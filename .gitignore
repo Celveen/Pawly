@@ -1,0 +1,25 @@
+# ===== 密钥（绝不提交）=====
+.env
+.env.*
+!.env.example
+!.env.local.example
+**/.env
+**/.env.local
+
+# ===== 依赖与构建产物 =====
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+dist/
+build/
+
+# ===== 日志 =====
+*.log
+npm-debug.log*
+
+# ===== 系统/编辑器 =====
+.DS_Store
+.idea/
+.vscode/
+.claude/settings.local.json
