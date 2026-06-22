@@ -230,10 +230,8 @@ export function MemberPage({ navigate }) {
   }, []);
   useEffect(() => { loadPets(); }, [loadPets]);
 
-  const orders = [
-    { id: 'PW2025-1029', date: '5/8', items: 3, total: 287, status: '已送达', emojis: ['🥣', '🦴', '🎾'] },
-    { id: 'PW2025-0913', date: '4/22', items: 2, total: 158, status: '已送达', emojis: ['🐟', '🍤'] },
-  ];
+  // 订单系统尚未接入（结算目前是演示流程），故暂无真实订单
+  const orders = [];
 
   return (
     <>
@@ -252,7 +250,7 @@ export function MemberPage({ navigate }) {
               </p>
             </div>
             <div style={{ display: 'flex', gap: 48, position: 'relative' }}>
-              {[{ n: String(pets.length), l: '毛孩子' }, { n: '2,180', l: '积分' }, { n: '¥218', l: '已节省' }].map((s) => (
+              {[{ n: String(pets.length), l: '毛孩子' }, { n: '0', l: '积分' }, { n: '¥0', l: '已节省' }].map((s) => (
                 <div key={s.l} style={{ textAlign: 'right' }}>
                   <div className="mono" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.01em' }}>{s.n}</div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', marginTop: 2 }}>{s.l}</div>
@@ -301,6 +299,7 @@ export function MemberPage({ navigate }) {
                   <h3 className="h-3" style={{ margin: 0 }}>最近订单</h3>
                   <button onClick={() => setTab('orders')} className="btn btn-ghost btn-sm">全部订单 →</button>
                 </div>
+                {orders.length === 0 && <p className="caption" style={{ margin: 0 }}>还没有订单，去商品页逛逛吧~</p>}
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                   {orders.map((o) => (
                     <li key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--line-2)' }}>
@@ -338,6 +337,12 @@ export function MemberPage({ navigate }) {
           {tab === 'orders' && (
             <div>
               <h3 className="h-3" style={{ margin: '0 0 20px' }}>全部订单</h3>
+              {orders.length === 0 && (
+                <div className="card" style={{ padding: 40, textAlign: 'center' }}>
+                  <div style={{ fontSize: 56 }}>📦</div>
+                  <p className="body" style={{ marginTop: 12 }}>还没有订单。去商品页挑点好东西，或让宝莉助手帮你推荐~</p>
+                </div>
+              )}
               <div style={{ display: 'grid', gap: 12 }}>
                 {orders.map((o) => (
                   <div key={o.id} className="card" style={{ padding: 24, display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', gap: 24, alignItems: 'center' }}>
