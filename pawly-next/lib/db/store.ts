@@ -1,18 +1,17 @@
-// 数据访问层（Prisma + SQLite）。商品共享；宠物/订单按用户隔离。
+// 数据访问层（Prisma + Postgres）。商品共享；宠物/订单按用户隔离。
 import { prisma } from './prisma';
 import { PRODUCTS } from './seed';
 
-// 首次访问时把商品种子灌入数据库（幂等）
+// 把商品种子同步进数据库（幂等）：已存在的按 id 跳过，新增的自动插入。
+// 用 skipDuplicates 而非"表为空才插"，这样以后新增商品也会自动补进已有的库。
 let productsReady: Promise<void> | null = null;
 function ensureProducts(): Promise<void> {
   if (!productsReady) {
     productsReady = (async () => {
-      const count = await prisma.product.count();
-      if (count === 0) {
-        await prisma.product.createMany({
-          data: PRODUCTS.map((p) => ({ ...p, badges: JSON.stringify(p.badges) })),
-        });
-      }
+      await prisma.product.createMany({
+        data: PRODUCTS.map((p) => ({ ...p, badges: JSON.stringify(p.badges) })),
+        skipDuplicates: true,
+      });
     })();
   }
   return productsReady;

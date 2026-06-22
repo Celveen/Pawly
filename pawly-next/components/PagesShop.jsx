@@ -19,7 +19,7 @@ export function HomePage({ navigate, onAdd }) {
               给那只<br /><span className="marker">挑剔的</span>毛孩子<br />的好东西。
             </h1>
             <p className="body-lg" style={{ marginTop: 28, maxWidth: 460 }}>
-              我们替你试过了——120 件商品，6 只狗 4 只猫亲身测评，留下来的只有这些。挑得累就抄我们作业。
+              我们替你挑过了——每一件都经过我们的狗狗和猫猫亲自试用，留下来的只有这些。挑得累就抄我们作业。
             </p>
             <div style={{ display: 'flex', gap: 12, marginTop: 36 }}>
               <button onClick={() => navigate({ page: 'shop' })} className="btn btn-primary btn-lg">开始逛 <span style={{ fontSize: 16 }}>→</span></button>
@@ -39,7 +39,7 @@ export function HomePage({ navigate, onAdd }) {
             <div style={{ position: 'absolute', top: '8%', right: '0%', width: '46%', aspectRatio: '1/1', borderRadius: 24, background: '#C8DDE2', display: 'grid', placeItems: 'center', fontSize: 130, boxShadow: 'var(--shadow-lg)', transform: 'rotate(4deg)' }}>🐱</div>
             <div style={{ position: 'absolute', bottom: '0%', left: '14%', width: '42%', aspectRatio: '1.4/1', borderRadius: 22, background: 'var(--ink)', color: 'var(--bg)', padding: 24, transform: 'rotate(-2deg)', boxShadow: 'var(--shadow-lg)' }}>
               <div className="eyebrow" style={{ color: 'rgba(255,255,255,.6)' }}>Best Seller</div>
-              <div style={{ fontSize: 18, fontWeight: 600, marginTop: 8, lineHeight: 1.3 }}>鸡胸肉条 · 一袋治百病</div>
+              <div style={{ fontSize: 18, fontWeight: 600, marginTop: 8, lineHeight: 1.3 }}>鸡胸肉条 · 训练奖励首选</div>
               <div className="mono" style={{ fontSize: 26, fontWeight: 700, marginTop: 14, letterSpacing: '-0.01em' }}>¥39 <span style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textDecoration: 'line-through', fontWeight: 400 }}>¥49</span></div>
             </div>
             <div style={{ position: 'absolute', bottom: '8%', right: '4%', width: '38%', aspectRatio: '1/1', borderRadius: 22, background: 'var(--accent)', padding: 20, transform: 'rotate(3deg)', boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -72,7 +72,7 @@ export function HomePage({ navigate, onAdd }) {
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
             <div>
               <div className="eyebrow" style={{ marginBottom: 12 }}>编辑精选</div>
-              <h2 className="h-1" style={{ margin: 0 }}>这周狗狗最爱</h2>
+              <h2 className="h-1" style={{ margin: 0 }}>本周人气好物</h2>
             </div>
             <button onClick={() => navigate({ page: 'shop' })} className="btn btn-ghost">查看全部 →</button>
           </div>
