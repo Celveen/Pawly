@@ -27,8 +27,12 @@ export async function runAgent(userId: string, history: ChatMessage[]): Promise<
 
     messages.push(msg);
 
-    // 有工具调用 → 逐个执行，把结果回灌后继续循环
     if (msg.tool_calls?.length) {
+      // 终结性输出工具：模型在这里给出最终回复，直接返回（参数由模型按 schema 生成，比手写 JSON 可靠）
+      const present = msg.tool_calls.find((tc: any) => tc.function.name === 'present_recommendation');
+      if (present) return parseArgs(present.function.arguments);
+
+      // 普通工具：执行并把结果回灌后继续循环
       for (const tc of msg.tool_calls) {
         let args: any = {};
         try { args = JSON.parse(tc.function.arguments || '{}'); } catch {}
@@ -38,11 +42,24 @@ export async function runAgent(userId: string, history: ChatMessage[]): Promise<
       continue;
     }
 
-    // 没有工具调用 → 这就是最终答复，解析成 {reply, proposals}
+    // 兜底：模型没用工具、直接写了文字
     return parseFinal(msg.content || '');
   }
 
   return { reply: '这个问题有点复杂，帮你转人工客服好吗？', proposals: [] };
+}
+
+// 解析 present_recommendation 的参数（工具参数通常是合法 JSON；仍做容错）
+function parseArgs(argStr: string): AgentResult {
+  let obj: any = null;
+  try { obj = JSON.parse(argStr || '{}'); } catch {
+    const a = (argStr || '').indexOf('{'), b = (argStr || '').lastIndexOf('}');
+    if (a >= 0 && b > a) { try { obj = JSON.parse(argStr.slice(a, b + 1)); } catch {} }
+  }
+  if (!obj || typeof obj !== 'object') return { reply: '抱歉，我刚没整理好，再说一次？', proposals: [] };
+  const proposals = Array.isArray(obj.proposals) ? obj.proposals : [];
+  for (const p of proposals) if (Array.isArray(p.productIds)) p.productIds = Array.from(new Set(p.productIds));
+  return { reply: obj.reply || '好的~', proposals };
 }
 
 // 宽松解析模型输出的 JSON（容忍 ``` 包裹或前后多余文字）

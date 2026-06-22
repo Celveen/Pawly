@@ -12,12 +12,9 @@ export function buildSystemPrompt(): string {
 5. 推荐商品前先调 search_products 取真实在售商品（建议 inStockOnly=true，别推缺货）。
 6. 用户明确要下单时调 create_order（不扣款，付款用户自己确认）。
 
-【输出格式 —— 只输出一个 JSON 对象，不要任何额外文字或 \`\`\` 包裹】
-{
-  "reply": "给用户的简短口语回复（80字内）。需要向用户追问资料时，问题写在这里。",
-  "proposals": [
-    { "title": "方案名", "badge": "一句话标签", "productIds": ["真实商品id"], "reason": "结合该宠物品种/年龄/体重/特点的理由(60字内)" }
-  ]
-}
-购物类问题给 2~3 个方案（经济→周全）；纯咨询/闲聊/还在收集资料时 proposals 为 []。`;
+【如何回复 —— 必须遵守】
+- 你给用户的最终回复，必须通过调用 present_recommendation 工具来输出，绝不要把回复直接写成普通文字或 JSON 文本。
+- reply 填给用户的话（需要追问资料时，问题写在 reply 里）。
+- proposals：购物类问题放 2~3 个方案（经济→周全）；纯咨询/闲聊/还在收集资料时传空数组 []。
+- proposals 里的 productIds 必须来自 search_products 返回的真实商品 id。`;
 }

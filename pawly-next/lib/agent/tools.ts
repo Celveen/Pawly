@@ -71,6 +71,35 @@ export const toolDefs = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'present_recommendation',
+      description:
+        '【最终输出工具】当你准备好回复用户时，必须调用它来输出（不要把回复直接写成文字或 JSON）。reply 是给用户的话；proposals 是商品方案（纯咨询/还在收集资料时传空数组 []）。',
+      parameters: {
+        type: 'object',
+        properties: {
+          reply: { type: 'string', description: '给用户的简短口语回复（80字内）' },
+          proposals: {
+            type: 'array',
+            description: '0~3 个方案；购物类问题给 2~3 个（经济→周全）',
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string', description: '方案名' },
+                badge: { type: 'string', description: '一句话标签' },
+                productIds: { type: 'array', items: { type: 'string' }, description: '来自 search_products 的真实商品 id' },
+                reason: { type: 'string', description: '结合宠物特点的理由（60字内）' },
+              },
+              required: ['title', 'productIds', 'reason'],
+            },
+          },
+        },
+        required: ['reply'],
+      },
+    },
+  },
 ] as const;
 
 export async function runTool(name: string, args: any, ctx: ToolContext): Promise<unknown> {
