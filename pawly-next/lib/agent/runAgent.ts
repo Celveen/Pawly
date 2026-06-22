@@ -4,9 +4,10 @@ import { buildSystemPrompt } from './systemPrompt';
 import { toolDefs, runTool } from './tools';
 import type { AgentResult, ChatMessage } from '../types';
 
-const MAX_STEPS = 5; // 防止工具调用死循环
+const MAX_STEPS = 6; // 防止工具调用死循环
 
-export async function runAgent(history: ChatMessage[]): Promise<AgentResult> {
+export async function runAgent(userId: string, history: ChatMessage[]): Promise<AgentResult> {
+  const ctx = { userId };
   const messages: any[] = [
     { role: 'system', content: buildSystemPrompt() },
     ...history.map((m) => ({ role: m.role, content: m.content })),
@@ -31,7 +32,7 @@ export async function runAgent(history: ChatMessage[]): Promise<AgentResult> {
       for (const tc of msg.tool_calls) {
         let args: any = {};
         try { args = JSON.parse(tc.function.arguments || '{}'); } catch {}
-        const result = await runTool(tc.function.name, args);
+        const result = await runTool(tc.function.name, args, ctx);
         messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result) });
       }
       continue;
@@ -55,7 +56,12 @@ function parseFinal(raw: string): AgentResult {
     if (a >= 0 && b > a) obj = tryParse(cleaned.slice(a, b + 1));
   }
   if (obj && typeof obj === 'object') {
-    return { reply: obj.reply || '', proposals: Array.isArray(obj.proposals) ? obj.proposals : [] };
+    const proposals = Array.isArray(obj.proposals) ? obj.proposals : [];
+    // 去重每个方案里的商品 id（模型偶尔会重复列同一件）
+    for (const p of proposals) {
+      if (Array.isArray(p.productIds)) p.productIds = Array.from(new Set(p.productIds));
+    }
+    return { reply: obj.reply || '', proposals };
   }
   return { reply: raw || '', proposals: [] };
 }

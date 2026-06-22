@@ -1,0 +1,50 @@
+'use client';
+// 整站外壳：前端路由 + 购物车 + 浮窗 AI 客服（沿用原型结构，接后端 API）
+import { useState } from 'react';
+import { Header, Footer, CartDrawer } from './ui';
+import { HomePage, ShopPage, ProductPage } from './PagesShop';
+import { ArticlesPage, ArticlePage, CheckoutPage, MemberPage } from './PagesOther';
+import ChatWidget from './ChatWidget';
+
+export default function App() {
+  const [route, setRoute] = useState({ page: 'home' });
+  const [cartItems, setCartItems] = useState([]);
+  const [cartOpen, setCartOpen] = useState(false);
+
+  const navigate = (next) => { setRoute(next); window.scrollTo({ top: 0, behavior: 'instant' }); };
+
+  const addToCart = (p, qty = 1) => setCartItems((prev) => {
+    const found = prev.find((x) => x.id === p.id);
+    if (found) return prev.map((x) => (x.id === p.id ? { ...x, qty: x.qty + qty } : x));
+    return [...prev, { ...p, qty }];
+  });
+  const setQty = (id, qty) => {
+    if (qty <= 0) setCartItems((prev) => prev.filter((x) => x.id !== id));
+    else setCartItems((prev) => prev.map((x) => (x.id === id ? { ...x, qty } : x)));
+  };
+  const removeItem = (id) => setCartItems((prev) => prev.filter((x) => x.id !== id));
+  const clearCart = () => setCartItems([]);
+  const cartCount = cartItems.reduce((s, it) => s + it.qty, 0);
+  const goCheckout = () => { setCartOpen(false); navigate({ page: 'checkout' }); };
+
+  let page;
+  switch (route.page) {
+    case 'shop': page = <ShopPage initialCat={route.cat} navigate={navigate} onAdd={addToCart} />; break;
+    case 'product': page = <ProductPage id={route.id} navigate={navigate} onAdd={addToCart} onCartOpen={() => setCartOpen(true)} />; break;
+    case 'articles': page = <ArticlesPage navigate={navigate} />; break;
+    case 'article': page = <ArticlePage id={route.id} navigate={navigate} />; break;
+    case 'checkout': page = <CheckoutPage items={cartItems} navigate={navigate} clearCart={clearCart} />; break;
+    case 'member': page = <MemberPage navigate={navigate} />; break;
+    default: page = <HomePage navigate={navigate} onAdd={addToCart} onCartOpen={() => setCartOpen(true)} />;
+  }
+
+  return (
+    <>
+      <Header route={route} navigate={navigate} cartCount={cartCount} onCartOpen={() => setCartOpen(true)} />
+      <main key={route.page + (route.id || '') + (route.cat || '')}>{page}</main>
+      <Footer />
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setQty={setQty} removeItem={removeItem} onCheckout={goCheckout} />
+      <ChatWidget onAdd={addToCart} navigate={navigate} onCartOpen={() => setCartOpen(true)} />
+    </>
+  );
+}

@@ -1,5 +1,6 @@
-// 种子数据（骨架用内存数据；上线时把 store.ts 换成真实数据库即可，类型不变）
-import type { Product, Pet } from '../types';
+// 商品种子数据（首次访问由 store.ts 自动灌入数据库）。
+// 宠物不再写死——改为每个真实用户自己录入。
+import type { Product } from '../types';
 
 export const PRODUCTS: Product[] = [
   { id: 'p1', cat: 'food', pet: '狗', emoji: '🥣', bg: '#F4D7B0', name: '冷压低温烘焙鲜粮 · 鸡肉口味', sub: '1.5kg | 全年龄段', price: 168, was: 198, rating: 4.9, sold: 12480, tag: '畅销', desc: '85% 高鲜肉占比，低温慢烤锁住营养。无谷物、无诱食剂。', badges: ['85% 鲜肉', '无谷物', '小颗粒'], stock: 320 },
@@ -18,10 +19,4 @@ export const PRODUCTS: Product[] = [
   { id: 'p14', cat: 'health', pet: '猫', emoji: '🌿', bg: '#D5E0CC', name: '化毛膏 · 三文鱼味', sub: '120g', price: 49, was: 69, rating: 4.8, sold: 8210, tag: null, desc: '麦芽天然纤维，温和促排毛球。', badges: ['天然麦芽', '三文鱼味', '不添加色素'], stock: 230 },
   { id: 'p15', cat: 'snack', pet: '狗', emoji: '🥩', bg: '#E8BCA8', name: '牦牛奶酪磨牙棒', sub: 'L 号 | 中大型犬', price: 58, was: 78, rating: 4.7, sold: 5621, tag: null, desc: '高原牦牛奶天然发酵，硬到磨牙、香到上头。', badges: ['天然牦牛奶', '高蛋白', '清洁牙齿'], stock: 0 },
   { id: 'p16', cat: 'toy', pet: '狗', emoji: '🦆', bg: '#EBDDC4', name: '发声鸭子毛绒玩具', sub: '25cm', price: 29, was: 39, rating: 4.9, sold: 18712, tag: null, desc: '捏一下嘎一下，藏耳朵/抛接/磨牙三合一。', badges: ['静音橡胶哨', '可机洗', '抗撕咬'], stock: 300 },
-];
-
-// 注意 birthday 而非 age。这里写死的日期会随"今天"自动算出当前年龄。
-export const PETS: Pet[] = [
-  { id: 'pet1', name: '糯米', species: '狗', breed: '柴犬', sex: '男', emoji: '🐶', birthday: '2023-03-15', weightKg: 12, weightUpdatedAt: '2026-05-01', notes: '肠胃略敏感、活泼好动、爱啃咬' },
-  { id: 'pet2', name: '芝麻', species: '猫', breed: '英短', sex: '女', emoji: '🐱', birthday: '2021-01-20', weightKg: 4.2, weightUpdatedAt: '2026-01-10', notes: '室内猫、易长毛球、偏胖需控体重' },
 ];

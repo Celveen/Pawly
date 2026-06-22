@@ -1,5 +1,4 @@
 // 宠物年龄/生命阶段计算 —— 解决"用户不会每次更新数据"的核心模块
-import type { Pet } from './types';
 
 /** 由出生日期实时计算月龄（每次调用都是最新的，无需用户维护） */
 export function ageInMonths(birthday: string, now: Date = new Date()): number {
@@ -38,20 +37,35 @@ export function isStale(updatedAt: string, days = 60, now: Date = new Date()): b
   return diff > days;
 }
 
-/** 给 Agent 用的"档案快照"：把实时年龄、阶段、过期标记都算好 */
-export function petSnapshot(pet: Pet, now: Date = new Date()) {
-  const ageMonths = ageInMonths(pet.birthday, now);
+// 档案快照的输入（兼容数据库返回的 Date 或字符串，且各字段可为空——新用户还没填）
+interface PetLike {
+  name: string;
+  species: string;
+  breed?: string | null;
+  sex?: string | null;
+  birthday?: Date | string | null;
+  weightKg?: number | null;
+  weightUpdatedAt?: Date | string | null;
+  notes?: string | null;
+}
+
+const toISODate = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
+
+/** 给 Agent 用的"档案快照"：把实时年龄、阶段、过期标记都算好（缺数据时如实标注） */
+export function petSnapshot(pet: PetLike, now: Date = new Date()) {
+  const bday = pet.birthday ? toISODate(pet.birthday) : null;
+  const ageMonths = bday ? ageInMonths(bday, now) : null;
   return {
     name: pet.name,
     species: pet.species,
-    breed: pet.breed,
-    sex: pet.sex,
-    ageText: formatAge(pet.birthday, now),
+    breed: pet.breed ?? null,
+    sex: pet.sex ?? null,
+    ageText: bday ? formatAge(bday, now) : '未知（建议补充月龄或出生日期）',
     ageMonths,
-    lifeStage: lifeStage(pet.species, ageMonths),
-    weightKg: pet.weightKg,
-    weightUpdatedAt: pet.weightUpdatedAt,
-    weightStale: isStale(pet.weightUpdatedAt, 60, now), // true => Agent 应主动询问体重是否有变
-    notes: pet.notes,
+    lifeStage: ageMonths != null ? lifeStage(pet.species as '狗' | '猫', ageMonths) : null,
+    weightKg: pet.weightKg ?? null,
+    weightUpdatedAt: pet.weightUpdatedAt ? toISODate(pet.weightUpdatedAt) : null,
+    weightStale: pet.weightUpdatedAt ? isStale(toISODate(pet.weightUpdatedAt), 60, now) : false,
+    notes: pet.notes ?? null,
   };
 }

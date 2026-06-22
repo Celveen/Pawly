@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8901"],
       "port": 8901
+    },
+    {
+      "name": "pawly-next",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "pawly-next", "run", "start"],
+      "port": 3000
     }
   ]
 }

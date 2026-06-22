@@ -1,0 +1,67 @@
+// 本地与线上统一用 Neon Postgres（DATABASE_URL 指向 Neon 即可，本地无需装数据库）。
+generator client {
+  provider      = "prisma-client-js"
+  // native = 本地；rhel-openssl-3.0.x = Vercel 无服务器运行时
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 匿名用户：访客打开链接即自动创建（cookie 标识），无需注册，最适合扫码演示
+model User {
+  id        String   @id @default(cuid())
+  nickname  String?
+  createdAt DateTime @default(now())
+  pets      Pet[]
+  orders    Order[]
+}
+
+// 宠物档案：归属到具体用户。存 birthday 而非 age，年龄实时算
+model Pet {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  species         String // '狗' | '猫'
+  breed           String?
+  sex             String?
+  birthday        DateTime?
+  weightKg        Float?
+  weightUpdatedAt DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// 商品：共享目录（首次访问自动从种子灌入）
+model Product {
+  id     String  @id
+  cat    String
+  pet    String
+  emoji  String
+  bg     String
+  name   String
+  sub    String
+  price  Int
+  was    Int
+  rating Float
+  sold   Int
+  tag    String?
+  desc   String
+  badges String // JSON 字符串（SQLite 无数组类型）
+  stock  Int
+}
+
+// 订单：待支付（不扣款，付款由用户确认）
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     String // JSON
+  total     Int
+  status    String   @default("pending_payment")
+  createdAt DateTime @default(now())
+}

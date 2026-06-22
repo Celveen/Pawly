@@ -1,51 +1,51 @@
 # Pawly 宝莉 · Next.js 全栈骨架
 
-把浏览器原型迁移成「API 优先 + 单主 Agent + 工具调用」的全栈骨架，对应架构图里的：客户端 → API → 业务服务 / AI 编排层 → 数据。
+API 优先 + 单主 Agent + 真数据库 + 多用户。访客打开链接即用、各填各的数据，AI 客服读取并主动收集每个人的宠物档案后给建议。
 
 ## 跑起来
 
 ```bash
 cd pawly-next
-cp .env.local.example .env.local   # 填入 DEEPSEEK_API_KEY
+cp .env.local.example .env.local     # 填入 DEEPSEEK_API_KEY
+# .env 里已有 DATABASE_URL="file:./dev.db"（SQLite，本地零安装）
 npm install
-npm run dev                        # 打开 http://localhost:3000
+npm run db:migrate                   # 建库建表（首次）
+npm run dev                          # http://localhost:3000
 ```
 
 ## 目录结构（对照架构图）
 
 ```
 app/
-  page.tsx              前端：极简聊天 UI（瘦客户端）
+  page.tsx              前端：宠物档案表单 + AI 对话
   api/
-    chat/route.ts       AI 导购 Agent 接口  ← 编排层入口
-    products/route.ts   商品接口            ← 业务服务（多端共用）
-    pets/route.ts       宠物档案接口（年龄实时算）
+    chat/route.ts       AI 导购 Agent（读 cookie 身份 → 操作该用户数据）
+    pets/route.ts       宠物档案 CRUD（按用户隔离）
+    products/route.ts   商品接口
 lib/
-  deepseek.ts           DeepSeek 调用封装（Key 只在服务端）
+  session.ts            ⭐ 匿名会话：访客首访自动建账号(cookie)，数据各自隔离
+  deepseek.ts           DeepSeek 调用（Key 只在服务端）
   agent/
-    systemPrompt.ts     主 Agent 提示词（不再塞商品库！）
-    tools.ts            工具集：get_pet_profile / search_products / create_order
-    runAgent.ts         编排循环：调模型→执行工具→回灌→出答复
+    systemPrompt.ts     主 Agent 提示词
+    tools.ts            工具：get_pet_profile / upsert_pet(自动收集) / search_products / create_order
+    runAgent.ts         编排循环（按 userId 隔离）
   db/
-    seed.ts             种子数据（商品 + 宠物）
-    store.ts            数据访问层（内存版，上线换 PostgreSQL，上层不改）
-  pets.ts               ⭐ 年龄/生命阶段/过期检测
-  types.ts              共用类型
+    prisma.ts           Prisma 客户端单例
+    store.ts            数据访问层（商品共享 / 宠物·订单按用户隔离）
+    seed.ts             商品种子（首访自动灌库）
+  pets.ts               年龄实时计算 / 生命阶段 / 数据过期检测
+prisma/schema.prisma    数据库模型：User / Pet / Product / Order
 ```
 
-## 两个关键设计点
+## 关键设计
 
-### 1. 单主 Agent + 工具（不是多 Agent）
-- 入口只有一个对话 Agent，它通过 `tools.ts` 里的工具按需取数。
-- **商品库不进上下文**，靠 `search_products` 检索 —— 不管多少 SKU，上下文都不会爆。
+- **多用户、零注册**：cookie 匿名账号，扫码即用，每人只看自己的数据（`lib/session.ts`）。
+- **Agent 自动收集**：用户聊天里透露宠物信息，Agent 调 `upsert_pet` 存档，越用越懂（`lib/agent/tools.ts`）。
+- **年龄永不过期**：存 `birthday` 实时算年龄；体重带时间戳，超 60 天标记 `weightStale` 提醒确认（`lib/pets.ts`）。
+- **上下文不爆**：商品库不进 prompt，靠 `search_products` 按需检索。
 
-### 2. 数据会过期？存"出生日期"而非"年龄"
-- `Pet.birthday` 存出生日期，年龄每次由 `lib/pets.ts` 的 `ageInMonths()` **实时计算**，用户永远不用改。
-- 体重这种算不出来的字段带 `weightUpdatedAt`，超 60 天 `petSnapshot()` 会标记 `weightStale=true`，提示词要求 Agent **主动询问**再推荐。
-- 进阶：可加定时任务（cron）在宠物跨越生命阶段（幼年→成年）时主动推送提醒。
-
-## 上线前还要补（对照架构图）
-- 把 `store.ts` 换成真实数据库（Prisma + PostgreSQL）
-- 用户体系/鉴权、订单与支付（微信/支付宝）、对象存储（图片）
-- RAG 向量检索（商品 + 科普知识）、安全护栏、转人工
-- 微信小程序 / App 端（复用同一套 API）
+## 上线部署（让同学扫码用）需要做
+- SQLite 在 Vercel 这类无服务器平台不持久 → 换 **Postgres**（如 Neon/Supabase 免费档）：把 `schema.prisma` 的 provider 改 `postgresql`、`DATABASE_URL` 换成云库连接串，重跑 migrate。
+- 部署到 Vercel（连 GitHub 仓库），在环境变量里配 `DEEPSEEK_API_KEY` 和 `DATABASE_URL`。
+- 之后还可补：真实下单/支付、RAG、安全护栏、转人工。
+```
