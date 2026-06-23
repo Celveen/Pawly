@@ -9,7 +9,8 @@ function ensureProducts(): Promise<void> {
   if (!productsReady) {
     productsReady = (async () => {
       await prisma.product.createMany({
-        data: PRODUCTS.map((p) => ({ ...p, badges: JSON.stringify(p.badges) })),
+        // detail 仅前端展示用，不入库，这里剔除
+        data: PRODUCTS.map(({ detail, ...p }) => ({ ...p, badges: JSON.stringify(p.badges) })),
         skipDuplicates: true,
       });
     })();

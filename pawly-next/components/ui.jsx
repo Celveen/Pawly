@@ -63,10 +63,11 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
             </svg>
             <span>购物车</span>
             {cartCount > 0 && (
-              <span style={{
+              <span key={cartCount} style={{
                 minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999,
                 background: 'var(--accent)', color: '#2a1a0a', fontSize: 11, fontWeight: 700,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginLeft: 2,
+                animation: 'cartBump .4s ease',
               }}>{cartCount}</span>
             )}
           </button>
@@ -131,7 +132,10 @@ export function ProductCard({ p, onOpen, onAdd }) {
             <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }} className="mono">{fmt(p.price)}</span>
             {p.was && <span className="caption mono" style={{ textDecoration: 'line-through' }}>{fmt(p.was)}</span>}
           </div>
-          <button onClick={(e) => { e.stopPropagation(); onAdd(p); }}
+          <button onClick={(e) => {
+              e.stopPropagation(); onAdd(p);
+              const b = e.currentTarget; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = 'addPop .3s ease';
+            }}
             style={{
               width: 32, height: 32, borderRadius: 999, border: 0,
               background: 'var(--ink)', color: 'var(--bg)', display: 'grid', placeItems: 'center',

@@ -276,6 +276,40 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
         </div>
       </section>
 
+      {/* 商品介绍 + 规格参数 */}
+      <section style={{ paddingTop: 8, paddingBottom: 64 }}>
+        <div className="container">
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 48 }}>
+            <div>
+              <div className="eyebrow" style={{ marginBottom: 12 }}>商品介绍</div>
+              <h2 className="h-2" style={{ margin: '0 0 16px' }}>关于这款{CATEGORIES.find((c) => c.id === p.cat)?.name || '商品'}</h2>
+              <p className="body-lg" style={{ marginTop: 0 }}>{p.detail || p.desc}</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 20 }}>
+                {p.badges.map((b) => <span key={b} className="badge">✓ {b}</span>)}
+              </div>
+            </div>
+            <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 28, border: '1px solid var(--line-2)', alignSelf: 'start' }}>
+              <div className="eyebrow" style={{ marginBottom: 16 }}>规格参数</div>
+              <dl style={{ margin: 0 }}>
+                {[
+                  ['适用宠物', p.pet === '狗' ? '🐶 狗狗' : '🐱 猫咪'],
+                  ['规格 / 适用', p.sub],
+                  ['类别', CATEGORIES.find((c) => c.id === p.cat)?.name || '—'],
+                  ['主要卖点', p.badges.join(' / ')],
+                  ['评分', `★ ${p.rating}`],
+                  ['累计已售', p.sold.toLocaleString()],
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display: 'grid', gridTemplateColumns: '84px 1fr', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--line-2)' }}>
+                    <dt className="caption">{k}</dt>
+                    <dd style={{ margin: 0, fontSize: 14, color: 'var(--ink)' }}>{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section style={{ paddingTop: 32, paddingBottom: 96 }}>
         <div className="container">
           <h2 className="h-2" style={{ margin: '0 0 32px' }}>顺手再看看</h2>

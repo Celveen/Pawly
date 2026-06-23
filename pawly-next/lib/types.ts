@@ -14,6 +14,7 @@ export interface Product {
   sold: number;
   tag: string | null;
   desc: string;
+  detail?: string; // 详情页的较长介绍（前端展示用，不入库）
   badges: string[];
   stock: number; // 库存：决策时要校验，避免推荐缺货商品
 }
