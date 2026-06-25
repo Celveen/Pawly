@@ -2,15 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "pawly-static",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8901"],
-      "port": 8901
-    },
-    {
-      "name": "pawly-next",
+      "name": "pawly",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "pawly-next", "run", "start"],
+      "runtimeArgs": ["run", "start"],
       "port": 3000
     }
   ]

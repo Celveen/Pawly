@@ -3,23 +3,28 @@
 .env.*
 !.env.example
 !.env.local.example
-**/.env
-**/.env.local
 
 # ===== 依赖与构建产物 =====
 node_modules/
-**/node_modules/
 .next/
-**/.next/
 dist/
 build/
+next-env.d.ts
+
+# ===== 数据库（SQLite，仅本地早期用）=====
+*.db
+*.db-journal
+prisma/dev.db*
 
 # ===== 日志 =====
 *.log
 npm-debug.log*
 
-# ===== 系统/编辑器 =====
+# ===== 系统 / 编辑器 =====
 .DS_Store
 .idea/
 .vscode/
 .claude/settings.local.json
+
+# ===== 文档（不提交）=====
+*.docx
