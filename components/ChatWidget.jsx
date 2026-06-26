@@ -46,12 +46,27 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen }) {
   const [unread, setUnread] = useState(0);
   const [pos, setPos] = useState(readPos);
   const [dragging, setDragging] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const dragStateRef = useRef({ moved: false });
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, loading]);
   useEffect(() => { if (open) { setUnread(0); setTimeout(() => inputRef.current?.focus(), 200); } }, [open]);
+
+  // 首次进入：延迟弹出"试试我"冒泡提示；用户用过客服后不再打扰
+  useEffect(() => {
+    let engaged = false;
+    try { engaged = localStorage.getItem('pawly.chatEngaged') === '1'; } catch (e) {}
+    if (engaged) return;
+    const showT = setTimeout(() => setShowHint(true), 1800);
+    const hideT = setTimeout(() => setShowHint(false), 13000); // 约 11 秒后自动消失
+    return () => { clearTimeout(showT); clearTimeout(hideT); };
+  }, []);
+  // 打开客服即视为已发现，关闭提示且不再弹出
+  useEffect(() => {
+    if (open) { setShowHint(false); try { localStorage.setItem('pawly.chatEngaged', '1'); } catch (e) {} }
+  }, [open]);
   useEffect(() => { try { localStorage.setItem('pawly.chatPos', JSON.stringify(pos)); } catch (e) {} }, [pos]);
   useEffect(() => {
     const clamp = () => setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 76, p.x)), y: Math.max(8, Math.min(window.innerHeight - 76, p.y)) }));
@@ -191,6 +206,40 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen }) {
           </div>
         </div>
       </div>
+
+      {/* 首次进入：脉冲光圈 + 可关闭的冒泡提示 */}
+      {showHint && !open && (
+        <>
+          <div aria-hidden style={{
+            position: 'fixed', left: pos.x, bottom: pos.y, width: 60, height: 60, borderRadius: 999,
+            zIndex: 79, pointerEvents: 'none', animation: 'launcherPulse 1.8s ease-out infinite',
+          }} />
+          <div onClick={() => setOpen(true)} role="button" style={{
+            position: 'fixed', left: pos.x, bottom: pos.y + 74, zIndex: 81, cursor: 'pointer',
+            width: 'min(78vw, 230px)',
+            background: 'var(--surface)', color: 'var(--ink)',
+            border: '1px solid var(--line)', borderRadius: 16, padding: '12px 34px 12px 14px',
+            boxShadow: '0 16px 36px -10px rgba(38,70,83,.35)',
+            animation: 'hintPop .3s cubic-bezier(.22,.61,.36,1) both',
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝莉助手</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.5 }}>
+              试试问我「帮我家狗挑款狗粮」，照着你家毛孩子一步帮你选好 →
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); setShowHint(false); }} aria-label="关闭提示"
+              style={{
+                position: 'absolute', top: 6, right: 6, width: 22, height: 22, border: 0, borderRadius: 999,
+                background: 'var(--surface-2)', color: 'var(--ink-3)', cursor: 'pointer',
+                display: 'grid', placeItems: 'center', fontSize: 14, lineHeight: 1,
+              }}>×</button>
+            {/* 指向按钮的小尾巴 */}
+            <div aria-hidden style={{
+              position: 'absolute', left: 22, bottom: -7, width: 14, height: 14, background: 'var(--surface)',
+              borderRight: '1px solid var(--line)', borderBottom: '1px solid var(--line)', transform: 'rotate(45deg)',
+            }} />
+          </div>
+        </>
+      )}
 
       <button onPointerDown={onLauncherDown} aria-label="打开宝莉助手 (可拖动)" title="点击打开 · 长按拖动"
         style={{
