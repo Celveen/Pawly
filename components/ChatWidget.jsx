@@ -261,12 +261,52 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen }) {
   );
 }
 
+// 把单行里的 **加粗** / *斜体* 转成 React 节点（大模型常用的轻量 Markdown）
+function renderInline(line, keyBase) {
+  const nodes = [];
+  const re = /\*\*([^*]+)\*\*|\*([^*]+)\*/g;
+  let last = 0, m, i = 0;
+  while ((m = re.exec(line)) !== null) {
+    if (m.index > last) nodes.push(line.slice(last, m.index));
+    if (m[1] != null) nodes.push(<strong key={`${keyBase}-${i++}`}>{m[1]}</strong>);
+    else nodes.push(<em key={`${keyBase}-${i++}`}>{m[2]}</em>);
+    last = m.index + m[0].length;
+  }
+  if (last < line.length) nodes.push(line.slice(last));
+  return nodes;
+}
+
+// 渲染大模型返回的轻量 Markdown：加粗、斜体、无序列表、#### 小标题
+function MarkdownText({ text }) {
+  const lines = String(text).split('\n');
+  return (
+    <>
+      {lines.map((raw, i) => {
+        const line = raw.replace(/\t/g, '  ');
+        const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+        if (bullet) {
+          return (
+            <div key={i} style={{ display: 'flex', gap: 6, paddingLeft: 2 }}>
+              <span style={{ flexShrink: 0, color: 'var(--primary)' }}>•</span>
+              <span>{renderInline(bullet[1], i)}</span>
+            </div>
+          );
+        }
+        const heading = line.match(/^\s*#{1,6}\s+(.*)$/);
+        if (heading) return <div key={i} style={{ fontWeight: 700, margin: '2px 0' }}>{renderInline(heading[1], i)}</div>;
+        if (line.trim() === '') return <div key={i} style={{ height: 6 }} />;
+        return <div key={i}>{renderInline(line, i)}</div>;
+      })}
+    </>
+  );
+}
+
 function Bubble({ role, text }) {
   const isUser = role === 'user';
   return (
     <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', animation: 'fadeUp .25s ease both' }}>
       {!isUser && <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: 'var(--primary)', display: 'grid', placeItems: 'center', marginRight: 8, marginTop: 'auto', color: 'white' }}><PawIcon size={16} color="white" /></div>}
-      <div style={{ maxWidth: '78%', padding: '10px 14px', borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: isUser ? 'var(--ink)' : 'var(--surface)', color: isUser ? 'var(--bg)' : 'var(--ink)', fontSize: 13.5, lineHeight: 1.55, whiteSpace: 'pre-wrap', border: isUser ? 0 : '1px solid var(--line-2)', boxShadow: isUser ? 'none' : 'var(--shadow-sm)' }}>{text}</div>
+      <div style={{ maxWidth: '78%', padding: '10px 14px', borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: isUser ? 'var(--ink)' : 'var(--surface)', color: isUser ? 'var(--bg)' : 'var(--ink)', fontSize: 13.5, lineHeight: 1.55, whiteSpace: isUser ? 'pre-wrap' : 'normal', border: isUser ? 0 : '1px solid var(--line-2)', boxShadow: isUser ? 'none' : 'var(--shadow-sm)' }}>{isUser ? text : <MarkdownText text={text} />}</div>
     </div>
   );
 }
