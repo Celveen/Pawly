@@ -65,15 +65,15 @@ npm run dev          # 打开 http://localhost:3000
 ```
 app/
   page.tsx              前端入口（加载客户端 SPA）
-  api/{chat,pets,products}/route.ts   后端接口
-components/             页面与组件（商品/详情/科普/结算/会员 + 浮窗客服）
+  api/{chat,pets,products,posts}/route.ts   后端接口（posts 为社区帖子 + 点赞）
+components/             页面与组件（商品/详情/科普/社区/结算/会员 + 浮窗客服）
 lib/
   deepseek.ts           DeepSeek 调用封装（Key 仅服务端）
   session.ts            匿名 Cookie 会话
   pets.ts               年龄 / 生命阶段 / 数据过期计算
   agent/                Agent 编排循环 + 工具集 + 系统提示词
   db/                   Prisma 客户端 / 商品种子 / 数据访问层
-prisma/schema.prisma    数据库模型（User / Pet / Product / Order）
+prisma/schema.prisma    数据库模型（User / Pet / Product / Order / Post / PostLike）
 docs/                   产品设计 / 架构文档
 ```
 
@@ -82,6 +82,7 @@ docs/                   产品设计 / 架构文档
 - **存出生日期而非年龄**：年龄实时算，用户零维护，狗狗长大也永远准确。
 - **数据归属隔离**：宠物 / 订单都按匿名用户 id 隔离。
 - **商品自动同步**：商品种子按 id 增量灌库（已存在跳过），新增商品自动补充。
+- **社区帖子全站共享**：帖子/点赞对所有用户可见，发帖与删帖仍按匿名用户 id 归属；首次访问自动灌入官方示例帖。
 
 ## ☁️ 部署
 

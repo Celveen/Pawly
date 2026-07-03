@@ -12,11 +12,13 @@ datasource db {
 
 // 匿名用户：访客打开链接即自动创建（cookie 标识），无需注册，最适合扫码演示
 model User {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   nickname  String?
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
   pets      Pet[]
   orders    Order[]
+  posts     Post[]
+  postLikes PostLike[]
 }
 
 // 宠物档案：归属到具体用户。存 birthday 而非 age，年龄实时算
@@ -53,6 +55,35 @@ model Product {
   desc   String
   badges String // JSON 字符串（SQLite 无数组类型）
   stock  Int
+}
+
+// 社区帖子：铲屎官分享（小红书式图文卡片）。暂无图片上传，封面用 emoji + 背景色，
+// 与全站现有视觉语言一致；接入对象存储后可平滑加 imageUrl 字段。
+model Post {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  topic     String // 话题：晒宠 | 好物 | 求助 | 日常
+  emoji     String // 封面 emoji
+  bg        String // 封面背景色
+  petName   String? // 关联的自家宠物名（可选）
+  createdAt DateTime   @default(now())
+  likes     PostLike[]
+
+  @@index([createdAt])
+}
+
+// 点赞：一人一帖只能赞一次
+model PostLike {
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
 }
 
 // 订单：待支付（不扣款，付款由用户确认）

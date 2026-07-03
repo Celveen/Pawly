@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Header, Footer, CartDrawer } from './ui';
 import { HomePage, ShopPage, ProductPage } from './PagesShop';
 import { ArticlesPage, ArticlePage, CheckoutPage, MemberPage } from './PagesOther';
+import { CommunityPage } from './PagesCommunity';
 import ChatWidget from './ChatWidget';
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
     case 'shop': page = <ShopPage initialCat={route.cat} navigate={navigate} onAdd={addToCart} />; break;
     case 'product': page = <ProductPage id={route.id} navigate={navigate} onAdd={addToCart} onCartOpen={() => setCartOpen(true)} />; break;
     case 'articles': page = <ArticlesPage navigate={navigate} />; break;
+    case 'community': page = <CommunityPage />; break;
     case 'article': page = <ArticlePage id={route.id} navigate={navigate} />; break;
     case 'checkout': page = <CheckoutPage items={cartItems} navigate={navigate} clearCart={clearCart} />; break;
     case 'member': page = <MemberPage navigate={navigate} />; break;

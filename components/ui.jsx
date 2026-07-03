@@ -21,6 +21,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
     { id: 'home', label: '首页' },
     { id: 'shop', label: '商品' },
     { id: 'articles', label: '宠物科普' },
+    { id: 'community', label: '社区' },
     { id: 'member', label: '会员' },
   ];
   return (
