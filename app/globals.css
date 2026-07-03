@@ -126,6 +126,9 @@ a { color: inherit; text-decoration: none; }
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 14px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
 @keyframes addPop { 0% { transform: scale(1); } 40% { transform: scale(.8); } 100% { transform: scale(1); } }
 
+/* 弹层对话框：淡入 + 轻微上浮缩放（配合 inset+margin 居中，不依赖 transform 定位） */
+@keyframes dialogIn { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+
 /* 客服首次提示：冒泡升起 + 按钮脉冲光圈 */
 @keyframes hintPop { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
 @keyframes launcherPulse {

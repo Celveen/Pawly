@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     title,
     content,
     topic: TOPICS.includes(b?.topic) ? b.topic : '日常',
-    emoji: String(b?.emoji || '🐾').slice(0, 8),
+    emoji: String(b?.emoji || 'paw').slice(0, 8), // 插画 id（旧数据可能是 emoji 字符，前端向后兼容）
     bg: /^#[0-9a-fA-F]{6}$/.test(b?.bg || '') ? b.bg : '#F4D7B0',
     petName: b?.petName ? String(b.petName).slice(0, 20) : null,
     nickname: b?.nickname ? String(b.nickname).slice(0, 20) : null,

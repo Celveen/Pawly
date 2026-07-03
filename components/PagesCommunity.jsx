@@ -1,6 +1,7 @@
 // 社区：铲屎官分享（小红书式瀑布流卡片 + 发帖 + 点赞）
 // 帖子数据走 /api/posts，点赞走 /api/posts/like，身份沿用匿名 cookie 会话。
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Illo, ILLO_IDS } from './illos';
 
 const TOPICS = [
   { id: 'all', name: '全部' },
@@ -10,8 +11,7 @@ const TOPICS = [
   { id: '日常', name: '☀️ 日常' },
 ];
 
-// 发帖封面可选的 emoji 与底色（与全站商品卡的柔和色板一致）
-const COVER_EMOJIS = ['🐶', '🐱', '🐾', '🦴', '🧶', '🛁', '🍖', '🎾', '🩺', '📷', '💛', '🏠'];
+// 发帖封面底色（与全站商品卡的柔和色板一致）；封面图案用插画库 ILLO_IDS
 const COVER_BGS = ['#F4D7B0', '#D3DEE2', '#E8D8C3', '#DCE5D4', '#EAD9DE', '#D9E2EA'];
 
 function timeAgo(iso) {
@@ -26,14 +26,21 @@ function timeAgo(iso) {
 export function CommunityPage() {
   const [topic, setTopic] = useState('all');
   const [posts, setPosts] = useState(null); // null=加载中
+  const [loadError, setLoadError] = useState('');
   const [composing, setComposing] = useState(false);
   const [expanded, setExpanded] = useState(null); // 展开阅读的帖子 id
 
   const load = useCallback(async (t = topic) => {
+    setLoadError('');
     try {
       const r = await fetch(`/api/posts${t !== 'all' ? `?topic=${encodeURIComponent(t)}` : ''}`);
-      if (r.ok) setPosts(await r.json());
-    } catch { setPosts([]); }
+      if (!r.ok) throw new Error(`接口返回 ${r.status}`);
+      setPosts(await r.json());
+    } catch (e) {
+      // 数据表未初始化 / 网络异常时不再永远"加载中"，给出可重试的提示
+      setPosts([]);
+      setLoadError(e.message || '加载失败');
+    }
   }, [topic]);
 
   useEffect(() => { setPosts(null); load(topic); }, [topic, load]);
@@ -89,9 +96,18 @@ export function CommunityPage() {
       <section style={{ paddingTop: 48, paddingBottom: 96 }}>
         <div className="container">
           {posts === null && <p className="caption" style={{ textAlign: 'center', padding: '64px 0' }}>加载中…</p>}
-          {posts && posts.length === 0 && (
+          {posts && loadError && (
+            <div className="card" style={{ padding: 40, textAlign: 'center', maxWidth: 560, margin: '0 auto' }}>
+              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 8 }}><Illo id="vet" size={72} /></div>
+              <h3 className="h-3" style={{ margin: '0 0 8px' }}>社区暂时打不开</h3>
+              <p className="caption" style={{ margin: '0 0 8px' }}>{loadError}</p>
+              <p className="caption" style={{ margin: '0 0 20px' }}>如果是刚部署的新版本，请确认已执行 <code className="mono">npx prisma db push</code> 同步社区数据表。</p>
+              <button className="btn btn-primary" onClick={() => { setPosts(null); load(); }}>重试</button>
+            </div>
+          )}
+          {posts && !loadError && posts.length === 0 && (
             <div style={{ padding: '96px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>🐾</div>
+              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Illo id="paw" size={88} /></div>
               <p className="body">这个话题还没有帖子，来发第一篇吧！</p>
               <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setComposing(true)}>✏️ 发布分享</button>
             </div>
@@ -118,9 +134,9 @@ function PostCard({ p, expanded, onExpand, onLike, onDelete }) {
   return (
     <article className="card fade-up" onClick={onExpand}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', breakInside: 'avoid', marginBottom: 20, display: 'block' }}>
-      <div style={{ background: p.bg, aspectRatio: expanded ? 'auto' : '4/3', minHeight: expanded ? 120 : undefined, display: 'grid', placeItems: 'center', fontSize: 72, position: 'relative', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))' }}>
+      <div style={{ background: p.bg, aspectRatio: expanded ? 'auto' : '4/3', minHeight: expanded ? 120 : undefined, display: 'grid', placeItems: 'center', position: 'relative' }}>
         <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>
-        {p.emoji}
+        <Illo id={p.emoji} size={88} />
       </div>
       <div style={{ padding: 16 }}>
         <h3 style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4, margin: 0 }}>{p.title}</h3>
@@ -149,7 +165,7 @@ function PostCard({ p, expanded, onExpand, onLike, onDelete }) {
 }
 
 function Composer({ onClose, onPosted }) {
-  const [form, setForm] = useState({ title: '', content: '', topic: '晒宠', emoji: '🐶', bg: COVER_BGS[0], petName: '', nickname: '' });
+  const [form, setForm] = useState({ title: '', content: '', topic: '晒宠', emoji: 'dog', bg: COVER_BGS[0], petName: '', nickname: '' });
   const [pets, setPets] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -181,19 +197,20 @@ function Composer({ onClose, onPosted }) {
   }
 
   return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(38,70,83,.35)', zIndex: 60, animation: 'fadeBg .2s ease' }} />
+    /* 用 flex 容器居中弹层：不给对话框本身设 transform 定位，避免与打开动效的 transform 冲突 */
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="发布分享" style={{
-        position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 70,
-        width: 'min(640px, calc(100vw - 32px))', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',
+        position: 'relative', width: 'min(640px, 100%)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',
         background: 'var(--bg)', borderRadius: 24, padding: 32, boxShadow: '0 24px 64px -16px rgba(38,70,83,.35)',
+        animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
             <div className="eyebrow">New Post</div>
             <h2 style={{ fontSize: 22, fontWeight: 600, margin: '4px 0 0' }}>发布分享</h2>
           </div>
-          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0 }} aria-label="关闭">
+          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="关闭">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
           </button>
         </div>
@@ -211,17 +228,21 @@ function Composer({ onClose, onPosted }) {
           value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <textarea className="input" placeholder="分享你的养宠日常、好物心得或求助问题…（最多 1000 字）" maxLength={1000} rows={5}
           value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })}
-          style={{ marginTop: 12, resize: 'vertical', minHeight: 120, lineHeight: 1.6, paddingTop: 12 }} />
+          style={{ marginTop: 12, resize: 'vertical', minHeight: 120, height: 'auto', lineHeight: 1.6, paddingTop: 12, borderRadius: 16 }} />
 
-        {/* 封面：emoji + 底色（图片上传接入对象存储后开放） */}
+        {/* 封面：插画 + 底色（图片上传接入对象存储后开放） */}
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 16, marginTop: 16, alignItems: 'start' }}>
-          <div style={{ width: 96, height: 96, borderRadius: 16, background: form.bg, display: 'grid', placeItems: 'center', fontSize: 48 }}>{form.emoji}</div>
+          <div style={{ width: 104, height: 104, borderRadius: 16, background: form.bg, display: 'grid', placeItems: 'center' }}>
+            <Illo id={form.emoji} size={72} />
+          </div>
           <div>
-            <div className="caption" style={{ marginBottom: 6 }}>封面表情</div>
+            <div className="caption" style={{ marginBottom: 6 }}>封面插画</div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {COVER_EMOJIS.map((e) => (
-                <button key={e} onClick={() => setForm({ ...form, emoji: e })}
-                  style={{ width: 32, height: 32, borderRadius: 8, border: form.emoji === e ? '2px solid var(--ink)' : '1px solid var(--line-2)', background: 'transparent', fontSize: 17, padding: 0 }}>{e}</button>
+              {ILLO_IDS.map((id) => (
+                <button key={id} onClick={() => setForm({ ...form, emoji: id })} aria-label={`封面 ${id}`}
+                  style={{ width: 40, height: 40, borderRadius: 10, border: form.emoji === id ? '2px solid var(--ink)' : '1px solid var(--line-2)', background: 'transparent', padding: 0, display: 'grid', placeItems: 'center' }}>
+                  <Illo id={id} size={30} />
+                </button>
               ))}
             </div>
             <div className="caption" style={{ margin: '10px 0 6px' }}>封面底色</div>
@@ -252,6 +273,6 @@ function Composer({ onClose, onPosted }) {
         </div>
         <p className="caption" style={{ margin: '12px 0 0', textAlign: 'center' }}>请友善分享 · 健康问题请以兽医意见为准</p>
       </div>
-    </>
+    </div>
   );
 }

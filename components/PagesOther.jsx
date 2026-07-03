@@ -3,8 +3,9 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { fmt } from './util';
 import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
 import { ArticleCard, ProductCard } from './ui';
+import { Illo } from './illos';
 
-const petEmoji = (sp) => (sp === '狗' ? '🐶' : '🐱');
+const petIllo = (sp) => (sp === '狗' ? 'dog' : 'cat');
 const petBg = (sp) => (sp === '狗' ? '#F4D7B0' : '#D3DEE2');
 
 export function ArticlesPage({ navigate }) {
@@ -286,7 +287,7 @@ export function MemberPage({ navigate }) {
                   <div style={{ display: 'flex', gap: 16 }}>
                     {pets.map((p) => (
                       <div key={p.name} style={{ flex: 1, padding: 20, borderRadius: 16, background: petBg(p.species), textAlign: 'center' }}>
-                        <div style={{ fontSize: 56 }}>{petEmoji(p.species)}</div>
+                        <div style={{ display: 'grid', placeItems: 'center' }}><Illo id={petIllo(p.species)} size={64} /></div>
                         <div style={{ fontSize: 18, fontWeight: 600, marginTop: 8 }}>{p.name}</div>
                         <div className="caption">{p.breed || p.species} · {p.ageText}</div>
                       </div>
@@ -480,7 +481,7 @@ function PetsTab({ pets, onChanged }) {
 
       {pets.length === 0 && !open && (
         <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-          <div style={{ fontSize: 56 }}>🐾</div>
+          <div style={{ display: 'grid', placeItems: 'center' }}><Illo id="paw" size={72} /></div>
           <p className="body" style={{ marginTop: 12 }}>还没有宠物档案。点"添加宠物"，或直接告诉右下角的宝莉助手——它会自动帮你建档。</p>
         </div>
       )}
@@ -488,7 +489,7 @@ function PetsTab({ pets, onChanged }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
         {pets.map((p) => (
           <div key={p.name} className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ background: petBg(p.species), padding: '40px 0', textAlign: 'center', fontSize: 88 }}>{petEmoji(p.species)}</div>
+            <div style={{ background: petBg(p.species), padding: '32px 0', display: 'grid', placeItems: 'center' }}><Illo id={petIllo(p.species)} size={104} /></div>
             <div style={{ padding: 24 }}>
               <h4 style={{ fontSize: 22, fontWeight: 600, margin: 0 }}>{p.name}</h4>
               <p className="caption" style={{ margin: '4px 0 0' }}>{p.breed || p.species}{p.weightStale ? ' · ⚠️ 体重待更新' : ''}</p>
