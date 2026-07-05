@@ -13,12 +13,23 @@ datasource db {
 // 匿名用户：访客打开链接即自动创建（cookie 标识），无需注册，最适合扫码演示
 model User {
   id        String     @id @default(cuid())
+  phone     String?    @unique // 手机号登录后绑定；游客为 null
   nickname  String?
   createdAt DateTime   @default(now())
   pets      Pet[]
   orders    Order[]
   posts     Post[]
   postLikes PostLike[]
+}
+
+// 短信验证码：一个手机号同一时刻只保留最新一条（发送即覆盖）。
+// 存哈希不存明文；5 分钟过期；连续错 5 次作废。
+model PhoneCode {
+  phone     String   @id
+  codeHash  String
+  expiresAt DateTime
+  sentAt    DateTime @default(now())
+  tries     Int      @default(0)
 }
 
 // 宠物档案：归属到具体用户。存 birthday 而非 age，年龄实时算

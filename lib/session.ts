@@ -6,6 +6,23 @@ import { prisma } from './db/prisma';
 
 const COOKIE = 'pawly_uid';
 
+const cookieOpts = {
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  path: '/',
+  maxAge: 60 * 60 * 24 * 365, // 一年
+};
+
+// 登录成功后把 cookie 切到手机号账号
+export function setUserCookie(userId: string) {
+  cookies().set(COOKIE, userId, cookieOpts);
+}
+
+// 退出登录：清 cookie，下次请求自动回到全新游客身份
+export function clearUserCookie() {
+  cookies().delete(COOKIE);
+}
+
 export async function getOrCreateUserId(): Promise<string> {
   const jar = cookies();
   const existing = jar.get(COOKIE)?.value;
@@ -14,11 +31,6 @@ export async function getOrCreateUserId(): Promise<string> {
     if (user) return user.id;
   }
   const user = await prisma.user.create({ data: {} });
-  jar.set(COOKIE, user.id, {
-    httpOnly: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 365, // 一年
-  });
+  jar.set(COOKIE, user.id, cookieOpts);
   return user.id;
 }

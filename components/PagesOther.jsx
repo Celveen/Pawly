@@ -225,11 +225,26 @@ export function CheckoutPage({ items, navigate, clearCart }) {
 export function MemberPage({ navigate }) {
   const [tab, setTab] = useState('overview');
   const [pets, setPets] = useState([]);
+  const [me, setMe] = useState(null); // null=加载中；{guest:true} 或 {phoneMasked,...}
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const loadPets = useCallback(async () => {
     try { const r = await fetch('/api/pets'); if (r.ok) setPets(await r.json()); } catch {}
   }, []);
-  useEffect(() => { loadPets(); }, [loadPets]);
+  const loadMe = useCallback(async () => {
+    try {
+      const r = await fetch('/api/auth/me');
+      setMe(r.ok ? await r.json() : { guest: true });
+    } catch { setMe({ guest: true }); }
+  }, []);
+  useEffect(() => { loadPets(); loadMe(); }, [loadPets, loadMe]);
+
+  async function logout() {
+    if (!window.confirm('退出后将回到游客身份（数据保留在账号里，重新登录即可找回）')) return;
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setMe({ guest: true });
+    loadPets(); // 身份已切换，刷新数据
+  }
 
   // 订单系统尚未接入（结算目前是演示流程），故暂无真实订单
   const orders = [];
@@ -242,12 +257,20 @@ export function MemberPage({ navigate }) {
             <div style={{ position: 'absolute', right: -20, bottom: -60, fontSize: 260, opacity: .08 }}>🐾</div>
             <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', display: 'grid', placeItems: 'center', fontSize: 44 }}>👤</div>
             <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <h2 style={{ fontSize: 28, fontWeight: 600, margin: 0, letterSpacing: '-0.01em' }}>铲屎官</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: 28, fontWeight: 600, margin: 0, letterSpacing: '-0.01em' }}>
+                  {me && !me.guest ? (me.nickname || me.phoneMasked) : '铲屎官（游客）'}
+                </h2>
                 <span style={{ height: 26, padding: '0 12px', borderRadius: 999, background: 'var(--accent)', color: '#2a1a0a', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>⭐ Pawly Club 会员</span>
+                {me && (me.guest
+                  ? <button className="btn btn-accent btn-sm" onClick={() => setLoginOpen(true)}>手机号登录</button>
+                  : <button className="btn btn-sm" onClick={logout} style={{ background: 'rgba(255,255,255,.14)', color: 'var(--bg)' }}>退出登录</button>
+                )}
               </div>
               <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,.65)', fontSize: 14 }}>
+                {me && !me.guest && `已绑定 ${me.phoneMasked} · `}
                 {pets.length > 0 ? `已添加 ${pets.length} 个毛孩子档案 · ${pets.map((p) => p.name).join('、')}` : '还没有宠物档案，去"宠物档案"添加吧'}
+                {me?.guest && ' · 登录后数据可跨设备同步'}
               </p>
             </div>
             <div style={{ display: 'flex', gap: 48, position: 'relative' }}>
@@ -366,6 +389,8 @@ export function MemberPage({ navigate }) {
 
           {tab === 'pets' && <PetsTab pets={pets} onChanged={loadPets} />}
 
+          {loginOpen && <LoginDialog onClose={() => setLoginOpen(false)} onLoggedIn={() => { setLoginOpen(false); loadMe(); loadPets(); }} />}
+
           {tab === 'addr' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -378,6 +403,100 @@ export function MemberPage({ navigate }) {
         </div>
       </section>
     </>
+  );
+}
+
+// 手机号验证码登录弹层。开发模式（未配置短信服务商）下验证码由接口直接返回并展示。
+function LoginDialog({ onClose, onLoggedIn }) {
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [devCode, setDevCode] = useState('');
+  const [sent, setSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  const phoneOk = /^1\d{10}$/.test(phone);
+
+  async function sendCode() {
+    setBusy(true); setError('');
+    try {
+      const r = await fetch('/api/auth/send-code', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || `发送失败（${r.status}）`);
+      setSent(true); setCountdown(60);
+      if (d.devCode) setDevCode(d.devCode);
+    } catch (e) { setError(e.message || '发送失败'); }
+    finally { setBusy(false); }
+  }
+
+  async function login() {
+    setBusy(true); setError('');
+    try {
+      const r = await fetch('/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, code }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || `登录失败（${r.status}）`);
+      onLoggedIn();
+    } catch (e) { setError(e.message || '登录失败'); setBusy(false); }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
+      <div role="dialog" aria-label="手机号登录" style={{
+        position: 'relative', width: 'min(420px, 100%)',
+        background: 'var(--bg)', borderRadius: 24, padding: 32, boxShadow: '0 24px 64px -16px rgba(38,70,83,.35)',
+        animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div>
+            <div className="eyebrow">Sign In</div>
+            <h2 style={{ fontSize: 22, fontWeight: 600, margin: '4px 0 0' }}>手机号登录</h2>
+          </div>
+          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="关闭">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
+          </button>
+        </div>
+
+        <input className="input" placeholder="手机号" inputMode="numeric" maxLength={11} autoFocus
+          value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} />
+        <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+          <input className="input" placeholder="验证码" inputMode="numeric" maxLength={6} style={{ flex: 1 }}
+            value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+            onKeyDown={(e) => { if (e.key === 'Enter' && code.length === 6) login(); }} />
+          <button className="btn btn-line" onClick={sendCode} disabled={!phoneOk || busy || countdown > 0} style={{ whiteSpace: 'nowrap' }}>
+            {countdown > 0 ? `${countdown}s 后重发` : sent ? '重新发送' : '获取验证码'}
+          </button>
+        </div>
+
+        {devCode && (
+          <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px dashed var(--line)', fontSize: 13, color: 'var(--ink-2)' }}>
+            🧪 演示模式（短信服务未接入）：你的验证码是 <b className="mono" style={{ fontSize: 15 }}>{devCode}</b>
+          </div>
+        )}
+        {error && <div style={{ color: '#D9826B', fontSize: 13, marginTop: 12 }}>⚠️ {error}</div>}
+
+        <button className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 16, justifyContent: 'center' }}
+          onClick={login} disabled={busy || !phoneOk || code.length !== 6}>
+          {busy ? '登录中…' : '登录 / 注册'}
+        </button>
+        <p className="caption" style={{ margin: '12px 0 0', textAlign: 'center' }}>
+          未注册的手机号将自动创建账号<br />当前游客身份下的宠物档案与帖子会自动并入你的账号
+        </p>
+      </div>
+    </div>
   );
 }
 
