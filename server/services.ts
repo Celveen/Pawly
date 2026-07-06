@@ -5,7 +5,7 @@
 import { prisma } from './db/prisma';
 import { store } from './db/store';
 import { runAgent } from './agent/runAgent';
-import { sendLoginCode, verifyLoginCode, loginWithPhone } from './auth';
+import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured } from './auth';
 import { petSnapshot, birthdayFromAgeMonths } from './pets';
 
 // 业务错误：带 HTTP 状态码，网关层据此返回给前端
@@ -111,8 +111,12 @@ export const services: Record<string, Handler> = {
 
   'auth.login': async (userId, b) => {
     const phone = String(b?.phone || '');
-    const check = await verifyLoginCode(phone, String(b?.code || ''));
-    if (!check.ok) throw new RpcError(400, check.error);
+    if (!/^1\d{10}$/.test(phone)) throw new RpcError(400, '手机号格式不正确');
+    // 短信服务商开通前免验证码直登（仅手机号）；配置 SMS_* 后自动恢复验证码校验
+    if (smsConfigured()) {
+      const check = await verifyLoginCode(phone, String(b?.code || ''));
+      if (!check.ok) throw new RpcError(400, check.error);
+    }
     const finalUserId = await loginWithPhone(phone, userId);
     return { ok: true, userId: finalUserId, phone };
   },

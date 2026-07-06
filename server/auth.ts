@@ -16,7 +16,7 @@ function hashCode(phone: string, code: string) {
   return createHash('sha256').update(`${phone}:${code}:${secret}`).digest('hex');
 }
 
-const smsConfigured = () => !!process.env.SMS_ACCESS_KEY_ID;
+export const smsConfigured = () => !!process.env.SMS_ACCESS_KEY_ID;
 
 async function sendSms(phone: string, code: string) {
   // TODO: 接入真实短信服务商（阿里云短信/腾讯云 SMS），需要已备案签名与模板。

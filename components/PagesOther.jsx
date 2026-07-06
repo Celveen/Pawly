@@ -406,45 +406,21 @@ export function MemberPage({ navigate }) {
   );
 }
 
-// 手机号验证码登录弹层。开发模式（未配置短信服务商）下验证码由接口直接返回并展示。
+// 手机号登录弹层。短信服务开通前为免验证码直登（仅手机号）；
+// 后端配置 SMS_* 后会要求验证码，届时恢复验证码输入框（git 历史里有现成实现）。
 function LoginDialog({ onClose, onLoggedIn }) {
   const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [devCode, setDevCode] = useState('');
-  const [sent, setSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (countdown <= 0) return;
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown]);
-
   const phoneOk = /^1\d{10}$/.test(phone);
-
-  async function sendCode() {
-    setBusy(true); setError('');
-    try {
-      const r = await fetch('/api/auth/send-code', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || `发送失败（${r.status}）`);
-      setSent(true); setCountdown(60);
-      if (d.devCode) setDevCode(d.devCode);
-    } catch (e) { setError(e.message || '发送失败'); }
-    finally { setBusy(false); }
-  }
 
   async function login() {
     setBusy(true); setError('');
     try {
       const r = await fetch('/api/auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, code }),
+        body: JSON.stringify({ phone }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || `登录失败（${r.status}）`);
@@ -471,29 +447,18 @@ function LoginDialog({ onClose, onLoggedIn }) {
         </div>
 
         <input className="input" placeholder="手机号" inputMode="numeric" maxLength={11} autoFocus
-          value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} />
-        <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-          <input className="input" placeholder="验证码" inputMode="numeric" maxLength={6} style={{ flex: 1 }}
-            value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-            onKeyDown={(e) => { if (e.key === 'Enter' && code.length === 6) login(); }} />
-          <button className="btn btn-line" onClick={sendCode} disabled={!phoneOk || busy || countdown > 0} style={{ whiteSpace: 'nowrap' }}>
-            {countdown > 0 ? `${countdown}s 后重发` : sent ? '重新发送' : '获取验证码'}
-          </button>
-        </div>
+          value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+          onKeyDown={(e) => { if (e.key === 'Enter' && phoneOk && !busy) login(); }} />
 
-        {devCode && (
-          <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px dashed var(--line)', fontSize: 13, color: 'var(--ink-2)' }}>
-            🧪 演示模式（短信服务未接入）：你的验证码是 <b className="mono" style={{ fontSize: 15 }}>{devCode}</b>
-          </div>
-        )}
         {error && <div style={{ color: '#D9826B', fontSize: 13, marginTop: 12 }}>⚠️ {error}</div>}
 
         <button className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 16, justifyContent: 'center' }}
-          onClick={login} disabled={busy || !phoneOk || code.length !== 6}>
+          onClick={login} disabled={busy || !phoneOk}>
           {busy ? '登录中…' : '登录 / 注册'}
         </button>
         <p className="caption" style={{ margin: '12px 0 0', textAlign: 'center' }}>
-          未注册的手机号将自动创建账号<br />当前游客身份下的宠物档案与帖子会自动并入你的账号
+          未注册的手机号将自动创建账号<br />当前游客身份下的宠物档案与帖子会自动并入你的账号<br />
+          短信验证码将在短信服务开通后启用
         </p>
       </div>
     </div>
