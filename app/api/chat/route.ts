@@ -1,20 +1,17 @@
-// AI 导购 Agent 接口：读取当前访客身份(cookie)，让 Agent 操作【他自己的】数据
+// AI 导购接口（BFF 代理）：Agent 编排与模型 Key 都在后端层
 import { NextRequest, NextResponse } from 'next/server';
-import { runAgent } from '@/lib/agent/runAgent';
+import { rpc } from '@/lib/gateway';
 import { getOrCreateUserId } from '@/lib/session';
-import type { ChatMessage } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  try {
-    const userId = await getOrCreateUserId();
-    const { messages } = (await req.json()) as { messages: ChatMessage[] };
-    const result = await runAgent(userId, messages || []);
-    return NextResponse.json(result);
-  } catch (e: any) {
-    console.error('[chat] error:', e?.message || e);
+  const body = await req.json().catch(() => ({}));
+  const r = await rpc('chat.run', getOrCreateUserId(), body);
+  if (!r.ok) {
+    // 对话场景保持友好兜底，不把内部错误暴露给用户
     return NextResponse.json({ reply: '抱歉，AI 暂时不可用，请稍后再试。', proposals: [] }, { status: 200 });
   }
+  return NextResponse.json(r.data);
 }

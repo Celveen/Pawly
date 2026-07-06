@@ -2,7 +2,7 @@
 import { deepseekChat } from '../deepseek';
 import { buildSystemPrompt } from './systemPrompt';
 import { toolDefs, runTool } from './tools';
-import type { AgentResult, ChatMessage } from '../types';
+import type { AgentResult, ChatMessage } from '@/lib/types';
 
 const MAX_STEPS = 6; // 防止工具调用死循环
 

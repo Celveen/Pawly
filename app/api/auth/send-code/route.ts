@@ -1,13 +1,14 @@
-// 发送登录验证码。未配置短信服务商时为开发模式：验证码随响应返回（devCode）。
+// 发送登录验证码（BFF 代理）。开发模式下验证码随响应返回（devCode）。
 import { NextRequest, NextResponse } from 'next/server';
-import { sendLoginCode } from '@/lib/auth';
+import { rpc } from '@/lib/gateway';
+import { getOrCreateUserId } from '@/lib/session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const b = await req.json().catch(() => ({}));
-  const r = await sendLoginCode(String(b?.phone || ''));
-  if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
-  return NextResponse.json(r);
+  const body = await req.json().catch(() => ({}));
+  const r = await rpc('auth.sendCode', getOrCreateUserId(), body);
+  if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
+  return NextResponse.json(r.data);
 }

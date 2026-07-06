@@ -1,10 +1,13 @@
-// 商品接口（供网页/小程序/App 共用），从数据库读取
+// 商品接口（BFF 代理）：业务逻辑在 server/services.ts
 import { NextResponse } from 'next/server';
-import { store } from '@/lib/db/store';
+import { rpc } from '@/lib/gateway';
+import { getOrCreateUserId } from '@/lib/session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return NextResponse.json(await store.listProducts());
+  const r = await rpc('products.list', getOrCreateUserId());
+  if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
+  return NextResponse.json(r.data);
 }

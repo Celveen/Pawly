@@ -1,5 +1,5 @@
 // 前端展示数据。商品统一从后端种子导出（单一数据源，前后台一致）。
-export { PRODUCTS } from '@/lib/db/seed';
+export { PRODUCTS } from '@/lib/catalog';
 
 export const CATEGORIES = [
   { id: 'all',    name: '全部',  icon: '✨' },

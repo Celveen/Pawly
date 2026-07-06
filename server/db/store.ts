@@ -1,6 +1,6 @@
 // 数据访问层（Prisma + Postgres）。商品共享；宠物/订单按用户隔离。
 import { prisma } from './prisma';
-import { PRODUCTS } from './seed';
+import { PRODUCTS } from '@/lib/catalog';
 
 // 把商品种子同步进数据库（幂等）：已存在的按 id 跳过，新增的自动插入。
 // 用 skipDuplicates 而非"表为空才插"，这样以后新增商品也会自动补进已有的库。
