@@ -110,7 +110,7 @@ export function Footer() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           fontSize: 12, color: 'rgba(255,255,255,.4)',
         }}>
-          <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗 · Emoji graphics by Twemoji (CC-BY 4.0)</span>
+          <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗 · Emoji graphics by Microsoft Fluent Emoji (MIT)</span>
           <span className="mono">v 3.0 · 上海 → 你家门口</span>
         </div>
       </div>
