@@ -22,12 +22,26 @@ function deserialize(p: any) {
   return { ...p, badges: JSON.parse(p.badges || '[]') as string[] };
 }
 
+// 早期版本发帖封面存的是手绘插画 id（'dog'/'cat'/'paw' 等纯文字），
+// 后改为直接存 emoji 字符（图片渲染，跨平台一致）。这里把历史数据一次性转换，
+// 避免已经跑过旧版本的环境里，老帖子封面显示成英文单词而不是图案。
+const LEGACY_ILLO_TO_EMOJI: Record<string, string> = {
+  dog: '🐶', cat: '🐱', paw: '🐾', bone: '🦴', yarn: '🧶', bath: '🛁',
+  food: '🥣', ball: '🎾', vet: '🩺', camera: '📷', heart: '🎁', home: '🏠',
+};
+
 // 社区首次访问：没有任何帖子时，用一个官方账号灌入几条示例帖，避免空荡荡的首屏。
 // 与 ensureProducts 同样的"惰性初始化 + 幂等"思路（按官方昵称判存在）。
 let communityReady: Promise<void> | null = null;
 function ensureCommunitySeed(): Promise<void> {
   if (!communityReady) {
     communityReady = (async () => {
+      await Promise.all(
+        Object.entries(LEGACY_ILLO_TO_EMOJI).map(([illoId, emoji]) =>
+          prisma.post.updateMany({ where: { emoji: illoId }, data: { emoji } }),
+        ),
+      );
+
       const count = await prisma.post.count();
       if (count > 0) return;
       const official = await prisma.user.upsert({
@@ -37,9 +51,9 @@ function ensureCommunitySeed(): Promise<void> {
       });
       await prisma.post.createMany({
         data: [
-          { userId: official.id, topic: '日常', emoji: 'paw', bg: '#F4D7B0', title: '欢迎来到 Pawly 社区！', content: '这里是铲屎官们的分享角落：晒宠、好物安利、养宠求助都可以发。发帖时可以选一张插画封面和底色，图片上传功能在路上啦～' },
-          { userId: official.id, topic: '好物', emoji: 'yarn', bg: '#D3DEE2', title: '新手养猫最容易买错的三样东西', content: '1. 太小的猫窝——猫更爱纸箱；2. 带铃铛的项圈——大多数猫会应激；3. 劣质猫砂——粉尘大伤呼吸道。先从基础款买起，观察主子偏好再升级。' },
-          { userId: official.id, topic: '求助', emoji: 'vet', bg: '#E8D8C3', title: '发求助帖小提示', content: '描述症状时尽量写清：年龄、品种、持续时间、饮食变化。社区经验仅供参考，紧急情况请第一时间联系兽医！' },
+          { userId: official.id, topic: '日常', emoji: '🐾', bg: '#F4D7B0', title: '欢迎来到 Pawly 社区！', content: '这里是铲屎官们的分享角落：晒宠、好物安利、养宠求助都可以发。发帖时可以选一个表情封面和底色，图片上传功能在路上啦～' },
+          { userId: official.id, topic: '好物', emoji: '🧶', bg: '#D3DEE2', title: '新手养猫最容易买错的三样东西', content: '1. 太小的猫窝——猫更爱纸箱；2. 带铃铛的项圈——大多数猫会应激；3. 劣质猫砂——粉尘大伤呼吸道。先从基础款买起，观察主子偏好再升级。' },
+          { userId: official.id, topic: '求助', emoji: '🩺', bg: '#E8D8C3', title: '发求助帖小提示', content: '描述症状时尽量写清：年龄、品种、持续时间、饮食变化。社区经验仅供参考，紧急情况请第一时间联系兽医！' },
         ],
         skipDuplicates: true,
       });
@@ -57,6 +71,16 @@ export interface PetInput {
   weightKg?: number | null;
   weightUpdatedAt?: Date | null;
   notes?: string | null;
+}
+
+export interface AddressInput {
+  name: string;
+  phone: string;
+  province: string;
+  city: string;
+  district: string;
+  detail: string;
+  isDefault?: boolean;
 }
 
 export const store = {
@@ -168,6 +192,58 @@ export const store = {
     }
     const likeCount = await prisma.postLike.count({ where: { postId } });
     return { liked: !existing, likeCount };
+  },
+
+  // —— 收货地址：按用户隔离 ——
+  async listAddresses(userId: string) {
+    return prisma.address.findMany({ where: { userId }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }] });
+  },
+
+  async upsertAddress(userId: string, data: AddressInput & { id?: string }) {
+    return prisma.$transaction(async (tx) => {
+      if (data.isDefault) {
+        await tx.address.updateMany({ where: { userId }, data: { isDefault: false } });
+      }
+      const fields = {
+        name: data.name, phone: data.phone, province: data.province, city: data.city,
+        district: data.district, detail: data.detail, isDefault: !!data.isDefault,
+      };
+      if (data.id) {
+        const existing = await tx.address.findFirst({ where: { id: data.id, userId } });
+        if (!existing) throw new Error('地址不存在');
+        return tx.address.update({ where: { id: data.id }, data: fields });
+      }
+      const created = await tx.address.create({ data: { ...fields, userId } });
+      // 用户的第一条地址自动设为默认，省去手动勾选
+      const count = await tx.address.count({ where: { userId } });
+      if (count === 1 && !created.isDefault) {
+        return tx.address.update({ where: { id: created.id }, data: { isDefault: true } });
+      }
+      return created;
+    });
+  },
+
+  async deleteAddress(userId: string, id: string) {
+    return prisma.$transaction(async (tx) => {
+      const target = await tx.address.findFirst({ where: { id, userId } });
+      if (!target) return { count: 0 };
+      await tx.address.delete({ where: { id } });
+      // 删掉的是默认地址且还有其他地址时，把最新的一条提升为默认
+      if (target.isDefault) {
+        const next = await tx.address.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
+        if (next) await tx.address.update({ where: { id: next.id }, data: { isDefault: true } });
+      }
+      return { count: 1 };
+    });
+  },
+
+  async setDefaultAddress(userId: string, id: string) {
+    return prisma.$transaction(async (tx) => {
+      const target = await tx.address.findFirst({ where: { id, userId } });
+      if (!target) throw new Error('地址不存在');
+      await tx.address.updateMany({ where: { userId }, data: { isDefault: false } });
+      return tx.address.update({ where: { id }, data: { isDefault: true } });
+    });
   },
 
   // —— 订单：按用户隔离 ——

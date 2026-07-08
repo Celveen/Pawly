@@ -55,6 +55,45 @@ export const services: Record<string, Handler> = {
     return { ok: true };
   },
 
+  // —— 收货地址 ——
+  'addresses.list': async (userId) => store.listAddresses(userId),
+
+  'addresses.upsert': async (userId, b) => {
+    const name = String(b?.name || '').trim();
+    const phone = String(b?.phone || '').trim();
+    const province = String(b?.province || '').trim();
+    const city = String(b?.city || '').trim();
+    const district = String(b?.district || '').trim();
+    const detail = String(b?.detail || '').trim();
+    if (!name || !phone || !province || !city || !district || !detail) {
+      throw new RpcError(400, '请填写完整的收货信息');
+    }
+    if (!/^1\d{10}$/.test(phone)) throw new RpcError(400, '手机号格式不正确');
+    await ensureUser(userId);
+    return store.upsertAddress(userId, {
+      id: b?.id ? String(b.id) : undefined,
+      name, phone, province, city, district, detail,
+      isDefault: !!b?.isDefault,
+    });
+  },
+
+  'addresses.delete': async (userId, b) => {
+    if (!b?.id) throw new RpcError(400, '缺少 id');
+    const r = await store.deleteAddress(userId, String(b.id));
+    if (r.count === 0) throw new RpcError(404, '地址不存在或不属于你');
+    return { ok: true };
+  },
+
+  'addresses.setDefault': async (userId, b) => {
+    if (!b?.id) throw new RpcError(400, '缺少 id');
+    try {
+      await store.setDefaultAddress(userId, String(b.id));
+      return { ok: true };
+    } catch {
+      throw new RpcError(404, '地址不存在或不属于你');
+    }
+  },
+
   // —— 社区 ——
   'posts.list': async (userId, b) => {
     const topic = b?.topic && POST_TOPICS.includes(b.topic) ? b.topic : undefined;
@@ -71,7 +110,7 @@ export const services: Record<string, Handler> = {
       title,
       content,
       topic: POST_TOPICS.includes(b?.topic) ? b.topic : '日常',
-      emoji: String(b?.emoji || 'paw').slice(0, 8),
+      emoji: String(b?.emoji || '🐾').slice(0, 8),
       bg: /^#[0-9a-fA-F]{6}$/.test(b?.bg || '') ? b.bg : '#F4D7B0',
       petName: b?.petName ? String(b.petName).slice(0, 20) : null,
       nickname: b?.nickname ? String(b.nickname).slice(0, 20) : null,

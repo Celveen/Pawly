@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { fmt } from './util';
 import { PRODUCTS, CATEGORIES, ARTICLES } from './data';
 import { ProductCard, ArticleCard } from './ui';
+import { Emoji } from './Emoji';
 
 export function HomePage({ navigate, onAdd }) {
   const featured = PRODUCTS.slice(0, 4);
@@ -35,15 +36,15 @@ export function HomePage({ navigate, onAdd }) {
             </div>
           </div>
           <div style={{ position: 'relative', aspectRatio: '1 / 1.05' }}>
-            <div style={{ position: 'absolute', top: '4%', left: '0%', width: '54%', aspectRatio: '1/1.15', borderRadius: 28, background: '#F4C28A', display: 'grid', placeItems: 'center', fontSize: 160, boxShadow: 'var(--shadow-lg)', transform: 'rotate(-3deg)' }}>🐶</div>
-            <div style={{ position: 'absolute', top: '8%', right: '0%', width: '46%', aspectRatio: '1/1', borderRadius: 24, background: '#C8DDE2', display: 'grid', placeItems: 'center', fontSize: 130, boxShadow: 'var(--shadow-lg)', transform: 'rotate(4deg)' }}>🐱</div>
+            <div style={{ position: 'absolute', top: '4%', left: '0%', width: '54%', aspectRatio: '1/1.15', borderRadius: 28, background: '#F4C28A', display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-lg)', transform: 'rotate(-3deg)' }}><Emoji text="🐶" size={160} /></div>
+            <div style={{ position: 'absolute', top: '8%', right: '0%', width: '46%', aspectRatio: '1/1', borderRadius: 24, background: '#C8DDE2', display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-lg)', transform: 'rotate(4deg)' }}><Emoji text="🐱" size={130} /></div>
             <div style={{ position: 'absolute', bottom: '0%', left: '14%', width: '42%', aspectRatio: '1.4/1', borderRadius: 22, background: 'var(--ink)', color: 'var(--bg)', padding: 24, transform: 'rotate(-2deg)', boxShadow: 'var(--shadow-lg)' }}>
               <div className="eyebrow" style={{ color: 'rgba(255,255,255,.6)' }}>Best Seller</div>
               <div style={{ fontSize: 18, fontWeight: 600, marginTop: 8, lineHeight: 1.3 }}>鸡胸肉条 · 训练奖励首选</div>
               <div className="mono" style={{ fontSize: 26, fontWeight: 700, marginTop: 14, letterSpacing: '-0.01em' }}>¥39 <span style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textDecoration: 'line-through', fontWeight: 400 }}>¥49</span></div>
             </div>
             <div style={{ position: 'absolute', bottom: '8%', right: '4%', width: '38%', aspectRatio: '1/1', borderRadius: 22, background: 'var(--accent)', padding: 20, transform: 'rotate(3deg)', boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 40 }}>🦴</div>
+              <Emoji text="🦴" size={40} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#2a1a0a' }}>新人专享</div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#2a1a0a', lineHeight: 1.1, marginTop: 4 }}>首单 8 折</div>
@@ -59,7 +60,7 @@ export function HomePage({ navigate, onAdd }) {
             {CATEGORIES.slice(1).map((c) => (
               <button key={c.id} onClick={() => navigate({ page: 'shop', cat: c.id })}
                 style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 18, padding: '24px 8px', textAlign: 'center', cursor: 'pointer', transition: 'transform .15s, background .15s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 28 }}>{c.icon}</span>
+                <Emoji text={c.icon} size={28} />
                 <span style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</span>
               </button>
             ))}
@@ -85,7 +86,7 @@ export function HomePage({ navigate, onAdd }) {
       <section style={{ paddingTop: 32, paddingBottom: 32 }}>
         <div className="container">
           <div style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 28, padding: '56px 56px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', right: -40, bottom: -60, fontSize: 280, opacity: .08 }}>🐾</div>
+            <div style={{ position: 'absolute', right: -40, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={280} /></div>
             <div style={{ position: 'relative' }}>
               <div className="eyebrow" style={{ color: 'rgba(255,255,255,.5)', marginBottom: 12 }}>Pawly Club · 会员计划</div>
               <h2 style={{ fontSize: 40, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>每月省一袋狗粮的钱。<br />大概。</h2>
@@ -95,8 +96,10 @@ export function HomePage({ navigate, onAdd }) {
               <button onClick={() => navigate({ page: 'member' })} className="btn btn-accent btn-lg" style={{ marginTop: 28 }}>了解会员 →</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, position: 'relative' }}>
-              {['🎁 会员礼盒', '9️⃣ 全场 9 折', '🏥 月度体检', '🎂 生日福利'].map((it) => (
-                <div key={it} style={{ background: 'rgba(255,255,255,.08)', backdropFilter: 'blur(8px)', borderRadius: 14, padding: '20px 16px', border: '1px solid rgba(255,255,255,.1)', fontSize: 14, fontWeight: 500 }}>{it}</div>
+              {[{ e: '🎁', t: '会员礼盒' }, { e: '💳', t: '全场 9 折' }, { e: '🏥', t: '月度体检' }, { e: '🎂', t: '生日福利' }].map((it) => (
+                <div key={it.t} style={{ background: 'rgba(255,255,255,.08)', backdropFilter: 'blur(8px)', borderRadius: 14, padding: '20px 16px', border: '1px solid rgba(255,255,255,.1)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Emoji text={it.e} size={18} />{it.t}
+                </div>
               ))}
             </div>
           </div>
@@ -167,7 +170,7 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
             {CATEGORIES.map((c) => (
               <button key={c.id} onClick={() => setCat(c.id)}
                 style={{ height: 36, padding: '0 16px', borderRadius: 999, background: cat === c.id ? 'var(--ink)' : 'var(--surface)', color: cat === c.id ? 'var(--bg)' : 'var(--ink)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6, border: cat === c.id ? 0 : '1px solid var(--line-2)', transition: 'all .15s' }}>
-                <span>{c.icon}</span>{c.name}
+                <Emoji text={c.icon} size={15} />{c.name}
               </button>
             ))}
           </div>
@@ -175,8 +178,8 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
             <div style={{ display: 'inline-flex', borderRadius: 999, padding: 3, background: 'var(--surface-2)', border: '1px solid var(--line-2)' }}>
               {['全部', '狗', '猫'].map((p) => (
                 <button key={p} onClick={() => setPet(p)}
-                  style={{ height: 28, padding: '0 14px', borderRadius: 999, border: 0, background: pet === p ? 'var(--surface)' : 'transparent', boxShadow: pet === p ? 'var(--shadow-sm)' : 'none', color: 'var(--ink)', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap' }}>
-                  {p === '狗' ? '🐶' : p === '猫' ? '🐱' : '✨'} {p}
+                  style={{ height: 28, padding: '0 14px', borderRadius: 999, border: 0, background: pet === p ? 'var(--surface)' : 'transparent', boxShadow: pet === p ? 'var(--shadow-sm)' : 'none', color: 'var(--ink)', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Emoji text={p === '狗' ? '🐶' : p === '猫' ? '🐱' : '✨'} size={13} /> {p}
                 </button>
               ))}
             </div>
@@ -196,7 +199,7 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
           </div>
           {filtered.length === 0 && (
             <div style={{ padding: '96px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>🥹</div>
+              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Emoji text="🥹" size={64} /></div>
               <p className="body">没有找到合适的商品，试试别的分类？</p>
             </div>
           )}
@@ -227,13 +230,13 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64 }}>
             <div>
               <div className="prod-img" style={{ background: p.bg, aspectRatio: '1/1', borderRadius: 24 }}>
-                <span className="pet-pill">{p.pet === '狗' ? '🐶 狗狗' : '🐱 猫咪'}</span>
+                <span className="pet-pill"><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>
                 {p.tag && <span className="tag-pill">{p.tag}</span>}
-                <span style={{ fontSize: 220 }}>{p.emoji}</span>
+                <Emoji text={p.emoji} size={220} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 12 }}>
                 {[p.emoji, '📷', '📐', '🎬'].map((e, i) => (
-                  <div key={i} style={{ aspectRatio: '1/1', borderRadius: 12, background: i === 0 ? p.bg : 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 28, border: i === 0 ? '2px solid var(--ink)' : '1px solid var(--line-2)', cursor: 'pointer' }}>{e}</div>
+                  <div key={i} style={{ aspectRatio: '1/1', borderRadius: 12, background: i === 0 ? p.bg : 'var(--surface-2)', display: 'grid', placeItems: 'center', border: i === 0 ? '2px solid var(--ink)' : '1px solid var(--line-2)', cursor: 'pointer' }}><Emoji text={e} size={28} /></div>
                 ))}
               </div>
             </div>
@@ -269,7 +272,9 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
                 <button onClick={() => { onAdd(p, qty); onCartOpen(); }} className="btn btn-primary btn-lg" style={{ flex: 1, justifyContent: 'center' }}>加入购物车 · {fmt(p.price * qty)}</button>
               </div>
               <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--line-2)', display: 'flex', gap: 28, fontSize: 13, color: 'var(--ink-2)' }}>
-                <span>🚚 满 ¥99 包邮</span><span>↺ 7 天无理由退换</span><span>🏷️ 假一赔三</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Emoji text="🚚" size={14} /> 满 ¥99 包邮</span>
+                <span>↺ 7 天无理由退换</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Emoji text="🏷️" size={14} /> 假一赔三</span>
               </div>
             </div>
           </div>
@@ -292,7 +297,7 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
               <div className="eyebrow" style={{ marginBottom: 16 }}>规格参数</div>
               <dl style={{ margin: 0 }}>
                 {[
-                  ['适用宠物', p.pet === '狗' ? '🐶 狗狗' : '🐱 猫咪'],
+                  ['适用宠物', <span key="pet" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>],
                   ['规格 / 适用', p.sub],
                   ['类别', CATEGORIES.find((c) => c.id === p.cat)?.name || '—'],
                   ['主要卖点', p.badges.join(' / ')],

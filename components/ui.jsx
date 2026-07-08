@@ -1,6 +1,7 @@
 // 共享组件：Logo、Header、Footer、ProductCard、ArticleCard、CartDrawer
 import { fmt } from './util';
 import { ARTICLE_CATS } from './data';
+import { Emoji } from './Emoji';
 
 export const Logo = ({ size = 28 }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -109,7 +110,7 @@ export function Footer() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           fontSize: 12, color: 'rgba(255,255,255,.4)',
         }}>
-          <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗</span>
+          <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗 · Emoji graphics by Twemoji (CC-BY 4.0)</span>
           <span className="mono">v 3.0 · 上海 → 你家门口</span>
         </div>
       </div>
@@ -121,9 +122,9 @@ export function ProductCard({ p, onOpen, onAdd }) {
   return (
     <div className="card fade-up" style={{ padding: 12, cursor: 'pointer' }} onClick={() => onOpen(p)}>
       <div className="prod-img" style={{ background: p.bg }}>
-        <span className="pet-pill">{p.pet === '狗' ? '🐶 狗狗' : '🐱 猫咪'}</span>
+        <span className="pet-pill"><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>
         {p.tag && <span className="tag-pill">{p.tag}</span>}
-        <span className="emoji">{p.emoji}</span>
+        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
       </div>
       <div style={{ padding: '14px 6px 6px' }}>
         <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35, minHeight: 38 }}>{p.name}</div>
@@ -159,8 +160,9 @@ export function ArticleCard({ a, onOpen, featured }) {
       <div style={{
         background: a.bg, width: featured ? '50%' : '100%',
         aspectRatio: featured ? 'auto' : '16/10', display: 'grid', placeItems: 'center',
-        fontSize: featured ? 120 : 64, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))',
-      }}>{a.emoji}</div>
+      }}>
+        <Emoji text={a.emoji} size={featured ? 120 : 64} style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))' }} />
+      </div>
       <div style={{ padding: featured ? '40px' : '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div className="eyebrow" style={{ marginBottom: 12 }}>
           {ARTICLE_CATS.find((c) => c.id === a.cat)?.name} · {a.read}
@@ -170,7 +172,7 @@ export function ArticleCard({ a, onOpen, featured }) {
           {a.excerpt}
         </p>
         <div style={{ marginTop: 'auto', paddingTop: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 13 }}>👤</div>
+          <div style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={14} /></div>
           <span className="caption">{a.author} · {a.date}</span>
         </div>
       </div>
@@ -203,7 +205,7 @@ export function CartDrawer({ open, onClose, items, setQty, removeItem, onCheckou
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 28px' }}>
           {items.length === 0 ? (
             <div style={{ padding: '80px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>🦴</div>
+              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Emoji text="🦴" size={64} /></div>
               <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 8px' }}>购物车空空如也</h3>
               <p className="caption" style={{ margin: '0 0 24px' }}>主子等不及啦，快去挑点好东西~</p>
               <button onClick={onClose} className="btn btn-primary">去逛逛</button>
@@ -212,7 +214,7 @@ export function CartDrawer({ open, onClose, items, setQty, removeItem, onCheckou
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {items.map((it) => (
                 <li key={it.id} style={{ display: 'grid', gridTemplateColumns: '72px 1fr auto', gap: 14, padding: '16px 0', borderBottom: '1px solid var(--line-2)' }}>
-                  <div style={{ width: 72, height: 72, borderRadius: 14, background: it.bg, display: 'grid', placeItems: 'center', fontSize: 36 }}>{it.emoji}</div>
+                  <div style={{ width: 72, height: 72, borderRadius: 14, background: it.bg, display: 'grid', placeItems: 'center' }}><Emoji text={it.emoji} size={36} /></div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{it.name}</div>
                     <div className="caption" style={{ marginTop: 4 }}>{it.sub}</div>

@@ -20,6 +20,25 @@ model User {
   orders    Order[]
   posts     Post[]
   postLikes PostLike[]
+  addresses Address[]
+}
+
+// 收货地址：一个用户可有多个，isDefault 标记默认地址（结算页优先勾选）
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String // 收货人
+  phone     String
+  province  String
+  city      String
+  district  String
+  detail    String // 详细地址（街道门牌号）
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 // 短信验证码：一个手机号同一时刻只保留最新一条（发送即覆盖）。

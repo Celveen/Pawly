@@ -1,17 +1,18 @@
 // 社区：铲屎官分享（小红书式瀑布流卡片 + 发帖 + 点赞）
 // 帖子数据走 /api/posts，点赞走 /api/posts/like，身份沿用匿名 cookie 会话。
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Illo, ILLO_IDS } from './illos';
+import { Emoji } from './Emoji';
 
 const TOPICS = [
-  { id: 'all', name: '全部' },
-  { id: '晒宠', name: '🐾 晒宠' },
-  { id: '好物', name: '🧶 好物' },
-  { id: '求助', name: '🩺 求助' },
-  { id: '日常', name: '☀️ 日常' },
+  { id: 'all', name: '全部', emoji: null },
+  { id: '晒宠', name: '晒宠', emoji: '🐾' },
+  { id: '好物', name: '好物', emoji: '🧶' },
+  { id: '求助', name: '求助', emoji: '🩺' },
+  { id: '日常', name: '日常', emoji: '☀️' },
 ];
 
-// 发帖封面底色（与全站商品卡的柔和色板一致）；封面图案用插画库 ILLO_IDS
+// 发帖封面：emoji（图片渲染，跨平台一致）+ 底色（与全站商品卡的柔和色板一致）
+const COVER_EMOJIS = ['🐶', '🐱', '🐾', '🧶', '🛁', '🦴', '🥣', '🎾', '🩺', '📷', '🏠', '🎁'];
 const COVER_BGS = ['#F4D7B0', '#D3DEE2', '#E8D8C3', '#DCE5D4', '#EAD9DE', '#D9E2EA'];
 
 function timeAgo(iso) {
@@ -75,7 +76,9 @@ export function CommunityPage() {
               <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>晒宠、种草、抱团取暖。</h1>
               <p className="body-lg" style={{ marginTop: 20, maxWidth: 620 }}>发一篇你和毛孩子的日常，或者把踩过的坑分享给下一位铲屎官。</p>
             </div>
-            <button className="btn btn-primary btn-lg" onClick={() => setComposing(true)}>✏️ 发布分享</button>
+            <button className="btn btn-primary btn-lg" onClick={() => setComposing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <Emoji text="✏️" size={16} /> 发布分享
+            </button>
           </div>
         </div>
       </section>
@@ -85,8 +88,8 @@ export function CommunityPage() {
           <div className="h-scroll" style={{ display: 'flex', gap: 4, padding: '8px 0' }}>
             {TOPICS.map((t) => (
               <button key={t.id} onClick={() => setTopic(t.id)}
-                style={{ height: 40, padding: '0 16px', borderRadius: 999, border: 0, background: topic === t.id ? 'var(--ink)' : 'transparent', color: topic === t.id ? 'var(--bg)' : 'var(--ink)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap' }}>
-                {t.name}
+                style={{ height: 40, padding: '0 16px', borderRadius: 999, border: 0, background: topic === t.id ? 'var(--ink)' : 'transparent', color: topic === t.id ? 'var(--bg)' : 'var(--ink)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {t.emoji && <Emoji text={t.emoji} size={14} />}{t.name}
               </button>
             ))}
           </div>
@@ -98,7 +101,7 @@ export function CommunityPage() {
           {posts === null && <p className="caption" style={{ textAlign: 'center', padding: '64px 0' }}>加载中…</p>}
           {posts && loadError && (
             <div className="card" style={{ padding: 40, textAlign: 'center', maxWidth: 560, margin: '0 auto' }}>
-              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 8 }}><Illo id="vet" size={72} /></div>
+              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 8 }}><Emoji text="🩺" size={72} /></div>
               <h3 className="h-3" style={{ margin: '0 0 8px' }}>社区暂时打不开</h3>
               <p className="caption" style={{ margin: '0 0 8px' }}>{loadError}</p>
               <p className="caption" style={{ margin: '0 0 20px' }}>如果是刚部署的新版本，请确认已执行 <code className="mono">npx prisma db push</code> 同步社区数据表。</p>
@@ -107,9 +110,9 @@ export function CommunityPage() {
           )}
           {posts && !loadError && posts.length === 0 && (
             <div style={{ padding: '96px 0', textAlign: 'center' }}>
-              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Illo id="paw" size={88} /></div>
+              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Emoji text="🐾" size={88} /></div>
               <p className="body">这个话题还没有帖子，来发第一篇吧！</p>
-              <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setComposing(true)}>✏️ 发布分享</button>
+              <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setComposing(true)}>发布分享</button>
             </div>
           )}
           {posts && posts.length > 0 && (
@@ -136,16 +139,20 @@ function PostCard({ p, expanded, onExpand, onLike, onDelete }) {
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', breakInside: 'avoid', marginBottom: 20, display: 'block' }}>
       <div style={{ background: p.bg, aspectRatio: expanded ? 'auto' : '4/3', minHeight: expanded ? 120 : undefined, display: 'grid', placeItems: 'center', position: 'relative' }}>
         <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>
-        <Illo id={p.emoji} size={88} />
+        <Emoji text={p.emoji} size={88} />
       </div>
       <div style={{ padding: 16 }}>
         <h3 style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4, margin: 0 }}>{p.title}</h3>
         <p className="body" style={{ fontSize: 13, margin: '8px 0 0', ...(expanded ? { whiteSpace: 'pre-wrap' } : { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }) }}>
           {p.content}
         </p>
-        {p.petName && <div className="caption" style={{ marginTop: 8 }}>🐾 关联毛孩子：{p.petName}</div>}
+        {p.petName && (
+          <div className="caption" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Emoji text="🐾" size={12} /> 关联毛孩子：{p.petName}
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line-2)' }}>
-          <div style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 12, flexShrink: 0 }}>👤</div>
+          <div style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text="👤" size={12} /></div>
           <span className="caption" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.author} · {timeAgo(p.createdAt)}</span>
           {p.mine && (
             <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -165,7 +172,7 @@ function PostCard({ p, expanded, onExpand, onLike, onDelete }) {
 }
 
 function Composer({ onClose, onPosted }) {
-  const [form, setForm] = useState({ title: '', content: '', topic: '晒宠', emoji: 'dog', bg: COVER_BGS[0], petName: '', nickname: '' });
+  const [form, setForm] = useState({ title: '', content: '', topic: '晒宠', emoji: COVER_EMOJIS[0], bg: COVER_BGS[0], petName: '', nickname: '' });
   const [pets, setPets] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -218,8 +225,8 @@ function Composer({ onClose, onPosted }) {
         <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
           {TOPICS.filter((t) => t.id !== 'all').map((t) => (
             <button key={t.id} onClick={() => setForm({ ...form, topic: t.id })}
-              style={{ height: 34, padding: '0 14px', borderRadius: 999, border: form.topic === t.id ? '2px solid var(--ink)' : '1px solid var(--line)', background: form.topic === t.id ? 'var(--surface-2)' : 'transparent', color: 'var(--ink)', fontSize: 13, fontWeight: 500 }}>
-              {t.name}
+              style={{ height: 34, padding: '0 14px', borderRadius: 999, border: form.topic === t.id ? '2px solid var(--ink)' : '1px solid var(--line)', background: form.topic === t.id ? 'var(--surface-2)' : 'transparent', color: 'var(--ink)', fontSize: 13, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Emoji text={t.emoji} size={13} />{t.name}
             </button>
           ))}
         </div>
@@ -230,18 +237,18 @@ function Composer({ onClose, onPosted }) {
           value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })}
           style={{ marginTop: 12, resize: 'vertical', minHeight: 120, height: 'auto', lineHeight: 1.6, paddingTop: 12, borderRadius: 16 }} />
 
-        {/* 封面：插画 + 底色（图片上传接入对象存储后开放） */}
+        {/* 封面：emoji + 底色（图片上传接入对象存储后开放） */}
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 16, marginTop: 16, alignItems: 'start' }}>
           <div style={{ width: 104, height: 104, borderRadius: 16, background: form.bg, display: 'grid', placeItems: 'center' }}>
-            <Illo id={form.emoji} size={72} />
+            <Emoji text={form.emoji} size={64} />
           </div>
           <div>
-            <div className="caption" style={{ marginBottom: 6 }}>封面插画</div>
+            <div className="caption" style={{ marginBottom: 6 }}>封面表情</div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {ILLO_IDS.map((id) => (
-                <button key={id} onClick={() => setForm({ ...form, emoji: id })} aria-label={`封面 ${id}`}
-                  style={{ width: 40, height: 40, borderRadius: 10, border: form.emoji === id ? '2px solid var(--ink)' : '1px solid var(--line-2)', background: 'transparent', padding: 0, display: 'grid', placeItems: 'center' }}>
-                  <Illo id={id} size={30} />
+              {COVER_EMOJIS.map((e) => (
+                <button key={e} onClick={() => setForm({ ...form, emoji: e })} aria-label={`封面 ${e}`}
+                  style={{ width: 36, height: 36, borderRadius: 10, border: form.emoji === e ? '2px solid var(--ink)' : '1px solid var(--line-2)', background: 'transparent', padding: 0, display: 'grid', placeItems: 'center' }}>
+                  <Emoji text={e} size={22} />
                 </button>
               ))}
             </div>
@@ -264,10 +271,10 @@ function Composer({ onClose, onPosted }) {
             value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
         </div>
 
-        {error && <div style={{ color: '#D9826B', fontSize: 13, marginTop: 12 }}>⚠️ {error}</div>}
+        {error && <div style={{ color: '#D9826B', fontSize: 13, marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Emoji text="⚠️" size={14} /> {error}</div>}
         <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           <button className="btn btn-primary btn-lg" style={{ flex: 1, justifyContent: 'center' }} onClick={submit} disabled={saving || !form.title.trim() || !form.content.trim()}>
-            {saving ? '发布中…' : '发布 🐾'}
+            {saving ? '发布中…' : '发布'}
           </button>
           <button className="btn btn-line btn-lg" onClick={onClose}>取消</button>
         </div>
