@@ -121,8 +121,19 @@ model Order {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     String // JSON
+  items     String // JSON：[{id,name,price,qty,emoji,bg}]
   total     Int
   status    String   @default("pending_payment")
+  address   String? // JSON 快照：{name,phone,province,city,district,detail}（下单时的收货信息，地址簿后续修改不影响历史订单）
+  delivery  String? // standard | express
   createdAt DateTime @default(now())
+}
+
+// AI 助手每日用量：按用户+日期计数，用于会员额度（游客/会员每日对话次数不同）
+model ChatUsage {
+  userId String
+  date   String // YYYY-MM-DD（服务器时区）
+  count  Int    @default(0)
+
+  @@id([userId, date])
 }

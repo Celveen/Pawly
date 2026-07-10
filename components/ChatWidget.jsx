@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { fmt } from './util';
 import { PRODUCTS } from './data';
+import { Emoji } from './Emoji';
 
 const ASSISTANT_NAME = '宝莉助手';
 
@@ -44,6 +45,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [quota, setQuota] = useState(null); // {used, limit, member} 后端每次回复带回
   const [pos, setPos] = useState(readPos);
   const [dragging, setDragging] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -80,7 +82,8 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen }) {
     setLoading(true);
     try {
       const claudeMessages = newMsgs.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }));
-      const { reply, proposals } = await callAI(claudeMessages);
+      const { reply, proposals, quota: q } = await callAI(claudeMessages);
+      if (q) setQuota(q);
       setMessages((m) => [...m, { role: 'assistant', text: reply || '抱歉，我刚走神了，再说一次？', proposals: proposals && proposals.length ? proposals : undefined }]);
       if (!open) setUnread((u) => u + 1);
     } catch (e) {
@@ -203,6 +206,11 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen }) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--ink-3)' }}>
             <span>AI 回复仅供参考</span>
+            {quota && (
+              <span style={quota.used >= quota.limit ? { color: '#D9826B', fontWeight: 600 } : undefined}>
+                今日额度 {Math.min(quota.used, quota.limit)}/{quota.limit}{!quota.member && ' · 登录会员可提升'}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -340,7 +348,7 @@ function ProposalCard({ proposal, onAdopt }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
         {items.map((p) => (
           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: p.bg, display: 'grid', placeItems: 'center', fontSize: 18 }}>{p.emoji}</div>
+            <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: p.bg, display: 'grid', placeItems: 'center' }}><Emoji text={p.emoji} size={18} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
               <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.sub}</div>

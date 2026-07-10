@@ -24,6 +24,20 @@ async function ensureUser(id: string) {
 
 const POST_TOPICS = ['晒宠', '好物', '求助', '日常'];
 
+// AI 助手每日额度：游客较低，手机号登录（Pawly Club 会员）更高——会员核心权益之一
+const GUEST_CHAT_LIMIT = Number(process.env.GUEST_CHAT_LIMIT || 10);
+const MEMBER_CHAT_LIMIT = Number(process.env.MEMBER_CHAT_LIMIT || 30);
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+async function chatQuota(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const member = !!user?.phone;
+  const limit = member ? MEMBER_CHAT_LIMIT : GUEST_CHAT_LIMIT;
+  const used = await store.getChatUsage(userId, today());
+  return { member, limit, used };
+}
+
 type Handler = (userId: string, payload: any) => Promise<any>;
 
 export const services: Record<string, Handler> = {
@@ -135,10 +149,43 @@ export const services: Record<string, Handler> = {
     }
   },
 
-  // —— AI 客服 ——
+  // —— AI 客服（带每日额度）——
   'chat.run': async (userId, b) => {
     await ensureUser(userId); // Agent 工具可能建档/下单，先保证用户行存在
-    return runAgent(userId, Array.isArray(b?.messages) ? b.messages : []);
+    const q = await chatQuota(userId);
+    if (q.used >= q.limit) {
+      return {
+        reply: q.member
+          ? `今天的 ${q.limit} 次 AI 咨询额度用完啦，明天再来找我玩吧 🐾`
+          : `今天的 ${q.limit} 次免费咨询用完啦～登录 Pawly Club 会员每天可以聊 ${MEMBER_CHAT_LIMIT} 次（会员页 → 手机号登录）`,
+        proposals: [],
+        quota: { used: q.used, limit: q.limit, member: q.member },
+      };
+    }
+    // 先跑 Agent、成功才计数：模型故障时不冤枉扣用户额度
+    const result = await runAgent(userId, Array.isArray(b?.messages) ? b.messages : []);
+    const used = await store.incrChatUsage(userId, today());
+    return { ...result, quota: { used, limit: q.limit, member: q.member } };
+  },
+
+  // —— 订单 ——
+  'orders.list': async (userId) => store.listOrders(userId),
+
+  'orders.create': async (userId, b) => {
+    const lines = Array.isArray(b?.items) ? b.items.filter((l: any) => l?.id) : [];
+    if (!lines.length) throw new RpcError(400, '订单里没有商品');
+    await ensureUser(userId);
+    let address: object | null = null;
+    if (b?.addressId) {
+      const addr = (await store.listAddresses(userId)).find((a) => a.id === b.addressId);
+      if (!addr) throw new RpcError(400, '收货地址不存在');
+      address = { name: addr.name, phone: addr.phone, province: addr.province, city: addr.city, district: addr.district, detail: addr.detail };
+    }
+    return store.createOrder(
+      userId,
+      lines.map((l: any) => ({ id: String(l.id), qty: Number(l.qty) || 1 })),
+      { address, delivery: b?.delivery === 'express' ? 'express' : 'standard', shipping: Number(b?.shipping) || 0 },
+    );
   },
 
   // —— 登录 ——
@@ -162,11 +209,14 @@ export const services: Record<string, Handler> = {
 
   'auth.me': async (userId) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.phone) return { guest: true, nickname: user?.nickname || null };
+    const q = await chatQuota(userId);
+    const quota = { chatUsed: q.used, chatLimit: q.limit, memberChatLimit: MEMBER_CHAT_LIMIT };
+    if (!user?.phone) return { guest: true, nickname: user?.nickname || null, ...quota };
     return {
       guest: false,
       nickname: user.nickname || null,
       phoneMasked: user.phone.slice(0, 3) + '****' + user.phone.slice(7),
+      ...quota,
     };
   },
 };

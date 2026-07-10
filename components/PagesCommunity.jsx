@@ -155,8 +155,11 @@ function PostCard({ p, expanded, onExpand, onLike, onDelete }) {
           <div style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text="👤" size={12} /></div>
           <span className="caption" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.author} · {timeAgo(p.createdAt)}</span>
           {p.mine && (
-            <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              style={{ border: 0, background: 'transparent', color: 'var(--ink-3)', fontSize: 12, padding: 0 }}>删除</button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} aria-label="删除我的帖子" title="删除我的帖子"
+              style={{ border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontSize: 12, padding: '2px 8px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6" /></svg>
+              删除
+            </button>
           )}
           <button onClick={(e) => { e.stopPropagation(); onLike(); }} aria-label="点赞"
             style={{ border: 0, background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0, color: p.likedByMe ? '#D9826B' : 'var(--ink-3)', fontSize: 13, fontWeight: 600 }}>

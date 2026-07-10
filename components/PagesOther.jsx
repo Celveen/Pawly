@@ -62,6 +62,28 @@ export function ArticlePage({ id, navigate }) {
   const more = ARTICLES.filter((x) => x.cat === a.cat && x.id !== a.id).slice(0, 3);
   const allMore = more.length > 0 ? more : ARTICLES.filter((x) => x.id !== a.id).slice(0, 3);
 
+  // 收藏存本地（登录体系完善后可迁到服务端）；分享=复制链接
+  const [faved, setFaved] = useState(false);
+  const [shared, setShared] = useState(false);
+  useEffect(() => {
+    try { setFaved((JSON.parse(localStorage.getItem('pawly.favArticles') || '[]')).includes(a.id)); } catch {}
+  }, [a.id]);
+  function toggleFav() {
+    try {
+      const list = JSON.parse(localStorage.getItem('pawly.favArticles') || '[]');
+      const next = list.includes(a.id) ? list.filter((x) => x !== a.id) : [...list, a.id];
+      localStorage.setItem('pawly.favArticles', JSON.stringify(next));
+      setFaved(next.includes(a.id));
+    } catch {}
+  }
+  async function share() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShared(true);
+      setTimeout(() => setShared(false), 1800);
+    } catch {}
+  }
+
   return (
     <>
       <section style={{ paddingTop: 32, paddingBottom: 32 }}>
@@ -80,8 +102,10 @@ export function ArticlePage({ id, navigate }) {
               <div style={{ fontSize: 14, fontWeight: 600 }}>{a.author}</div>
               <div className="caption">{a.date} · {a.read}阅读</div>
             </div>
-            <button className="btn btn-line btn-sm">收藏</button>
-            <button className="btn btn-line btn-sm">分享</button>
+            <button className="btn btn-line btn-sm" onClick={toggleFav} style={faved ? { background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1.5px var(--ink)' } : undefined}>
+              {faved ? '已收藏 ★' : '收藏 ☆'}
+            </button>
+            <button className="btn btn-line btn-sm" onClick={share}>{shared ? '已复制链接 ✓' : '分享'}</button>
           </div>
         </div>
         <div className="container" style={{ maxWidth: 880, marginTop: 48 }}>
@@ -128,6 +152,8 @@ export function CheckoutPage({ items, navigate, clearCart }) {
   const [addingNew, setAddingNew] = useState(false);
   const [addrForm, setAddrForm] = useState(EMPTY_ADDR_FORM);
   const [addrError, setAddrError] = useState('');
+  const [placing, setPlacing] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState(null); // 下单成功后的 {orderId, total}
   const subtotal = items.reduce((s, it) => s + it.price * it.qty, 0);
   const shipping = delivery === 'express' ? 18 : subtotal >= 99 ? 0 : 12;
   const total = subtotal + shipping;
@@ -160,7 +186,7 @@ export function CheckoutPage({ items, navigate, clearCart }) {
     setAddingNew(false);
     await loadAddresses();
     setSelectedId(d.id);
-    return true;
+    return d.id; // 返回新地址 id 供下单直接使用
   }
 
   if (step === 'empty') {
@@ -181,24 +207,45 @@ export function CheckoutPage({ items, navigate, clearCart }) {
         <div className="container" style={{ textAlign: 'center', maxWidth: 520 }}>
           <div style={{ display: 'grid', placeItems: 'center' }}><Emoji text="🎉" size={80} /></div>
           <h2 className="h-1" style={{ marginTop: 24 }}>下单成功！</h2>
-          <p className="body-lg" style={{ marginTop: 12 }}>订单号 PW2026{Math.floor(Math.random() * 10000).toString().padStart(4, '0')}<br />毛孩子在家门口等着了，预计 48 小时送达。</p>
+          <p className="body-lg" style={{ marginTop: 12 }}>
+            订单号 <span className="mono">{placedOrder?.orderId?.slice(-8).toUpperCase()}</span>（待支付）<br />
+            可在「会员 → 我的订单」查看；毛孩子在家门口等着了~
+          </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 32 }}>
-            <button onClick={() => { clearCart(); navigate({ page: 'member' }); }} className="btn btn-primary btn-lg">查看订单</button>
-            <button onClick={() => { clearCart(); navigate({ page: 'home' }); }} className="btn btn-line btn-lg">继续逛</button>
+            <button onClick={() => navigate({ page: 'member', tab: 'orders' })} className="btn btn-primary btn-lg">查看订单</button>
+            <button onClick={() => navigate({ page: 'home' })} className="btn btn-line btn-lg">继续逛</button>
           </div>
         </div>
       </section>
     );
   }
 
-  const canSubmit = selectedId || (addingNew && addrForm.name && addrForm.phone && addrForm.province && addrForm.city && addrForm.district && addrForm.detail);
+  const canSubmit = !placing && (selectedId || (addingNew && addrForm.name && addrForm.phone && addrForm.province && addrForm.city && addrForm.district && addrForm.detail));
 
   async function confirmOrder() {
-    if (addingNew) {
-      const saved = await saveNewAddress();
-      if (!saved) return;
+    setPlacing(true);
+    try {
+      let addressId = selectedId;
+      if (addingNew) {
+        const saved = await saveNewAddress();
+        if (!saved) return;
+        addressId = saved; // saveNewAddress 返回新地址 id
+      }
+      const r = await fetch('/api/orders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((it) => ({ id: it.id, qty: it.qty })),
+          addressId, delivery, shipping,
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setAddrError(d.error || `下单失败（${r.status}）`); return; }
+      setPlacedOrder(d);
+      clearCart();
+      setStep('done');
+    } finally {
+      setPlacing(false);
     }
-    setStep('done');
   }
 
   return (
@@ -307,7 +354,7 @@ export function CheckoutPage({ items, navigate, clearCart }) {
                 </div>
               </div>
               <button onClick={confirmOrder} className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 16, justifyContent: 'center' }} disabled={!canSubmit}>
-                确认下单 · {fmt(total)}
+                {placing ? '下单中…' : `确认下单 · ${fmt(total)}`}
               </button>
               <p className="caption" style={{ textAlign: 'center', marginTop: 12, marginBottom: 0 }}>提交订单即表示同意《购物条款》</p>
             </div>
@@ -318,14 +365,19 @@ export function CheckoutPage({ items, navigate, clearCart }) {
   );
 }
 
-export function MemberPage({ navigate }) {
-  const [tab, setTab] = useState('overview');
+export function MemberPage({ navigate, initialTab }) {
+  const TABS = ['overview', 'orders', 'pets', 'addr', 'benefits'];
+  const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : 'overview');
   const [pets, setPets] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [me, setMe] = useState(null); // null=加载中；{guest:true} 或 {phoneMasked,...}
   const [loginOpen, setLoginOpen] = useState(false);
 
   const loadPets = useCallback(async () => {
     try { const r = await fetch('/api/pets'); if (r.ok) setPets(await r.json()); } catch {}
+  }, []);
+  const loadOrders = useCallback(async () => {
+    try { const r = await fetch('/api/orders'); if (r.ok) setOrders(await r.json()); } catch {}
   }, []);
   const loadMe = useCallback(async () => {
     try {
@@ -333,17 +385,17 @@ export function MemberPage({ navigate }) {
       setMe(r.ok ? await r.json() : { guest: true });
     } catch { setMe({ guest: true }); }
   }, []);
-  useEffect(() => { loadPets(); loadMe(); }, [loadPets, loadMe]);
+  useEffect(() => { loadPets(); loadOrders(); loadMe(); }, [loadPets, loadOrders, loadMe]);
 
   async function logout() {
     if (!window.confirm('退出后将回到游客身份（数据保留在账号里，重新登录即可找回）')) return;
     await fetch('/api/auth/logout', { method: 'POST' });
     setMe({ guest: true });
-    loadPets(); // 身份已切换，刷新数据
+    loadPets(); loadOrders(); // 身份已切换，刷新数据
   }
 
-  // 订单系统尚未接入（结算目前是演示流程），故暂无真实订单
-  const orders = [];
+  const orderStatusText = (s) => ({ pending_payment: '待支付', paid: '已支付', shipped: '已发货', done: '已完成' }[s] || s);
+  const fmtDate = (iso) => new Date(iso).toLocaleDateString('zh-CN');
 
   return (
     <>
@@ -371,7 +423,11 @@ export function MemberPage({ navigate }) {
               </p>
             </div>
             <div style={{ display: 'flex', gap: 48, position: 'relative' }}>
-              {[{ n: String(pets.length), l: '毛孩子' }, { n: '0', l: '积分' }, { n: '¥0', l: '已节省' }].map((s) => (
+              {[
+                { n: String(pets.length), l: '毛孩子' },
+                { n: String(orders.length), l: '订单' },
+                { n: me ? `${me.chatUsed ?? 0}/${me.chatLimit ?? '-'}` : '…', l: '今日AI额度' },
+              ].map((s) => (
                 <div key={s.l} style={{ textAlign: 'right' }}>
                   <div className="mono" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.01em' }}>{s.n}</div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', marginTop: 2 }}>{s.l}</div>
@@ -385,7 +441,7 @@ export function MemberPage({ navigate }) {
       <div style={{ borderBottom: '1px solid var(--line-2)' }}>
         <div className="container">
           <div style={{ display: 'flex', gap: 4 }}>
-            {[{ id: 'overview', l: '概览' }, { id: 'orders', l: '我的订单' }, { id: 'pets', l: '宠物档案' }, { id: 'addr', l: '地址管理' }].map((t) => (
+            {[{ id: 'overview', l: '概览' }, { id: 'orders', l: '我的订单' }, { id: 'pets', l: '宠物档案' }, { id: 'addr', l: '地址管理' }, { id: 'benefits', l: '会员权益' }].map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{ height: 52, padding: '0 16px', border: 0, background: 'transparent', color: 'var(--ink)', fontSize: 14, fontWeight: 500, borderBottom: tab === t.id ? '2px solid var(--ink)' : '2px solid transparent', marginBottom: -1 }}>{t.l}</button>
             ))}
           </div>
@@ -422,16 +478,16 @@ export function MemberPage({ navigate }) {
                 </div>
                 {orders.length === 0 && <p className="caption" style={{ margin: 0 }}>还没有订单，去商品页逛逛吧~</p>}
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                  {orders.map((o) => (
+                  {orders.slice(0, 3).map((o) => (
                     <li key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--line-2)' }}>
                       <div style={{ display: 'flex' }}>
-                        {o.emojis.slice(0, 3).map((e, i) => (
-                          <div key={i} style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', marginLeft: i > 0 ? -8 : 0, border: '1px solid var(--surface)' }}><Emoji text={e} size={18} /></div>
+                        {o.items.slice(0, 3).map((it, i) => (
+                          <div key={i} style={{ width: 36, height: 36, borderRadius: 8, background: it.bg || 'var(--surface-2)', display: 'grid', placeItems: 'center', marginLeft: i > 0 ? -8 : 0, border: '1px solid var(--surface)' }}><Emoji text={it.emoji} size={18} /></div>
                         ))}
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{o.id}</div>
-                        <div className="caption">{o.date} · {o.items} 件商品 · {o.status}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.items.map((it) => it.name).join('、')}</div>
+                        <div className="caption">{fmtDate(o.createdAt)} · {o.items.reduce((s, it) => s + it.qty, 0)} 件商品 · {orderStatusText(o.status)}</div>
                       </div>
                       <div className="mono" style={{ fontSize: 14, fontWeight: 700 }}>{fmt(o.total)}</div>
                     </li>
@@ -468,15 +524,18 @@ export function MemberPage({ navigate }) {
                 {orders.map((o) => (
                   <div key={o.id} className="card" style={{ padding: 24, display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', gap: 24, alignItems: 'center' }}>
                     <div style={{ display: 'flex' }}>
-                      {o.emojis.map((e, i) => (
-                        <div key={i} style={{ width: 56, height: 56, borderRadius: 12, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', marginLeft: i > 0 ? -16 : 0, border: '2px solid var(--surface)' }}><Emoji text={e} size={28} /></div>
+                      {o.items.slice(0, 4).map((it, i) => (
+                        <div key={i} style={{ width: 56, height: 56, borderRadius: 12, background: it.bg || 'var(--surface-2)', display: 'grid', placeItems: 'center', marginLeft: i > 0 ? -16 : 0, border: '2px solid var(--surface)' }}><Emoji text={it.emoji} size={28} /></div>
                       ))}
                     </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{o.id}</div>
-                      <div className="caption" style={{ marginTop: 4 }}>{o.date} 下单 · {o.items} 件商品</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.items.map((it) => `${it.name} ×${it.qty}`).join('、')}</div>
+                      <div className="caption" style={{ marginTop: 4 }}>
+                        {fmtDate(o.createdAt)} 下单 · {o.items.reduce((s, it) => s + it.qty, 0)} 件商品
+                        {o.address && ` · 寄往 ${o.address.province}${o.address.city} ${o.address.name}`}
+                      </div>
                     </div>
-                    <span className="badge">{o.status}</span>
+                    <span className="badge">{orderStatusText(o.status)}</span>
                     <div className="mono" style={{ fontSize: 20, fontWeight: 700 }}>{fmt(o.total)}</div>
                   </div>
                 ))}
@@ -489,9 +548,64 @@ export function MemberPage({ navigate }) {
           {loginOpen && <LoginDialog onClose={() => setLoginOpen(false)} onLoggedIn={() => { setLoginOpen(false); loadMe(); loadPets(); }} />}
 
           {tab === 'addr' && <AddressTab />}
+
+          {tab === 'benefits' && <BenefitsTab me={me} onLogin={() => setLoginOpen(true)} />}
         </div>
       </section>
     </>
+  );
+}
+
+// 会员权益：Pawly Club 免费会员（手机号登录即享）。付费会员等真实支付接入后再分层。
+function BenefitsTab({ me, onLogin }) {
+  const isMember = me && !me.guest;
+  const benefits = [
+    { emoji: '🐾', title: 'AI 助手额度提升', desc: `宝莉助手每日咨询次数：游客 ${me?.chatLimit && me.guest ? me.chatLimit : 10} 次 → 会员 ${me?.memberChatLimit || 30} 次，挑粮、问养护随便聊`, hot: true },
+    { emoji: '🏠', title: '数据跨设备同步', desc: '宠物档案、订单、收货地址、社区帖子绑定手机号，换设备登录即恢复' },
+    { emoji: '🎁', title: '会员礼盒', desc: '入会礼包与节日惊喜（供应链接入后发放）', soon: true },
+    { emoji: '💳', title: '全场 9 折', desc: '会员专享价（真实支付接入后生效）', soon: true },
+    { emoji: '🏥', title: '月度免费体检', desc: '合作宠物医院每月一次基础体检（城市开通中）', soon: true },
+    { emoji: '🎂', title: '生日福利', desc: '毛孩子生日当月双倍积分 + 生日礼（按宠物档案的生日自动触达）', soon: true },
+  ];
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h3 className="h-3" style={{ margin: 0 }}>Pawly Club 会员权益</h3>
+          <p className="caption" style={{ margin: '6px 0 0' }}>
+            {isMember ? `已是会员（${me.phoneMasked}），以下权益已生效` : '手机号登录即免费成为会员，立即解锁以下权益'}
+          </p>
+        </div>
+        {!isMember && <button className="btn btn-primary" onClick={onLogin}>登录解锁会员</button>}
+      </div>
+
+      {/* 今日 AI 额度进度 */}
+      {me && (
+        <div className="card" style={{ padding: 24, marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>今日 AI 助手额度</span>
+            <span className="mono" style={{ fontSize: 14, fontWeight: 700 }}>{me.chatUsed ?? 0} / {me.chatLimit ?? '-'}</span>
+          </div>
+          <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-2)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${Math.min(100, ((me.chatUsed ?? 0) / (me.chatLimit || 1)) * 100)}%`, background: 'var(--primary)', borderRadius: 999, transition: 'width .4s ease' }} />
+          </div>
+          {me.guest && <p className="caption" style={{ margin: '10px 0 0' }}>登录后每日额度提升至 {me.memberChatLimit || 30} 次</p>}
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        {benefits.map((b) => (
+          <div key={b.title} className="card" style={{ padding: 24, position: 'relative' }}>
+            {b.hot && <span className="tag-pill" style={{ top: 16, right: 16 }}>已生效</span>}
+            {b.soon && <span className="badge" style={{ position: 'absolute', top: 16, right: 16 }}>敬请期待</span>}
+            <Emoji text={b.emoji} size={36} />
+            <div style={{ fontSize: 16, fontWeight: 600, margin: '12px 0 6px' }}>{b.title}</div>
+            <p className="caption" style={{ margin: 0, lineHeight: 1.6 }}>{b.desc}</p>
+          </div>
+        ))}
+      </div>
+      <p className="caption" style={{ marginTop: 20 }}>* 当前为免费会员计划；标注"敬请期待"的权益将随供应链与支付能力上线逐步开放。</p>
+    </div>
   );
 }
 

@@ -247,12 +247,55 @@ export const store = {
   },
 
   // —— 订单：按用户隔离 ——
-  async createOrder(userId: string, productIds: string[]) {
-    const items = await store.getProductsByIds(productIds);
-    const total = items.reduce((s, p) => s + p.price, 0);
+  // lines: [{id, qty}]；address 为下单时的收货信息快照
+  async createOrder(
+    userId: string,
+    lines: { id: string; qty?: number }[],
+    opts: { address?: object | null; delivery?: string | null; shipping?: number } = {},
+  ) {
+    const products = await store.getProductsByIds(lines.map((l) => l.id));
+    const items = products.map((p) => {
+      const qty = Math.max(1, Math.min(99, lines.find((l) => l.id === p.id)?.qty || 1));
+      return { id: p.id, name: p.name, price: p.price, qty, emoji: p.emoji, bg: p.bg };
+    });
+    const total = items.reduce((s, i) => s + i.price * i.qty, 0) + (opts.shipping || 0);
     const order = await prisma.order.create({
-      data: { userId, items: JSON.stringify(items.map((i) => ({ id: i.id, name: i.name, price: i.price }))), total },
+      data: {
+        userId,
+        items: JSON.stringify(items),
+        total,
+        address: opts.address ? JSON.stringify(opts.address) : null,
+        delivery: opts.delivery || null,
+      },
     });
     return { orderId: order.id, total: order.total, status: order.status, items };
+  },
+
+  async listOrders(userId: string) {
+    const orders = await prisma.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 });
+    return orders.map((o) => ({
+      id: o.id,
+      items: JSON.parse(o.items || '[]'),
+      total: o.total,
+      status: o.status,
+      address: o.address ? JSON.parse(o.address) : null,
+      delivery: o.delivery,
+      createdAt: o.createdAt,
+    }));
+  },
+
+  // —— AI 助手每日用量（会员额度）——
+  async getChatUsage(userId: string, date: string) {
+    const row = await prisma.chatUsage.findUnique({ where: { userId_date: { userId, date } } });
+    return row?.count || 0;
+  },
+
+  async incrChatUsage(userId: string, date: string) {
+    const row = await prisma.chatUsage.upsert({
+      where: { userId_date: { userId, date } },
+      update: { count: { increment: 1 } },
+      create: { userId, date, count: 1 },
+    });
+    return row.count;
   },
 };

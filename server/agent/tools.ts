@@ -139,7 +139,7 @@ export async function runTool(name: string, args: any, ctx: ToolContext): Promis
     }
 
     case 'create_order': {
-      return store.createOrder(ctx.userId, args?.productIds || []);
+      return store.createOrder(ctx.userId, (args?.productIds || []).map((id: string) => ({ id })));
     }
 
     default:

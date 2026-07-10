@@ -93,7 +93,7 @@ export function HomePage({ navigate, onAdd }) {
               <p style={{ fontSize: 15, lineHeight: 1.65, color: 'rgba(255,255,255,.7)', marginTop: 16, maxWidth: 480 }}>
                 ¥29/月 解锁 9 折商品、专属客服、生日礼盒、每月一场免费宠物体检。算下来比咖啡便宜还能让你的狗变得更好。
               </p>
-              <button onClick={() => navigate({ page: 'member' })} className="btn btn-accent btn-lg" style={{ marginTop: 28 }}>了解会员 →</button>
+              <button onClick={() => navigate({ page: 'member', tab: 'benefits' })} className="btn btn-accent btn-lg" style={{ marginTop: 28 }}>了解会员 →</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, position: 'relative' }}>
               {[{ e: '🎁', t: '会员礼盒' }, { e: '💳', t: '全场 9 折' }, { e: '🏥', t: '月度体检' }, { e: '🎂', t: '生日福利' }].map((it) => (

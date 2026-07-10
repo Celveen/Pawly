@@ -1,6 +1,7 @@
-// 共享组件：Logo、Header、Footer、ProductCard、ArticleCard、CartDrawer
+// 共享组件：Logo、Header（含全站搜索）、Footer、ProductCard、ArticleCard、CartDrawer
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { fmt } from './util';
-import { ARTICLE_CATS } from './data';
+import { ARTICLE_CATS, PRODUCTS, ARTICLES } from './data';
 import { Emoji } from './Emoji';
 
 export const Logo = ({ size = 28 }) => (
@@ -18,6 +19,7 @@ export const Logo = ({ size = 28 }) => (
 );
 
 export function Header({ route, navigate, cartCount, onCartOpen }) {
+  const [searchOpen, setSearchOpen] = useState(false);
   const navItems = [
     { id: 'home', label: '首页' },
     { id: 'shop', label: '商品' },
@@ -53,7 +55,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
           })}
         </nav>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0 }} aria-label="搜索">
+          <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="搜索">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
             </svg>
@@ -75,16 +77,116 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
           </button>
         </div>
       </div>
+      {searchOpen && <SearchOverlay navigate={navigate} onClose={() => setSearchOpen(false)} />}
     </header>
   );
 }
 
-export function Footer() {
+// 全站搜索浮层：本地检索商品 + 科普文章，点击结果直接跳转
+function SearchOverlay({ navigate, onClose }) {
+  const [q, setQ] = useState('');
+  const inputRef = useRef(null);
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const kw = q.trim();
+  const { prods, arts } = useMemo(() => {
+    if (!kw) return { prods: [], arts: [] };
+    // 整词命中优先；否则拆成单字全部命中即可（"狗粮"→"狗"匹配宠物类型+"粮"匹配名称）
+    const hit = (text) => text.includes(kw) || Array.from(kw).every((ch) => text.includes(ch));
+    return {
+      prods: PRODUCTS.filter((p) => hit(`${p.pet}${p.pet === '狗' ? '犬' : ''}${p.name}${p.sub}${p.desc}${(p.badges || []).join('')}`)).slice(0, 6),
+      arts: ARTICLES.filter((a) => hit(`${a.title}${a.excerpt}`)).slice(0, 4),
+    };
+  }, [kw]);
+
+  const go = (route) => { onClose(); navigate(route); };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
+      <div role="dialog" aria-label="全站搜索" style={{
+        position: 'relative', margin: '96px auto 0', width: 'min(640px, calc(100vw - 32px))',
+        background: 'var(--bg)', borderRadius: 24, padding: 20, boxShadow: '0 24px 64px -16px rgba(38,70,83,.35)',
+        maxHeight: 'calc(100vh - 160px)', display: 'flex', flexDirection: 'column',
+        animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
+      }}>
+        <div style={{ position: 'relative' }}>
+          <input ref={inputRef} className="input" placeholder="搜索商品、科普文章…（Esc 关闭）"
+            value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
+          <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        </div>
+
+        <div style={{ overflowY: 'auto', marginTop: 8 }}>
+          {kw && prods.length === 0 && arts.length === 0 && (
+            <p className="caption" style={{ textAlign: 'center', padding: '32px 0' }}>没有找到「{kw}」相关的内容，换个词试试？</p>
+          )}
+          {prods.length > 0 && (
+            <>
+              <div className="eyebrow" style={{ margin: '14px 4px 8px' }}>商品</div>
+              {prods.map((p) => (
+                <button key={p.id} onClick={() => go({ page: 'product', id: p.id })}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 8px', borderRadius: 12, border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'var(--ink)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: p.bg, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={p.emoji} size={22} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                    <div className="caption">{p.sub}</div>
+                  </div>
+                  <span className="mono" style={{ fontSize: 13, fontWeight: 600 }}>{fmt(p.price)}</span>
+                </button>
+              ))}
+            </>
+          )}
+          {arts.length > 0 && (
+            <>
+              <div className="eyebrow" style={{ margin: '14px 4px 8px' }}>科普文章</div>
+              {arts.map((a) => (
+                <button key={a.id} onClick={() => go({ page: 'article', id: a.id })}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 8px', borderRadius: 12, border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'var(--ink)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: a.bg, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={a.emoji} size={22} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
+                    <div className="caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.excerpt}</div>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+          {!kw && (
+            <p className="caption" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>试试搜「狗粮」「猫砂」「疫苗」「训练」…</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function Footer({ navigate }) {
   const cols = [
-    { title: '购物', items: ['新品上架', '畅销商品', '订阅服务', '礼品卡'] },
-    { title: '科普', items: ['幼犬指南', '猫咪护理', '训练课程', '健康百科'] },
-    { title: '客服', items: ['配送说明', '退换政策', '联系我们', '常见问题'] },
-    { title: '关于', items: ['品牌故事', '加入我们', '宠物公益', '商业合作'] },
+    { title: '购物', items: [
+      { t: '新品上架', to: { page: 'shop' } }, { t: '畅销商品', to: { page: 'shop' } },
+      { t: '主粮零食', to: { page: 'shop', cat: 'food' } }, { t: '玩具好物', to: { page: 'shop', cat: 'toy' } },
+    ] },
+    { title: '科普', items: [
+      { t: '幼犬指南', to: { page: 'articles' } }, { t: '猫咪护理', to: { page: 'articles' } },
+      { t: '训练教程', to: { page: 'articles' } }, { t: '健康百科', to: { page: 'articles' } },
+    ] },
+    { title: '会员', items: [
+      { t: '会员权益', to: { page: 'member', tab: 'benefits' } }, { t: '我的订单', to: { page: 'member', tab: 'orders' } },
+      { t: '宠物档案', to: { page: 'member', tab: 'pets' } }, { t: '地址管理', to: { page: 'member', tab: 'addr' } },
+    ] },
+    { title: '社区', items: [
+      { t: '铲屎官社区', to: { page: 'community' } }, { t: '晒宠分享', to: { page: 'community' } },
+      { t: '好物种草', to: { page: 'community' } }, { t: '养宠求助', to: { page: 'community' } },
+    ] },
   ];
   return (
     <footer style={{ background: 'var(--ink)', color: 'rgba(255,255,255,.7)', padding: '80px 0 32px' }}>
@@ -100,7 +202,16 @@ export function Footer() {
             <div key={c.title}>
               <div style={{ color: 'white', fontSize: 13, fontWeight: 600, marginBottom: 16, letterSpacing: '.04em' }}>{c.title}</div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {c.items.map((it) => <li key={it} style={{ fontSize: 13 }}>{it}</li>)}
+                {c.items.map((it) => (
+                  <li key={it.t} style={{ fontSize: 13 }}>
+                    <button onClick={() => { navigate?.(it.to); window.scrollTo({ top: 0, behavior: 'instant' }); }}
+                      style={{ border: 0, background: 'transparent', color: 'inherit', padding: 0, fontSize: 13, cursor: 'pointer' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = 'white')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>
+                      {it.t}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
