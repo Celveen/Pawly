@@ -560,7 +560,7 @@ export function MemberPage({ navigate, initialTab }) {
 function BenefitsTab({ me, onLogin }) {
   const isMember = me && !me.guest;
   const benefits = [
-    { emoji: '🐾', title: 'AI 助手额度提升', desc: `宝莉助手每日咨询次数：游客 ${me?.chatLimit && me.guest ? me.chatLimit : 10} 次 → 会员 ${me?.memberChatLimit || 30} 次，挑粮、问养护随便聊`, hot: true },
+    { emoji: '🐾', title: 'AI 助手额度提升', desc: `宝莉助手每日咨询次数：游客 ${me?.guestChatLimit || 5} 次 → 会员 ${me?.memberChatLimit || 30} 次，挑粮、问养护随便聊`, hot: true },
     { emoji: '🏠', title: '数据跨设备同步', desc: '宠物档案、订单、收货地址、社区帖子绑定手机号，换设备登录即恢复' },
     { emoji: '🎁', title: '会员礼盒', desc: '入会礼包与节日惊喜（供应链接入后发放）', soon: true },
     { emoji: '💳', title: '全场 9 折', desc: '会员专享价（真实支付接入后生效）', soon: true },

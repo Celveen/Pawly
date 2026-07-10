@@ -29,7 +29,8 @@ export function CommunityPage() {
   const [posts, setPosts] = useState(null); // null=加载中
   const [loadError, setLoadError] = useState('');
   const [composing, setComposing] = useState(false);
-  const [expanded, setExpanded] = useState(null); // 展开阅读的帖子 id
+  const [detailId, setDetailId] = useState(null); // 打开详情弹窗的帖子 id
+  const detailPost = detailId && posts ? posts.find((p) => p.id === detailId) : null;
 
   const load = useCallback(async (t = topic) => {
     setLoadError('');
@@ -63,6 +64,7 @@ export function CommunityPage() {
   async function removePost(p) {
     if (!window.confirm(`确定删除「${p.title}」吗？`)) return;
     await fetch(`/api/posts?id=${encodeURIComponent(p.id)}`, { method: 'DELETE' });
+    setDetailId(null);
     load();
   }
 
@@ -119,8 +121,8 @@ export function CommunityPage() {
             /* 瀑布流：CSS columns 实现，卡片高度随内容自适应 */
             <div style={{ columns: '4 240px', columnGap: 20 }}>
               {posts.map((p) => (
-                <PostCard key={p.id} p={p} expanded={expanded === p.id}
-                  onExpand={() => setExpanded(expanded === p.id ? null : p.id)}
+                <PostCard key={p.id} p={p}
+                  onOpen={() => setDetailId(p.id)}
                   onLike={() => toggleLike(p)} onDelete={() => removePost(p)} />
               ))}
             </div>
@@ -128,22 +130,88 @@ export function CommunityPage() {
         </div>
       </section>
 
+      {detailPost && (
+        <PostDetail p={detailPost} onClose={() => setDetailId(null)}
+          onLike={() => toggleLike(detailPost)} onDelete={() => removePost(detailPost)} />
+      )}
       {composing && <Composer onClose={() => setComposing(false)} onPosted={() => { setComposing(false); setTopic('all'); load('all'); }} />}
     </>
   );
 }
 
-function PostCard({ p, expanded, onExpand, onLike, onDelete }) {
+// 帖子详情弹窗：大封面 + 全文 + 点赞/删除
+function PostDetail({ p, onClose, onLike, onDelete }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   return (
-    <article className="card fade-up" onClick={onExpand}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
+      <div role="dialog" aria-label={p.title} style={{
+        position: 'relative', width: 'min(560px, 100%)', maxHeight: 'calc(100vh - 64px)',
+        background: 'var(--bg)', borderRadius: 24, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 24px 64px -16px rgba(38,70,83,.35)',
+        animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
+      }}>
+        <div style={{ background: p.bg, minHeight: 180, display: 'grid', placeItems: 'center', position: 'relative', flexShrink: 0 }}>
+          <span className="pet-pill" style={{ position: 'absolute', top: 14, left: 14 }}>{p.topic}</span>
+          <button onClick={onClose} aria-label="关闭" style={{
+            position: 'absolute', top: 10, right: 10, width: 32, height: 32, border: 0, borderRadius: 999,
+            background: 'rgba(255,255,255,.85)', color: 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer',
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
+          </button>
+          <Emoji text={p.emoji} size={110} />
+        </div>
+        <div style={{ padding: '24px 28px', overflowY: 'auto' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 600, margin: 0, lineHeight: 1.35 }}>{p.title}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 16px' }}>
+            <div style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={13} /></div>
+            <span className="caption">{p.author} · {timeAgo(p.createdAt)}</span>
+            {p.petName && (
+              <span className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Emoji text="🐾" size={11} /> {p.petName}
+              </span>
+            )}
+          </div>
+          <p className="body" style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: 1.75 }}>{p.content}</p>
+        </div>
+        <div style={{ padding: '14px 28px', borderTop: '1px solid var(--line-2)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <button onClick={onLike}
+            style={{ border: '1px solid var(--line)', background: p.likedByMe ? 'rgba(217,130,107,.08)' : 'transparent', borderRadius: 999, height: 36, padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: p.likedByMe ? '#D9826B' : 'var(--ink-2)', fontSize: 13, fontWeight: 600 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={p.likedByMe ? '#D9826B' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 14c1.5-1.5 2-3.2 2-5a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 1.8.5 3.5 2 5l7 7 7-7Z" />
+            </svg>
+            {p.likedByMe ? '已赞' : '点赞'}{p.likeCount > 0 && <span className="mono">{p.likeCount}</span>}
+          </button>
+          <span style={{ flex: 1 }} />
+          {p.mine && (
+            <button onClick={onDelete}
+              style={{ border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontSize: 13, padding: '0 16px', height: 36, borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6" /></svg>
+              删除帖子
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PostCard({ p, onOpen, onLike, onDelete }) {
+  return (
+    <article className="card fade-up" onClick={onOpen}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', breakInside: 'avoid', marginBottom: 20, display: 'block' }}>
-      <div style={{ background: p.bg, aspectRatio: expanded ? 'auto' : '4/3', minHeight: expanded ? 120 : undefined, display: 'grid', placeItems: 'center', position: 'relative' }}>
+      <div style={{ background: p.bg, aspectRatio: '4/3', display: 'grid', placeItems: 'center', position: 'relative' }}>
         <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>
         <Emoji text={p.emoji} size={88} />
       </div>
       <div style={{ padding: 16 }}>
         <h3 style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4, margin: 0 }}>{p.title}</h3>
-        <p className="body" style={{ fontSize: 13, margin: '8px 0 0', ...(expanded ? { whiteSpace: 'pre-wrap' } : { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }) }}>
+        <p className="body" style={{ fontSize: 13, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {p.content}
         </p>
         {p.petName && (

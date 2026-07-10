@@ -24,8 +24,9 @@ async function ensureUser(id: string) {
 
 const POST_TOPICS = ['晒宠', '好物', '求助', '日常'];
 
-// AI 助手每日额度：游客较低，手机号登录（Pawly Club 会员）更高——会员核心权益之一
-const GUEST_CHAT_LIMIT = Number(process.env.GUEST_CHAT_LIMIT || 10);
+// AI 助手每日额度：游客 5 次/天；手机号登录即为 Pawly Club 会员，30 次/天。
+// 后续如分免费/付费会员，在 chatQuota 里按用户等级细分即可。
+const GUEST_CHAT_LIMIT = Number(process.env.GUEST_CHAT_LIMIT || 5);
 const MEMBER_CHAT_LIMIT = Number(process.env.MEMBER_CHAT_LIMIT || 30);
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -210,7 +211,7 @@ export const services: Record<string, Handler> = {
   'auth.me': async (userId) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const q = await chatQuota(userId);
-    const quota = { chatUsed: q.used, chatLimit: q.limit, memberChatLimit: MEMBER_CHAT_LIMIT };
+    const quota = { chatUsed: q.used, chatLimit: q.limit, guestChatLimit: GUEST_CHAT_LIMIT, memberChatLimit: MEMBER_CHAT_LIMIT };
     if (!user?.phone) return { guest: true, nickname: user?.nickname || null, ...quota };
     return {
       guest: false,

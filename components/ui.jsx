@@ -1,5 +1,6 @@
 // 共享组件：Logo、Header（含全站搜索）、Footer、ProductCard、ArticleCard、CartDrawer
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { fmt } from './util';
 import { ARTICLE_CATS, PRODUCTS, ARTICLES } from './data';
 import { Emoji } from './Emoji';
@@ -106,7 +107,9 @@ function SearchOverlay({ navigate, onClose }) {
 
   const go = (route) => { onClose(); navigate(route); };
 
-  return (
+  // 必须 Portal 到 body：header 的 backdrop-filter 会把 fixed 定位"困"在
+  // 72px 高的 header 盒子里，导致遮罩只覆盖顶部一条、点击页面无法关闭
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="全站搜索" style={{
@@ -115,10 +118,15 @@ function SearchOverlay({ navigate, onClose }) {
         maxHeight: 'calc(100vh - 160px)', display: 'flex', flexDirection: 'column',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
-        <div style={{ position: 'relative' }}>
-          <input ref={inputRef} className="input" placeholder="搜索商品、科普文章…（Esc 关闭）"
-            value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
-          <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <input ref={inputRef} className="input" placeholder="搜索商品、科普文章…"
+              value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
+            <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          </div>
+          <button onClick={onClose} aria-label="关闭搜索" style={{ width: 40, height: 40, flexShrink: 0, border: '1px solid var(--line)', borderRadius: 999, background: 'var(--surface)', color: 'var(--ink-2)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
+          </button>
         </div>
 
         <div style={{ overflowY: 'auto', marginTop: 8 }}>
@@ -165,7 +173,8 @@ function SearchOverlay({ navigate, onClose }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
