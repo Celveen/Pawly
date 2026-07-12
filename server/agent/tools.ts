@@ -419,8 +419,13 @@ const registeredTools: RegisteredTool[] = [
           weightKg: typeof profile.weightKg === 'number' ? profile.weightKg : undefined,
           notes: typeof profile.notes === 'string' ? profile.notes : undefined,
         } : undefined,
-        conversationContext: [],
-        suspectedRiskTags: [],
+        // 透传模型给出的上下文与风险标签（此前被硬编码为空，削弱了知识 Agent 的高风险判定）
+        conversationContext: Array.isArray(args?.conversationContext)
+          ? args.conversationContext.map((s: any) => String(s)).filter(Boolean).slice(0, 8)
+          : [],
+        suspectedRiskTags: Array.isArray(args?.suspectedRiskTags)
+          ? args.suspectedRiskTags.map((s: any) => String(s)).filter(Boolean)
+          : [],
         evidence: Array.isArray(args?.evidence) ? args.evidence.map((item: any) => ({
           source: String(item?.source || ''),
           title: String(item?.title || ''),
@@ -440,7 +445,8 @@ const registeredTools: RegisteredTool[] = [
       properties: { productIds: { type: 'array', items: { type: 'string' } } },
       required: ['productIds'],
     },
-    async (args, ctx) => store.createOrder(ctx.userId, args?.productIds || []),
+    // store.createOrder 新签名要求 [{id, qty}]，直接传 string[] 会创建空订单
+    async (args, ctx) => store.createOrder(ctx.userId, (args?.productIds || []).map((id: string) => ({ id: String(id) }))),
   ),
   defineTool(
     'present_recommendation',

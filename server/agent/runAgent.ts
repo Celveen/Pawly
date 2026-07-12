@@ -45,10 +45,13 @@ export async function* runAgentStream(userId: string, history: ChatMessage[]): A
 }
 
 // #主Agent核心执行器
-async function runAgentCore(userId: string, history: ChatMessage[], options: RunAgentOptions = {}): Promise<AgentResult> {
+async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: RunAgentOptions = {}): Promise<AgentResult> {
   const emit = async (event: AgentStreamEvent) => {
     await options.onEvent?.(event);
   };
+
+  // 角色白名单：history 来自客户端请求体，剔除伪造的 system/tool 角色，防提示注入
+  const history = (rawHistory || []).filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
 
   try {
     const currentUserQuestion = [...history].reverse().find((message) => message.role === 'user')?.content || '';
