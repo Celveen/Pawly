@@ -43,7 +43,7 @@ const KNOWLEDGE_PRESENTATION_POLICY_CENTER = {
         shouldCiteSources: hasSources,
         shouldAvoidProposals: true,
         shouldSuggestVet: result.needsVet,
-        shouldSuggestHumanHandoff: false,
+        shouldSuggestHumanHandoff: result.needsHumanHandoff,
         suggestedReplyStyle: 'knowledge_with_caution',
         nextAction: result.needsVet ? 'handoff_or_vet' : 'answer_only',
         templateId: result.needsVet ? 'knowledge_vet' : !result.canAnswer ? 'knowledge_clarify' : 'knowledge_caution',

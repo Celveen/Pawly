@@ -95,18 +95,25 @@ export async function runKnowledgeAgent(input: KnowledgeAgentInput): Promise<Kno
     );
   }
 
-  const res = await deepseekChat({
-    messages: [
-      { role: 'system', content: buildKnowledgeSystemPrompt() },
-      { role: 'user', content: buildKnowledgeUserPrompt({ ...input, evidence }, riskTags, riskLevel) },
-    ],
-    temperature: 0,
-    max_tokens: 1200,
-    response_format: { type: 'json_object' },
-  });
-
-  const raw = res.choices?.[0]?.message?.content || '{}';
-  const parsed = parseOutput(raw);
+  // 模型调用/解析失败一律走保守拒答：高风险问题的安全兜底不能随异常丢失
+  let parsed: Partial<KnowledgeAgentOutput> | null = null;
+  try {
+    const res = await deepseekChat({
+      messages: [
+        { role: 'system', content: buildKnowledgeSystemPrompt() },
+        { role: 'user', content: buildKnowledgeUserPrompt({ ...input, evidence }, riskTags, riskLevel) },
+      ],
+      temperature: 0,
+      max_tokens: 1200,
+      response_format: { type: 'json_object' },
+    });
+    parsed = parseOutput(res.choices?.[0]?.message?.content || '');
+  } catch (e: any) {
+    console.error('[knowledge] 模型调用失败:', e?.message || e);
+  }
+  if (!parsed) {
+    return buildRefusal(riskLevel, riskTags, '知识 Agent 生成回答失败，保守拒答。');
+  }
   const normalizedEvidence = pickAllowedEvidence(
     Array.isArray(parsed.evidence) ? parsed.evidence : [],
     evidence,
@@ -130,7 +137,7 @@ export async function runKnowledgeAgent(input: KnowledgeAgentInput): Promise<Kno
     riskLevel,
     riskTags,
     needsVet: needsVetByRisk(riskLevel),
-    needsHumanHandoff: false,
+    needsHumanHandoff: riskLevel === 'high',
     followUpQuestions: Array.isArray(parsed.followUpQuestions) ? parsed.followUpQuestions.map(String) : [],
     refusalReason: typeof parsed.refusalReason === 'string' ? parsed.refusalReason : undefined,
   };
@@ -238,17 +245,21 @@ function buildEvidenceKey(item: KnowledgeAgentInput['evidence'][number]) {
 }
 
 // #来源说明拼接
+// 措辞区分证据类型："参考"只用于真正读过内容的内部知识库文章；
+// 白名单权威站点只是静态目录映射（并未抓取原文），只能写"可进一步查阅"，
+// 否则等于给回答打上从未读取过内容的权威背书（引用关系造假）。
 function buildArticleSourceLine(allEvidence: KnowledgeAgentInput['evidence']): string {
-  const references = Array.from(
-    new Set(
-      allEvidence
-        .map((item) => formatEvidenceLabel(item))
-        .filter(Boolean),
-    ),
-  ).slice(0, 3);
+  const internal = Array.from(new Set(
+    allEvidence.filter((i) => i.evidenceType === 'internal_kb').map((i) => formatEvidenceLabel(i)).filter(Boolean),
+  )).slice(0, 3);
+  const external = Array.from(new Set(
+    allEvidence.filter((i) => i.evidenceType !== 'internal_kb').map((i) => formatEvidenceLabel(i)).filter(Boolean),
+  )).slice(0, 2);
 
-  if (!references.length) return '';
-  return `参考：${references.join('；')}。`;
+  const parts: string[] = [];
+  if (internal.length) parts.push(`参考：${internal.join('；')}。`);
+  if (external.length) parts.push(`可进一步查阅：${external.join('；')}。`);
+  return parts.join(' ');
 }
 
 // #证据标签格式化
@@ -541,8 +552,8 @@ function inferQuestionTopicDomains(
   );
 }
 
-// #模型JSON结果解析
-function parseOutput(raw: string): Partial<KnowledgeAgentOutput> {
+// #模型JSON结果解析（彻底失败返回 null，调用方走保守拒答，绝不默认"可回答"）
+function parseOutput(raw: string): Partial<KnowledgeAgentOutput> | null {
   try {
     return JSON.parse(raw);
   } catch {
@@ -554,7 +565,7 @@ function parseOutput(raw: string): Partial<KnowledgeAgentOutput> {
       } catch {}
     }
   }
-  return {};
+  return null;
 }
 
 // #无证据场景保守回复
@@ -565,8 +576,10 @@ function buildRefusal(
 ): KnowledgeAgentOutput {
   const highRisk = riskLevel === 'high';
   const warningLine = highRisk ? '⚠️线上建议不能替代面诊！' : '';
+  // 高风险且无证据时绝不给任何具体处置建议（此前硬编码的"补水观察"对尿闭/中毒等急症是危险指引），
+  // 只做就医引导——具体处置必须由面诊兽医判断。
   const answer = highRisk
-    ? `当前内部知识证据不足，不能安全地下明确诊断结论。请先少量多次补水并密切观察，一旦持续加重或伴随精神差、带血、发热，请尽快就医。\n\n${warningLine}`
+    ? `这个问题涉及健康风险，当前证据不足，我不能给出居家处置建议。请尽快联系兽医或就近的宠物医院面诊，并把症状开始的时间、频率和宠物的精神食欲状况告诉医生。\n\n${warningLine}`
     : '当前证据不足，暂不建议给出明确结论。';
   return {
     canAnswer: false,
@@ -577,7 +590,7 @@ function buildRefusal(
     riskLevel,
     riskTags,
     needsVet: highRisk,
-    needsHumanHandoff: false,
+    needsHumanHandoff: highRisk,
     followUpQuestions: [],
     refusalReason,
   };

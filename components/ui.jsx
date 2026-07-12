@@ -279,8 +279,9 @@ export function ArticleCard({ a, onOpen, featured }) {
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: featured ? 'row' : 'column', gap: 0 }}>
       <div style={{
         background: a.bg, width: featured ? '50%' : '100%',
-        aspectRatio: featured ? 'auto' : '16/10', display: 'grid', placeItems: 'center',
+        aspectRatio: featured ? 'auto' : '16/10', display: 'grid', placeItems: 'center', position: 'relative',
       }}>
+        {a.refs?.length > 0 && <span className="tag-pill" title="内容编译自权威兽医指南，文末附来源">✓ 循证</span>}
         <Emoji text={a.emoji} size={featured ? 120 : 64} style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))' }} />
       </div>
       <div style={{ padding: featured ? '40px' : '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
