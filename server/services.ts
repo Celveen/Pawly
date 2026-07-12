@@ -31,12 +31,19 @@ const MEMBER_CHAT_LIMIT = Number(process.env.MEMBER_CHAT_LIMIT || 30);
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+// 额度查询失败（如数据库尚未同步 ChatUsage 表）时放行而非拒绝服务：
+// 计费/额度是增值能力，绝不能反过来把核心的 AI 客服打死。
 async function chatQuota(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   const member = !!user?.phone;
   const limit = member ? MEMBER_CHAT_LIMIT : GUEST_CHAT_LIMIT;
-  const used = await store.getChatUsage(userId, today());
-  return { member, limit, used };
+  try {
+    const used = await store.getChatUsage(userId, today());
+    return { member, limit, used, degraded: false };
+  } catch (e: any) {
+    console.error('[quota] 额度查询失败（放行处理）:', e?.message || e);
+    return { member, limit, used: 0, degraded: true };
+  }
 }
 
 type Handler = (userId: string, payload: any) => Promise<any>;
@@ -163,9 +170,15 @@ export const services: Record<string, Handler> = {
         quota: { used: q.used, limit: q.limit, member: q.member },
       };
     }
-    // 先跑 Agent、成功才计数：模型故障时不冤枉扣用户额度
+    // 先跑 Agent、成功才计数：模型故障时不冤枉扣用户额度；
+    // 计数失败（表未同步等）也不影响回复送达
     const result = await runAgent(userId, Array.isArray(b?.messages) ? b.messages : []);
-    const used = await store.incrChatUsage(userId, today());
+    let used = q.used + 1;
+    try {
+      used = await store.incrChatUsage(userId, today());
+    } catch (e: any) {
+      console.error('[quota] 额度计数失败（忽略）:', e?.message || e);
+    }
     return { ...result, quota: { used, limit: q.limit, member: q.member } };
   },
 
