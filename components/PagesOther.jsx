@@ -120,11 +120,27 @@ export function ArticlePage({ id, navigate }) {
               {i === 0 ? p.slice(1) : p}
             </p>
           ))}
-          <div style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 20, padding: 32, marginTop: 40, display: 'flex', gap: 20 }}>
+          {/* 参考来源：循证文章标注编译出处，点击可跳转权威机构原文 */}
+          {a.refs?.length > 0 && (
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 20, padding: '24px 28px', marginTop: 40 }}>
+              <div className="eyebrow" style={{ marginBottom: 12 }}>参考来源 · References</div>
+              <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {a.refs.map((r, i) => (
+                  <li key={i} style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.org}</span>
+                    {' · '}
+                    <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>{r.title}</a>
+                  </li>
+                ))}
+              </ol>
+              <p className="caption" style={{ margin: '12px 0 0' }}>本文由 Pawly 编辑团队编译整理自上述公开指南，仅供参考。</p>
+            </div>
+          )}
+          <div style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 20, padding: 32, marginTop: a.refs?.length ? 16 : 40, display: 'flex', gap: 20 }}>
             <Emoji text="💡" size={36} />
             <div>
               <div className="eyebrow" style={{ color: 'rgba(255,255,255,.5)', marginBottom: 8 }}>Pawly 提示</div>
-              <p style={{ fontSize: 16, lineHeight: 1.6, margin: 0 }}>这些建议来自我们的合作兽医团队，但每只宠物都是独特的。有任何异常情况，第一时间联系你的兽医才是最稳妥的。</p>
+              <p style={{ fontSize: 16, lineHeight: 1.6, margin: 0 }}>{a.refs?.length ? '内容编译自权威兽医指南，但每只宠物都是独特的。' : '这些建议来自我们的合作兽医团队，但每只宠物都是独特的。'}有任何异常情况，第一时间联系你的兽医才是最稳妥的。</p>
             </div>
           </div>
         </div>
