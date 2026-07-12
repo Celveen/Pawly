@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Header, Footer, CartDrawer } from './ui';
 import { HomePage, ShopPage, ProductPage } from './PagesShop';
 import { ArticlesPage, ArticlePage, CheckoutPage, MemberPage } from './PagesOther';
+import { CommunityPage } from './PagesCommunity';
 import ChatWidget from './ChatWidget';
 
 export default function App() {
@@ -40,17 +41,18 @@ export default function App() {
     case 'shop': page = <ShopPage initialCat={route.cat} navigate={navigate} onAdd={addToCart} />; break;
     case 'product': page = <ProductPage id={route.id} navigate={navigate} onAdd={addToCart} onCartOpen={() => setCartOpen(true)} />; break;
     case 'articles': page = <ArticlesPage navigate={navigate} />; break;
+    case 'community': page = <CommunityPage />; break;
     case 'article': page = <ArticlePage id={route.id} navigate={navigate} />; break;
     case 'checkout': page = <CheckoutPage items={cartItems} navigate={navigate} clearCart={clearCart} />; break;
-    case 'member': page = <MemberPage navigate={navigate} />; break;
+    case 'member': page = <MemberPage navigate={navigate} initialTab={route.tab} key={route.tab || 'overview'} />; break;
     default: page = <HomePage navigate={navigate} onAdd={addToCart} onCartOpen={() => setCartOpen(true)} />;
   }
 
   return (
     <>
       <Header route={route} navigate={navigate} cartCount={cartCount} onCartOpen={() => setCartOpen(true)} />
-      <main key={route.page + (route.id || '') + (route.cat || '')}>{page}</main>
-      <Footer />
+      <main key={route.page + (route.id || '') + (route.cat || '') + (route.tab || '')}>{page}</main>
+      <Footer navigate={navigate} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setQty={setQty} removeItem={removeItem} onCheckout={goCheckout} />
       <ChatWidget onAdd={addToCart} navigate={navigate} onCartOpen={() => setCartOpen(true)} />
       {toast && <CartToast key={toast.id} name={toast.name} qty={toast.qty} onClick={() => setCartOpen(true)} />}

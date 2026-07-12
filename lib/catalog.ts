@@ -1,7 +1,7 @@
 // 商品种子数据（首次访问由 store.ts 自动灌入数据库）。
 // 这是全站唯一的商品数据源：前端展示(components/data.js 再导出)与后端 Agent 都用它。
 // 注意：detail 字段仅用于前端详情页展示，不写入数据库（store.ts 会剔除）。
-import type { Product } from '../types';
+import type { Product } from './types';
 
 export const PRODUCTS: Product[] = [
   // —— 主粮 ——

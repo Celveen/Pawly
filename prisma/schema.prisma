@@ -12,11 +12,43 @@ datasource db {
 
 // 匿名用户：访客打开链接即自动创建（cookie 标识），无需注册，最适合扫码演示
 model User {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
+  phone     String?    @unique // 手机号登录后绑定；游客为 null
   nickname  String?
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
   pets      Pet[]
   orders    Order[]
+  posts     Post[]
+  postLikes PostLike[]
+  addresses Address[]
+}
+
+// 收货地址：一个用户可有多个，isDefault 标记默认地址（结算页优先勾选）
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String // 收货人
+  phone     String
+  province  String
+  city      String
+  district  String
+  detail    String // 详细地址（街道门牌号）
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// 短信验证码：一个手机号同一时刻只保留最新一条（发送即覆盖）。
+// 存哈希不存明文；5 分钟过期；连续错 5 次作废。
+model PhoneCode {
+  phone     String   @id
+  codeHash  String
+  expiresAt DateTime
+  sentAt    DateTime @default(now())
+  tries     Int      @default(0)
 }
 
 // 宠物档案：归属到具体用户。存 birthday 而非 age，年龄实时算
@@ -55,13 +87,53 @@ model Product {
   stock  Int
 }
 
+// 社区帖子：铲屎官分享（小红书式图文卡片）。暂无图片上传，封面用 emoji + 背景色，
+// 与全站现有视觉语言一致；接入对象存储后可平滑加 imageUrl 字段。
+model Post {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  topic     String // 话题：晒宠 | 好物 | 求助 | 日常
+  emoji     String // 封面 emoji
+  bg        String // 封面背景色
+  petName   String? // 关联的自家宠物名（可选）
+  createdAt DateTime   @default(now())
+  likes     PostLike[]
+
+  @@index([createdAt])
+}
+
+// 点赞：一人一帖只能赞一次
+model PostLike {
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
+}
+
 // 订单：待支付（不扣款，付款由用户确认）
 model Order {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     String // JSON
+  items     String // JSON：[{id,name,price,qty,emoji,bg}]
   total     Int
   status    String   @default("pending_payment")
+  address   String? // JSON 快照：{name,phone,province,city,district,detail}（下单时的收货信息，地址簿后续修改不影响历史订单）
+  delivery  String? // standard | express
   createdAt DateTime @default(now())
+}
+
+// AI 助手每日用量：按用户+日期计数，用于会员额度（游客/会员每日对话次数不同）
+model ChatUsage {
+  userId String
+  date   String // YYYY-MM-DD（服务器时区）
+  count  Int    @default(0)
+
+  @@id([userId, date])
 }

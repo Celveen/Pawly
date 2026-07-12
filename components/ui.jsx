@@ -1,6 +1,9 @@
-// 共享组件：Logo、Header、Footer、ProductCard、ArticleCard、CartDrawer
+// 共享组件：Logo、Header（含全站搜索）、Footer、ProductCard、ArticleCard、CartDrawer
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { fmt } from './util';
-import { ARTICLE_CATS } from './data';
+import { ARTICLE_CATS, PRODUCTS, ARTICLES } from './data';
+import { Emoji } from './Emoji';
 
 export const Logo = ({ size = 28 }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -17,10 +20,12 @@ export const Logo = ({ size = 28 }) => (
 );
 
 export function Header({ route, navigate, cartCount, onCartOpen }) {
+  const [searchOpen, setSearchOpen] = useState(false);
   const navItems = [
     { id: 'home', label: '首页' },
     { id: 'shop', label: '商品' },
     { id: 'articles', label: '宠物科普' },
+    { id: 'community', label: '社区' },
     { id: 'member', label: '会员' },
   ];
   return (
@@ -51,7 +56,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
           })}
         </nav>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0 }} aria-label="搜索">
+          <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="搜索">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
             </svg>
@@ -73,16 +78,124 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
           </button>
         </div>
       </div>
+      {searchOpen && <SearchOverlay navigate={navigate} onClose={() => setSearchOpen(false)} />}
     </header>
   );
 }
 
-export function Footer() {
+// 全站搜索浮层：本地检索商品 + 科普文章，点击结果直接跳转
+function SearchOverlay({ navigate, onClose }) {
+  const [q, setQ] = useState('');
+  const inputRef = useRef(null);
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const kw = q.trim();
+  const { prods, arts } = useMemo(() => {
+    if (!kw) return { prods: [], arts: [] };
+    // 整词命中优先；否则拆成单字全部命中即可（"狗粮"→"狗"匹配宠物类型+"粮"匹配名称）
+    const hit = (text) => text.includes(kw) || Array.from(kw).every((ch) => text.includes(ch));
+    return {
+      prods: PRODUCTS.filter((p) => hit(`${p.pet}${p.pet === '狗' ? '犬' : ''}${p.name}${p.sub}${p.desc}${(p.badges || []).join('')}`)).slice(0, 6),
+      arts: ARTICLES.filter((a) => hit(`${a.title}${a.excerpt}`)).slice(0, 4),
+    };
+  }, [kw]);
+
+  const go = (route) => { onClose(); navigate(route); };
+
+  // 必须 Portal 到 body：header 的 backdrop-filter 会把 fixed 定位"困"在
+  // 72px 高的 header 盒子里，导致遮罩只覆盖顶部一条、点击页面无法关闭
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
+      <div role="dialog" aria-label="全站搜索" style={{
+        position: 'relative', margin: '96px auto 0', width: 'min(640px, calc(100vw - 32px))',
+        background: 'var(--bg)', borderRadius: 24, padding: 20, boxShadow: '0 24px 64px -16px rgba(38,70,83,.35)',
+        maxHeight: 'calc(100vh - 160px)', display: 'flex', flexDirection: 'column',
+        animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
+      }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <input ref={inputRef} className="input" placeholder="搜索商品、科普文章…"
+              value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
+            <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          </div>
+          <button onClick={onClose} aria-label="关闭搜索" style={{ width: 40, height: 40, flexShrink: 0, border: '1px solid var(--line)', borderRadius: 999, background: 'var(--surface)', color: 'var(--ink-2)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
+          </button>
+        </div>
+
+        <div style={{ overflowY: 'auto', marginTop: 8 }}>
+          {kw && prods.length === 0 && arts.length === 0 && (
+            <p className="caption" style={{ textAlign: 'center', padding: '32px 0' }}>没有找到「{kw}」相关的内容，换个词试试？</p>
+          )}
+          {prods.length > 0 && (
+            <>
+              <div className="eyebrow" style={{ margin: '14px 4px 8px' }}>商品</div>
+              {prods.map((p) => (
+                <button key={p.id} onClick={() => go({ page: 'product', id: p.id })}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 8px', borderRadius: 12, border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'var(--ink)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: p.bg, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={p.emoji} size={22} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                    <div className="caption">{p.sub}</div>
+                  </div>
+                  <span className="mono" style={{ fontSize: 13, fontWeight: 600 }}>{fmt(p.price)}</span>
+                </button>
+              ))}
+            </>
+          )}
+          {arts.length > 0 && (
+            <>
+              <div className="eyebrow" style={{ margin: '14px 4px 8px' }}>科普文章</div>
+              {arts.map((a) => (
+                <button key={a.id} onClick={() => go({ page: 'article', id: a.id })}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 8px', borderRadius: 12, border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'var(--ink)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: a.bg, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={a.emoji} size={22} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
+                    <div className="caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.excerpt}</div>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+          {!kw && (
+            <p className="caption" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>试试搜「狗粮」「猫砂」「疫苗」「训练」…</p>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+export function Footer({ navigate }) {
   const cols = [
-    { title: '购物', items: ['新品上架', '畅销商品', '订阅服务', '礼品卡'] },
-    { title: '科普', items: ['幼犬指南', '猫咪护理', '训练课程', '健康百科'] },
-    { title: '客服', items: ['配送说明', '退换政策', '联系我们', '常见问题'] },
-    { title: '关于', items: ['品牌故事', '加入我们', '宠物公益', '商业合作'] },
+    { title: '购物', items: [
+      { t: '新品上架', to: { page: 'shop' } }, { t: '畅销商品', to: { page: 'shop' } },
+      { t: '主粮零食', to: { page: 'shop', cat: 'food' } }, { t: '玩具好物', to: { page: 'shop', cat: 'toy' } },
+    ] },
+    { title: '科普', items: [
+      { t: '幼犬指南', to: { page: 'articles' } }, { t: '猫咪护理', to: { page: 'articles' } },
+      { t: '训练教程', to: { page: 'articles' } }, { t: '健康百科', to: { page: 'articles' } },
+    ] },
+    { title: '会员', items: [
+      { t: '会员权益', to: { page: 'member', tab: 'benefits' } }, { t: '我的订单', to: { page: 'member', tab: 'orders' } },
+      { t: '宠物档案', to: { page: 'member', tab: 'pets' } }, { t: '地址管理', to: { page: 'member', tab: 'addr' } },
+    ] },
+    { title: '社区', items: [
+      { t: '铲屎官社区', to: { page: 'community' } }, { t: '晒宠分享', to: { page: 'community' } },
+      { t: '好物种草', to: { page: 'community' } }, { t: '养宠求助', to: { page: 'community' } },
+    ] },
   ];
   return (
     <footer style={{ background: 'var(--ink)', color: 'rgba(255,255,255,.7)', padding: '80px 0 32px' }}>
@@ -98,7 +211,16 @@ export function Footer() {
             <div key={c.title}>
               <div style={{ color: 'white', fontSize: 13, fontWeight: 600, marginBottom: 16, letterSpacing: '.04em' }}>{c.title}</div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {c.items.map((it) => <li key={it} style={{ fontSize: 13 }}>{it}</li>)}
+                {c.items.map((it) => (
+                  <li key={it.t} style={{ fontSize: 13 }}>
+                    <button onClick={() => { navigate?.(it.to); window.scrollTo({ top: 0, behavior: 'instant' }); }}
+                      style={{ border: 0, background: 'transparent', color: 'inherit', padding: 0, fontSize: 13, cursor: 'pointer' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = 'white')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>
+                      {it.t}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
@@ -108,7 +230,7 @@ export function Footer() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           fontSize: 12, color: 'rgba(255,255,255,.4)',
         }}>
-          <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗</span>
+          <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗 · Emoji graphics by Microsoft Fluent Emoji (MIT)</span>
           <span className="mono">v 3.0 · 上海 → 你家门口</span>
         </div>
       </div>
@@ -120,9 +242,9 @@ export function ProductCard({ p, onOpen, onAdd }) {
   return (
     <div className="card fade-up" style={{ padding: 12, cursor: 'pointer' }} onClick={() => onOpen(p)}>
       <div className="prod-img" style={{ background: p.bg }}>
-        <span className="pet-pill">{p.pet === '狗' ? '🐶 狗狗' : '🐱 猫咪'}</span>
+        <span className="pet-pill"><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>
         {p.tag && <span className="tag-pill">{p.tag}</span>}
-        <span className="emoji">{p.emoji}</span>
+        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
       </div>
       <div style={{ padding: '14px 6px 6px' }}>
         <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35, minHeight: 38 }}>{p.name}</div>
@@ -158,8 +280,9 @@ export function ArticleCard({ a, onOpen, featured }) {
       <div style={{
         background: a.bg, width: featured ? '50%' : '100%',
         aspectRatio: featured ? 'auto' : '16/10', display: 'grid', placeItems: 'center',
-        fontSize: featured ? 120 : 64, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))',
-      }}>{a.emoji}</div>
+      }}>
+        <Emoji text={a.emoji} size={featured ? 120 : 64} style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))' }} />
+      </div>
       <div style={{ padding: featured ? '40px' : '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div className="eyebrow" style={{ marginBottom: 12 }}>
           {ARTICLE_CATS.find((c) => c.id === a.cat)?.name} · {a.read}
@@ -169,7 +292,7 @@ export function ArticleCard({ a, onOpen, featured }) {
           {a.excerpt}
         </p>
         <div style={{ marginTop: 'auto', paddingTop: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 13 }}>👤</div>
+          <div style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={14} /></div>
           <span className="caption">{a.author} · {a.date}</span>
         </div>
       </div>
@@ -202,7 +325,7 @@ export function CartDrawer({ open, onClose, items, setQty, removeItem, onCheckou
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 28px' }}>
           {items.length === 0 ? (
             <div style={{ padding: '80px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>🦴</div>
+              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Emoji text="🦴" size={64} /></div>
               <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 8px' }}>购物车空空如也</h3>
               <p className="caption" style={{ margin: '0 0 24px' }}>主子等不及啦，快去挑点好东西~</p>
               <button onClick={onClose} className="btn btn-primary">去逛逛</button>
@@ -211,7 +334,7 @@ export function CartDrawer({ open, onClose, items, setQty, removeItem, onCheckou
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {items.map((it) => (
                 <li key={it.id} style={{ display: 'grid', gridTemplateColumns: '72px 1fr auto', gap: 14, padding: '16px 0', borderBottom: '1px solid var(--line-2)' }}>
-                  <div style={{ width: 72, height: 72, borderRadius: 14, background: it.bg, display: 'grid', placeItems: 'center', fontSize: 36 }}>{it.emoji}</div>
+                  <div style={{ width: 72, height: 72, borderRadius: 14, background: it.bg, display: 'grid', placeItems: 'center' }}><Emoji text={it.emoji} size={36} /></div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{it.name}</div>
                     <div className="caption" style={{ marginTop: 4 }}>{it.sub}</div>
