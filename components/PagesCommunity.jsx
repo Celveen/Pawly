@@ -309,7 +309,7 @@ function Composer({ onClose, onPosted }) {
           style={{ marginTop: 12, resize: 'vertical', minHeight: 120, height: 'auto', lineHeight: 1.6, paddingTop: 12, borderRadius: 16 }} />
 
         {/* 封面：emoji + 底色（图片上传接入对象存储后开放） */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 16, marginTop: 16, alignItems: 'start' }}>
+        <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 16, marginTop: 16, alignItems: 'start' }}>
           <div style={{ width: 104, height: 104, borderRadius: 16, background: form.bg, display: 'grid', placeItems: 'center' }}>
             <Emoji text={form.emoji} size={64} />
           </div>

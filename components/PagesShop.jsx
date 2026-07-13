@@ -13,7 +13,7 @@ export function HomePage({ navigate, onAdd }) {
   return (
     <>
       <section style={{ paddingTop: 80, paddingBottom: 64 }}>
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 64, alignItems: 'center' }}>
+        <div className="container m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 64, alignItems: 'center' }}>
           <div className="fade-up">
             <div className="eyebrow" style={{ marginBottom: 24 }}>Pawly · 2026 春夏</div>
             <h1 className="h-display" style={{ margin: 0 }}>
@@ -56,7 +56,7 @@ export function HomePage({ navigate, onAdd }) {
 
       <section style={{ paddingTop: 32, paddingBottom: 32 }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 16 }}>
+          <div className="m-4col" style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 16 }}>
             {CATEGORIES.slice(1).map((c) => (
               <button key={c.id} onClick={() => navigate({ page: 'shop', cat: c.id })}
                 style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 18, padding: '24px 8px', textAlign: 'center', cursor: 'pointer', transition: 'transform .15s, background .15s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
@@ -77,7 +77,7 @@ export function HomePage({ navigate, onAdd }) {
             </div>
             <button onClick={() => navigate({ page: 'shop' })} className="btn btn-ghost">查看全部 →</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+          <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {featured.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
           </div>
         </div>
@@ -85,7 +85,7 @@ export function HomePage({ navigate, onAdd }) {
 
       <section style={{ paddingTop: 32, paddingBottom: 32 }}>
         <div className="container">
-          <div style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 28, padding: '56px 56px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 28, padding: '56px 56px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -40, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={280} /></div>
             <div style={{ position: 'relative' }}>
               <div className="eyebrow" style={{ color: 'rgba(255,255,255,.5)', marginBottom: 12 }}>Pawly Club · 会员计划</div>
@@ -115,7 +115,7 @@ export function HomePage({ navigate, onAdd }) {
             </div>
             <button onClick={() => navigate({ page: 'shop' })} className="btn btn-ghost">查看全部 →</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+          <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {newArrivals.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
           </div>
         </div>
@@ -130,7 +130,7 @@ export function HomePage({ navigate, onAdd }) {
             </div>
             <button onClick={() => navigate({ page: 'articles' })} className="btn btn-ghost">所有文章 →</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 20 }}>
+          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 20 }}>
             <ArticleCard a={topArticles[0]} featured onOpen={(a) => navigate({ page: 'article', id: a.id })} />
             <ArticleCard a={topArticles[1]} onOpen={(a) => navigate({ page: 'article', id: a.id })} />
             <ArticleCard a={topArticles[2]} onOpen={(a) => navigate({ page: 'article', id: a.id })} />
@@ -164,7 +164,7 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
         </div>
       </section>
 
-      <div style={{ position: 'sticky', top: 72, zIndex: 30, background: 'rgba(239,244,242,.78)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
+      <div className="m-static" style={{ position: 'sticky', top: 72, zIndex: 30, background: 'rgba(239,244,242,.78)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', gap: 16, flexWrap: 'wrap' }}>
           <div className="h-scroll" style={{ display: 'flex', gap: 8 }}>
             {CATEGORIES.map((c) => (
@@ -194,7 +194,7 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
       <section style={{ paddingTop: 32, paddingBottom: 96 }}>
         <div className="container">
           <div className="caption" style={{ marginBottom: 24 }}>共 {filtered.length} 件商品</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+          <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {filtered.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
           </div>
           {filtered.length === 0 && (
@@ -227,7 +227,7 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
             <span>/</span>
             <span style={{ color: 'var(--ink-2)' }}>{p.name}</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64 }}>
+          <div className="m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64 }}>
             <div>
               <div className="prod-img" style={{ background: p.bg, aspectRatio: '1/1', borderRadius: 24 }}>
                 <span className="pet-pill"><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>
@@ -284,7 +284,7 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
       {/* 商品介绍 + 规格参数 */}
       <section style={{ paddingTop: 8, paddingBottom: 64 }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 48 }}>
+          <div className="m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 48 }}>
             <div>
               <div className="eyebrow" style={{ marginBottom: 12 }}>商品介绍</div>
               <h2 className="h-2" style={{ margin: '0 0 16px' }}>关于这款{CATEGORIES.find((c) => c.id === p.cat)?.name || '商品'}</h2>
@@ -318,7 +318,7 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
       <section style={{ paddingTop: 32, paddingBottom: 96 }}>
         <div className="container">
           <h2 className="h-2" style={{ margin: '0 0 32px' }}>顺手再看看</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+          <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {related.map((rp) => <ProductCard key={rp.id} p={rp} onOpen={(p) => { navigate({ page: 'product', id: p.id }); window.scrollTo(0, 0); }} onAdd={onAdd} />)}
           </div>
         </div>

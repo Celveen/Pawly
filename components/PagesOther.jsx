@@ -42,7 +42,7 @@ export function ArticlesPage({ navigate }) {
       <section style={{ paddingTop: 48, paddingBottom: 96 }}>
         <div className="container">
           {hero && <div style={{ marginBottom: 40 }}><ArticleCard a={hero} featured onOpen={(a) => navigate({ page: 'article', id: a.id })} /></div>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {rest.map((a) => <ArticleCard key={a.id} a={a} onOpen={(a) => navigate({ page: 'article', id: a.id })} />)}
           </div>
           {filtered.length === 0 && (
@@ -94,7 +94,7 @@ export function ArticlePage({ id, navigate }) {
       <article>
         <div className="container" style={{ maxWidth: 760 }}>
           <div className="eyebrow" style={{ marginBottom: 16 }}>{ARTICLE_CATS.find((c) => c.id === a.cat)?.name} · {a.read}</div>
-          <h1 className="h-1" style={{ margin: 0, fontSize: 48, letterSpacing: '-0.025em' }}>{a.title}</h1>
+          <h1 className="h-1 m-h1" style={{ margin: 0, fontSize: 48, letterSpacing: '-0.025em' }}>{a.title}</h1>
           <p style={{ fontSize: 19, lineHeight: 1.65, color: 'var(--ink-2)', marginTop: 24 }}>{a.excerpt}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--line-2)' }}>
             <div style={{ width: 44, height: 44, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={20} /></div>
@@ -148,7 +148,7 @@ export function ArticlePage({ id, navigate }) {
       <section style={{ paddingTop: 80, paddingBottom: 96 }}>
         <div className="container">
           <h2 className="h-2" style={{ margin: '0 0 32px' }}>继续阅读</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {allMore.map((x) => <ArticleCard key={x.id} a={x} onOpen={(a) => { navigate({ page: 'article', id: a.id }); window.scrollTo(0, 0); }} />)}
           </div>
         </div>
@@ -269,7 +269,7 @@ export function CheckoutPage({ items, navigate, clearCart }) {
       <div className="container">
         <div className="eyebrow" style={{ marginBottom: 16 }}>结算</div>
         <h1 className="h-1" style={{ margin: 0 }}>填一下地址，狗子等不及了。</h1>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 48, marginTop: 48 }}>
+        <div className="m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 48, marginTop: 48 }}>
           <div>
             <div className="card" style={{ padding: 32 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -417,7 +417,7 @@ export function MemberPage({ navigate, initialTab }) {
     <>
       <section style={{ paddingTop: 56, paddingBottom: 32 }}>
         <div className="container">
-          <div style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 28, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 28, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={260} /></div>
             <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={44} /></div>
             <div style={{ position: 'relative' }}>
@@ -456,7 +456,7 @@ export function MemberPage({ navigate, initialTab }) {
 
       <div style={{ borderBottom: '1px solid var(--line-2)' }}>
         <div className="container">
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div className="m-tabs" style={{ display: 'flex', gap: 4 }}>
             {[{ id: 'overview', l: '概览' }, { id: 'orders', l: '我的订单' }, { id: 'pets', l: '宠物档案' }, { id: 'addr', l: '地址管理' }, { id: 'benefits', l: '会员权益' }].map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{ height: 52, padding: '0 16px', border: 0, background: 'transparent', color: 'var(--ink)', fontSize: 14, fontWeight: 500, borderBottom: tab === t.id ? '2px solid var(--ink)' : '2px solid transparent', marginBottom: -1 }}>{t.l}</button>
             ))}
@@ -467,7 +467,7 @@ export function MemberPage({ navigate, initialTab }) {
       <section style={{ paddingTop: 48, paddingBottom: 96 }}>
         <div className="container">
           {tab === 'overview' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
               <div className="card" style={{ padding: 28 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                   <h3 className="h-3" style={{ margin: 0 }}>我的毛孩子</h3>
@@ -512,7 +512,7 @@ export function MemberPage({ navigate, initialTab }) {
               </div>
               <div className="card" style={{ padding: 28, gridColumn: 'span 2' }}>
                 <h3 className="h-3" style={{ margin: '0 0 20px' }}>猜你会回购</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                   {PRODUCTS.slice(0, 4).map((p) => (
                     <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, background: 'var(--surface-2)' }}>
                       <div style={{ width: 48, height: 48, borderRadius: 10, background: p.bg, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={p.emoji} size={22} /></div>
@@ -730,7 +730,7 @@ function AddressTab() {
       {addresses?.length > 0 && (
         <div style={{ display: 'grid', gap: 12 }}>
           {addresses.map((a) => (
-            <div key={a.id} className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div key={a.id} className="card m-wrap" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>{a.name}</span>
@@ -883,7 +883,7 @@ function PetsTab({ pets, onChanged }) {
       {open && (
         <div className="card" style={{ padding: 24, marginBottom: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{editing ? `编辑「${editing}」的档案` : '添加新宠物'}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             <input className="input" placeholder="名字 *" value={form.name} disabled={!!editing}
               title={editing ? '名字不可修改（如需改名请删除后重建）' : ''}
               style={{ opacity: editing ? 0.6 : 1 }}
@@ -916,7 +916,7 @@ function PetsTab({ pets, onChanged }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+      <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
         {pets.map((p) => (
           <div key={p.name} className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ background: petBg(p.species), padding: '32px 0', display: 'grid', placeItems: 'center' }}><Emoji text={petEmoji(p.species)} size={104} /></div>

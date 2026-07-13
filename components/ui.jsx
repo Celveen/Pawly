@@ -15,7 +15,7 @@ export const Logo = ({ size = 28 }) => (
       <path d="M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z" fill="currentColor" />
     </svg>
     <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>Pawly</span>
-    <span style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500, marginLeft: -2 }}>宝莉</span>
+    <span className="logo-sub" style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500, marginLeft: -2 }}>宝莉</span>
   </div>
 );
 
@@ -35,11 +35,11 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
       backdropFilter: 'blur(14px) saturate(140%)', WebkitBackdropFilter: 'blur(14px) saturate(140%)',
       borderBottom: '1px solid var(--line-2)',
     }}>
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72 }}>
+      <div className="container site-header-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72 }}>
         <button onClick={() => navigate({ page: 'home' })} style={{ border: 0, background: 'transparent', color: 'var(--ink)', padding: 0 }}>
           <Logo />
         </button>
-        <nav style={{ display: 'flex', gap: 4 }}>
+        <nav className="site-nav" style={{ display: 'flex', gap: 4 }}>
           {navItems.map((it) => {
             const active = route.page === it.id
               || (it.id === 'shop' && ['product'].includes(route.page))
@@ -200,8 +200,8 @@ export function Footer({ navigate }) {
   return (
     <footer style={{ background: 'var(--ink)', color: 'rgba(255,255,255,.7)', padding: '80px 0 32px' }}>
       <div className="container">
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 48, marginBottom: 64 }}>
-          <div>
+        <div className="m-2col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 48, marginBottom: 64 }}>
+          <div className="footer-brand">
             <div style={{ color: 'white', marginBottom: 16 }}><Logo /></div>
             <p style={{ fontSize: 14, lineHeight: 1.6, margin: 0, color: 'rgba(255,255,255,.6)', maxWidth: 280 }}>
               专门给铲屎官选品的小铺子。每件商品都被我们的狗（和猫）亲自批准过。
@@ -275,11 +275,11 @@ export function ProductCard({ p, onOpen, onAdd }) {
 
 export function ArticleCard({ a, onOpen, featured }) {
   return (
-    <article className="card fade-up" onClick={() => onOpen(a)}
+    <article className="card fade-up m-col" onClick={() => onOpen(a)}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: featured ? 'row' : 'column', gap: 0 }}>
-      <div style={{
+      <div className="m-full" style={{
         background: a.bg, width: featured ? '50%' : '100%',
-        aspectRatio: featured ? 'auto' : '16/10', display: 'grid', placeItems: 'center', position: 'relative',
+        aspectRatio: featured ? 'auto' : '16/10', minHeight: featured ? 160 : undefined, display: 'grid', placeItems: 'center', position: 'relative',
       }}>
         {a.refs?.length > 0 && <span className="tag-pill" title="内容编译自权威兽医指南，文末附来源">✓ 循证</span>}
         <Emoji text={a.emoji} size={featured ? 120 : 64} style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))' }} />
