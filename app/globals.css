@@ -146,3 +146,35 @@ a { color: inherit; text-decoration: none; }
 
 section { padding: 96px 0; }
 @media (max-width: 720px) { section { padding: 64px 0; } }
+
+/* —— 移动端适配：以下仅在 ≤720px 视口生效，桌面端布局完全不受影响。
+   组件里大量布局是内联样式，这里用工具类 + !important 在小屏覆盖。 —— */
+@media (max-width: 720px){
+  .m-1col{ grid-template-columns: 1fr !important; }
+  /* 子项的 span 2 会在单列模板下撑出隐式第二列，一并还原 */
+  .m-1col > *{ grid-column: auto !important; }
+  .m-2col{ grid-template-columns: repeat(2, 1fr) !important; }
+  .m-4col{ grid-template-columns: repeat(4, 1fr) !important; }
+  .m-static{ position: static !important; }
+  .m-wrap{ flex-wrap: wrap !important; }
+  .m-col{ flex-direction: column !important; }
+  .m-full{ width: 100% !important; }
+  .m-pad{ padding: 24px 20px !important; }
+  .m-h1{ font-size: 30px !important; }
+  .m-gap{ gap: 24px !important; }
+
+  /* 顶栏：logo+操作按钮一行，导航整行横向滚动（原来 5 个菜单会把汉字挤成竖排） */
+  .site-header-inner{ flex-wrap: wrap; height: auto !important; padding-top: 10px; padding-bottom: 8px; row-gap: 4px; }
+  .site-nav{ order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; }
+  .site-nav::-webkit-scrollbar{ display: none; }
+  .site-nav button{ flex-shrink: 0; white-space: nowrap; }
+  .logo-sub{ display: none; }
+
+  /* 会员页 tab 行、其他横排 tab：横向滚动不换行 */
+  .m-tabs{ overflow-x: auto; scrollbar-width: none; }
+  .m-tabs::-webkit-scrollbar{ display: none; }
+  .m-tabs button{ white-space: nowrap; flex-shrink: 0; }
+
+  /* 页脚品牌块占满一行 */
+  .footer-brand{ grid-column: 1 / -1; }
+}
