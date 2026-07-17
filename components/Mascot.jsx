@@ -62,9 +62,8 @@ export function CatMascot({ size = 60, thinking = false, greet = false }) {
         <path d="M34 8.5 L34 15.5" stroke={C.stripe} strokeWidth="2.6" strokeLinecap="round" />
         <path d="M39.5 9.5 L41 16" stroke={C.stripe} strokeWidth="2.6" strokeLinecap="round" />
 
-        {/* 白口鼻（与胸口相连的感觉） */}
-        <path d="M21 24 C23 31.5 31 34 38 33 C44 32 47.5 28.5 48.5 24.5 C44 30 25 31 21 24 Z" fill={C.white} />
-        <ellipse cx="33" cy="27.5" rx="10.5" ry="5.8" fill={C.white} />
+        {/* 白口鼻：居中的小块，避免左脸大面积发白 */}
+        <ellipse cx="34" cy="27" rx="8.5" ry="5.2" fill={C.white} />
 
         {/* 眼睛（整组眨眼） */}
         <g className="cat-eyes">

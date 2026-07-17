@@ -203,7 +203,7 @@ function PostDetail({ p, onClose, onLike, onDelete }) {
 
 function PostCard({ p, onOpen, onLike, onDelete }) {
   return (
-    <article className="card fade-up" onClick={onOpen}
+    <article className="card card-hot fade-up" onClick={onOpen}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', breakInside: 'avoid', marginBottom: 20, display: 'block' }}>
       <div style={{ background: p.bg, aspectRatio: '4/3', display: 'grid', placeItems: 'center', position: 'relative' }}>
         <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>

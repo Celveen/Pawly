@@ -103,8 +103,8 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
         <Reveal><div className="container">
           <div className="m-4col" style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 16 }}>
             {CATEGORIES.slice(1).map((c) => (
-              <button key={c.id} onClick={() => navigate({ page: 'shop', cat: c.id })}
-                style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 18, padding: '24px 8px', textAlign: 'center', cursor: 'pointer', transition: 'transform .15s, background .15s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <button key={c.id} onClick={() => navigate({ page: 'shop', cat: c.id })} className="card-hot"
+                style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 18, padding: '24px 8px', textAlign: 'center', transition: 'transform .18s ease, box-shadow .22s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                 <Emoji text={c.icon} size={28} />
                 <span style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</span>
               </button>

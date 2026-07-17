@@ -52,8 +52,8 @@ a { color: inherit; text-decoration: none; }
   transition: transform .12s ease, background .18s, color .18s, box-shadow .18s;
   white-space: nowrap;
 }
-.btn:hover{ transform: translateY(-1px); }
-.btn:active{ transform: translateY(0); }
+.btn:hover{ transform: translateY(-2px); box-shadow: 0 10px 22px -10px rgba(51,46,38,.35); }
+.btn:active{ transform: translateY(0) scale(.97); box-shadow: none; }
 .btn-primary { background: var(--ink); color: var(--bg); }
 .btn-primary:hover{ background: #221e18; }
 .btn-accent { background: var(--accent); color: #2a1a0a; }
@@ -73,6 +73,11 @@ a { color: inherit; text-decoration: none; }
   transition: transform .18s ease, box-shadow .22s ease;
 }
 .card:hover{ transform: translateY(-2px); box-shadow: var(--shadow-md); }
+/* 可点击卡片（商品/科普/社区帖/分类）：悬停确认感更强 —— 明显抬升 + 大投影 + 图片微放大 */
+.card-hot{ cursor: pointer; }
+.card-hot:hover{ transform: translateY(-6px) scale(1.015); box-shadow: var(--shadow-lg); }
+.prod-img img, .prod-img .emoji{ transition: transform .28s cubic-bezier(.22,.61,.36,1); }
+.card-hot:hover .prod-img img, .card-hot:hover .prod-img .emoji{ transform: scale(1.1); }
 
 .prod-img{
   position: relative; border-radius: var(--r-md);
@@ -164,7 +169,7 @@ a { color: inherit; text-decoration: none; }
 
 /* 科普栏无缝横向滚动（内容渲染两遍，位移 -50% 循环）；悬停暂停方便点击 */
 .marquee{ overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
-.marquee-track{ display: flex; gap: 20px; width: max-content; animation: marqueeMove 90s linear infinite; }
+.marquee-track{ display: flex; gap: 20px; width: max-content; animation: marqueeMove 130s linear infinite; }
 .marquee-track-rev{ animation-direction: reverse; }
 .marquee:hover .marquee-track{ animation-play-state: paused; }
 @keyframes marqueeMove{ to{ transform: translateX(calc(-50% - 10px)); } }
@@ -183,9 +188,9 @@ a { color: inherit; text-decoration: none; }
 .cat-mascot .cat-ear-r{ transform-origin: 44px 13px; animation: catEar 7s infinite; }
 .cat-mascot .cat-tail{ transform-origin: 53px 62px; animation: catTail 3.2s ease-in-out infinite; }
 .cat-mascot.thinking .cat-head{ animation: catTilt 1.5s ease-in-out infinite; }
-.chat-launcher:hover .cat-head, .cat-mascot.greet .cat-head{ animation: catShake 1s ease-in-out infinite; }
-.chat-launcher:hover .cat-ear-l, .cat-mascot.greet .cat-ear-l{ animation: catEarWiggle 1s ease-in-out infinite; }
-.chat-launcher:hover .cat-ear-r, .cat-mascot.greet .cat-ear-r{ animation: catEarWiggle 1s ease-in-out .5s infinite; }
+.chat-launcher:hover .cat-head, .cat-mascot.greet .cat-head{ animation: catShake 1.8s ease-in-out infinite; }
+.chat-launcher:hover .cat-ear-l, .cat-mascot.greet .cat-ear-l{ animation: catEarWiggle 1.8s ease-in-out infinite; }
+.chat-launcher:hover .cat-ear-r, .cat-mascot.greet .cat-ear-r{ animation: catEarWiggle 1.8s ease-in-out .9s infinite; }
 @keyframes catBob{ 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(1.6px); } }
 @keyframes catBlink{ 0%,91%,97%,100%{ transform: scaleY(1); } 94%{ transform: scaleY(.06); } }
 @keyframes catEar{ 0%,88%,96%,100%{ transform: rotate(0); } 92%{ transform: rotate(-10deg); } }

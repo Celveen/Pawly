@@ -287,7 +287,7 @@ export function Footer({ navigate }) {
 
 export function ProductCard({ p, onOpen, onAdd }) {
   return (
-    <div className="card fade-up" style={{ padding: 12, cursor: 'pointer' }} onClick={() => onOpen(p)}>
+    <div className="card card-hot fade-up" style={{ padding: 12 }} onClick={() => onOpen(p)}>
       <div className="prod-img" style={{ background: p.bg }}>
         <span className="pet-pill"><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>
         {p.tag && <span className="tag-pill">{p.tag}</span>}
@@ -322,7 +322,7 @@ export function ProductCard({ p, onOpen, onAdd }) {
 
 export function ArticleCard({ a, onOpen, featured }) {
   return (
-    <article className="card fade-up m-col" onClick={() => onOpen(a)}
+    <article className="card card-hot fade-up m-col" onClick={() => onOpen(a)}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: featured ? 'row' : 'column', gap: 0 }}>
       <div className="m-full" style={{
         background: a.bg, width: featured ? '50%' : '100%',
