@@ -149,11 +149,11 @@ function PostDetail({ p, onClose, onLike, onDelete }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(51,46,38,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label={p.title} style={{
         position: 'relative', width: 'min(560px, 100%)', maxHeight: 'calc(100vh - 64px)',
         background: 'var(--bg)', borderRadius: 24, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 24px 64px -16px rgba(38,70,83,.35)',
+        boxShadow: '0 24px 64px -16px rgba(51,46,38,.35)',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
         <div style={{ background: p.bg, minHeight: 180, display: 'grid', placeItems: 'center', position: 'relative', flexShrink: 0 }}>
@@ -203,7 +203,7 @@ function PostDetail({ p, onClose, onLike, onDelete }) {
 
 function PostCard({ p, onOpen, onLike, onDelete }) {
   return (
-    <article className="card fade-up" onClick={onOpen}
+    <article className="card card-hot fade-up" onClick={onOpen}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', breakInside: 'avoid', marginBottom: 20, display: 'block' }}>
       <div style={{ background: p.bg, aspectRatio: '4/3', display: 'grid', placeItems: 'center', position: 'relative' }}>
         <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>
@@ -277,10 +277,10 @@ function Composer({ onClose, onPosted }) {
   return (
     /* 用 flex 容器居中弹层：不给对话框本身设 transform 定位，避免与打开动效的 transform 冲突 */
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(51,46,38,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="发布分享" style={{
         position: 'relative', width: 'min(640px, 100%)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',
-        background: 'var(--bg)', borderRadius: 24, padding: 32, boxShadow: '0 24px 64px -16px rgba(38,70,83,.35)',
+        background: 'var(--bg)', borderRadius: 24, padding: 32, boxShadow: '0 24px 64px -16px rgba(51,46,38,.35)',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>

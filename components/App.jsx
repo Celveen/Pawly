@@ -67,7 +67,7 @@ function CartToast({ name, qty, onClick }) {
     <div onClick={onClick} role="status" style={{
       position: 'fixed', left: '50%', bottom: 32, zIndex: 90, cursor: 'pointer',
       background: 'var(--ink)', color: 'var(--bg)', padding: '12px 18px', borderRadius: 999,
-      boxShadow: '0 16px 36px -10px rgba(38,70,83,.45)', fontSize: 14, fontWeight: 500,
+      boxShadow: '0 16px 36px -10px rgba(51,46,38,.45)', fontSize: 14, fontWeight: 500,
       display: 'flex', alignItems: 'center', gap: 10, maxWidth: 'min(86vw, 420px)',
       animation: 'toastIn .28s cubic-bezier(.22,.61,.36,1) both',
     }}>

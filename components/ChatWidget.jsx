@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { fmt } from './util';
 import { PRODUCTS } from './data';
 import { Emoji } from './Emoji';
+import { CatMascot } from './Mascot';
 
 const ASSISTANT_NAME = '宝莉助手';
 
@@ -58,22 +59,17 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, loading]);
   useEffect(() => { if (open) { setUnread(0); setTimeout(() => inputRef.current?.focus(), 200); } }, [open]);
 
-  // 首次进入：延迟弹出"试试我"冒泡提示；用户用过客服后不再打扰
+  // 每次打开网页都延迟弹出"试试我"冒泡提示，约 11 秒后自动消失
   useEffect(() => {
-    let engaged = false;
-    try { engaged = localStorage.getItem('pawly.chatEngaged') === '1'; } catch (e) {}
-    if (engaged) return;
     const showT = setTimeout(() => setShowHint(true), 1800);
-    const hideT = setTimeout(() => setShowHint(false), 13000); // 约 11 秒后自动消失
+    const hideT = setTimeout(() => setShowHint(false), 13000);
     return () => { clearTimeout(showT); clearTimeout(hideT); };
   }, []);
-  // 打开客服即视为已发现，关闭提示且不再弹出
-  useEffect(() => {
-    if (open) { setShowHint(false); try { localStorage.setItem('pawly.chatEngaged', '1'); } catch (e) {} }
-  }, [open]);
+  // 打开客服时收起提示
+  useEffect(() => { if (open) setShowHint(false); }, [open]);
   useEffect(() => { try { localStorage.setItem('pawly.chatPos', JSON.stringify(pos)); } catch (e) {} }, [pos]);
   useEffect(() => {
-    const clamp = () => setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 76, p.x)), y: Math.max(8, Math.min(window.innerHeight - 76, p.y)) }));
+    const clamp = () => setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 92, p.x)), y: Math.max(8, Math.min(window.innerHeight - 92, p.y)) }));
     window.addEventListener('resize', clamp);
     return () => window.removeEventListener('resize', clamp);
   }, []);
@@ -116,7 +112,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
     const move = (ev) => {
       const dx = ev.clientX - startX, dy = ev.clientY - startY;
       if (!dragStateRef.current.moved && Math.abs(dx) + Math.abs(dy) > 4) { dragStateRef.current.moved = true; setDragging(true); }
-      if (dragStateRef.current.moved) setPos({ x: Math.max(8, Math.min(window.innerWidth - 68, startPos.x + dx)), y: Math.max(8, Math.min(window.innerHeight - 68, startPos.y - dy)) });
+      if (dragStateRef.current.moved) setPos({ x: Math.max(8, Math.min(window.innerWidth - 84, startPos.x + dx)), y: Math.max(8, Math.min(window.innerHeight - 84, startPos.y - dy)) });
     };
     const up = () => {
       window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
@@ -131,7 +127,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
     e.preventDefault();
     const startX = e.clientX, startY = e.clientY;
     const startPos = { ...pos };
-    const move = (ev) => setPos({ x: Math.max(8, Math.min(window.innerWidth - 68, startPos.x + (ev.clientX - startX))), y: Math.max(8, Math.min(window.innerHeight - 68, startPos.y - (ev.clientY - startY))) });
+    const move = (ev) => setPos({ x: Math.max(8, Math.min(window.innerWidth - 84, startPos.x + (ev.clientX - startX))), y: Math.max(8, Math.min(window.innerHeight - 84, startPos.y - (ev.clientY - startY))) });
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); setDragging(false); };
     setDragging(true);
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
@@ -141,7 +137,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
   const panelLeft = pos.x + panelW + 16 < vw ? pos.x : Math.max(8, vw - panelW - 8);
-  const panelBottom = pos.y + 76 + panelH < vh ? pos.y + 76 : Math.max(8, pos.y);
+  const panelBottom = pos.y + 92 + panelH < vh ? pos.y + 92 : Math.max(8, pos.y);
 
   return (
     <>
@@ -149,7 +145,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         position: 'fixed', left: panelLeft, bottom: panelBottom, zIndex: 79,
         width: `min(${panelW}px, calc(100vw - 32px))`, height: `min(${panelH}px, calc(100vh - 140px))`,
         background: 'var(--bg)', borderRadius: 24,
-        boxShadow: '0 24px 64px -16px rgba(38,70,83,.30), 0 8px 16px rgba(0,0,0,.06)',
+        boxShadow: '0 24px 64px -16px rgba(51,46,38,.30), 0 8px 16px rgba(0,0,0,.06)',
         border: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
         transformOrigin: 'bottom left',
         transform: open ? 'scale(1) translateY(0)' : 'scale(.92) translateY(12px)',
@@ -159,7 +155,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         <div onPointerDown={onPanelDragDown} style={{ padding: '18px 20px', borderBottom: '1px solid var(--line-2)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: 14, cursor: dragging ? 'grabbing' : 'grab', userSelect: 'none', position: 'relative' }}>
           <div style={{ position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)', width: 32, height: 4, borderRadius: 999, background: 'var(--line)', opacity: .5 }} />
           <div style={{ position: 'relative', width: 42, height: 42, borderRadius: 12, background: 'var(--primary)', display: 'grid', placeItems: 'center', boxShadow: 'inset 0 -2px 4px rgba(0,0,0,.08), 0 4px 10px -4px var(--primary)', color: 'white' }}>
-            <PawIcon size={22} color="white" />
+            <CatMascot size={34} thinking={loading} />
             <span style={{ position: 'absolute', bottom: -2, right: -2, width: 12, height: 12, borderRadius: 999, background: '#22C55E', border: '2px solid var(--surface)' }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -221,15 +217,15 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
       {showHint && !open && (
         <>
           <div aria-hidden style={{
-            position: 'fixed', left: pos.x, bottom: pos.y, width: 60, height: 60, borderRadius: 999,
+            position: 'fixed', left: pos.x, bottom: pos.y, width: 76, height: 76, borderRadius: 999,
             zIndex: 79, pointerEvents: 'none', animation: 'launcherPulse 1.8s ease-out infinite',
           }} />
           <div onClick={() => setOpen(true)} role="button" style={{
-            position: 'fixed', left: pos.x, bottom: pos.y + 74, zIndex: 81, cursor: 'pointer',
+            position: 'fixed', left: pos.x, bottom: pos.y + 90, zIndex: 81, cursor: 'pointer',
             width: 'min(78vw, 230px)',
             background: 'var(--surface)', color: 'var(--ink)',
             border: '1px solid var(--line)', borderRadius: 16, padding: '12px 34px 12px 14px',
-            boxShadow: '0 16px 36px -10px rgba(38,70,83,.35)',
+            boxShadow: '0 16px 36px -10px rgba(51,46,38,.35)',
             animation: 'hintPop .3s cubic-bezier(.22,.61,.36,1) both',
           }}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝莉助手</div>
@@ -251,18 +247,21 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         </>
       )}
 
-      <button onPointerDown={onLauncherDown} aria-label="打开宝莉助手 (可拖动)" title="点击打开 · 长按拖动"
+      <button onPointerDown={onLauncherDown} className="chat-launcher" aria-label="打开宝莉助手 (可拖动)" title="点击打开 · 长按拖动"
         style={{
-          position: 'fixed', left: pos.x, bottom: pos.y, zIndex: 80, width: 60, height: 60, borderRadius: 999,
-          background: 'linear-gradient(135deg, var(--primary), color-mix(in oklch, var(--primary) 70%, var(--accent) 30%))',
-          color: 'white', border: 0, cursor: dragging ? 'grabbing' : 'grab', display: 'grid', placeItems: 'center',
-          boxShadow: '0 12px 32px -8px color-mix(in oklch, var(--primary) 60%, transparent), 0 4px 8px rgba(0,0,0,.10)',
+          position: 'fixed', left: pos.x, bottom: pos.y, zIndex: 80, width: 76, height: 76, borderRadius: 999,
+          background: 'var(--surface)', border: '1px solid var(--line)',
+          color: 'var(--ink)', cursor: dragging ? 'grabbing' : 'grab', display: 'grid', placeItems: 'center',
+          boxShadow: 'var(--shadow-md)',
           transition: dragging ? 'none' : 'transform .2s cubic-bezier(.22,.61,.36,1), left .2s, bottom .2s',
-          transform: open ? 'scale(.92)' : 'scale(1)', touchAction: 'none',
+          transform: open ? 'scale(.94)' : 'scale(1)', touchAction: 'none',
         }}>
         {open ? (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
-        ) : (<PawIcon size={26} color="white" />)}
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
+        ) : (
+          // 吉祥物：耳朵略微探出按钮圆外更显眼；弹出提示时摇头摆耳打招呼
+          <span style={{ marginTop: -8 }}><CatMascot size={66} thinking={loading} greet={showHint} /></span>
+        )}
         {!open && unread > 0 && (
           <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: 'var(--accent)', color: '#2a1a0a', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg)' }}>{unread}</span>
         )}

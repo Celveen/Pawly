@@ -2,18 +2,19 @@
 import { useState, useMemo } from 'react';
 import { fmt } from './util';
 import { PRODUCTS, CATEGORIES, ARTICLES } from './data';
-import { ProductCard, ArticleCard } from './ui';
+import { ProductCard, ArticleCard, Reveal } from './ui';
 import { Emoji } from './Emoji';
 
 export function HomePage({ navigate, onAdd, onAskAI }) {
-  const featured = PRODUCTS.slice(0, 4);
+  const featured = PRODUCTS.slice(0, 8);
   const newArrivals = PRODUCTS.filter((p) => p.tag === '新品' || p.cat === 'snack').slice(0, 4);
-  const topArticles = ARTICLES.slice(0, 3);
+  const marqueeArticles = ARTICLES.slice(0, 10);
 
   return (
     <>
-      <section style={{ paddingTop: 80, paddingBottom: 64 }}>
-        <div className="container m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 64, alignItems: 'center' }}>
+      <section style={{ paddingTop: 80, paddingBottom: 64, position: 'relative' }}>
+        <div aria-hidden className="hero-blobs"><span className="blob b1" /><span className="blob b2" /><span className="blob b3" /></div>
+        <div className="container m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 64, alignItems: 'center', position: 'relative' }}>
           <div className="fade-up">
             <div className="eyebrow" style={{ marginBottom: 24 }}>Pawly · AI 宠物管家</div>
             <h1 className="h-display" style={{ margin: 0 }}>
@@ -25,7 +26,6 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
             <div className="m-wrap" style={{ display: 'flex', gap: 12, marginTop: 36 }}>
               <button onClick={onAskAI} className="btn btn-primary btn-lg">让 AI 帮我挑 <span style={{ fontSize: 16 }}>→</span></button>
               <button onClick={() => navigate({ page: 'articles' })} className="btn btn-line btn-lg">看科普文章</button>
-              <button onClick={() => navigate({ page: 'shop' })} className="btn btn-ghost btn-lg">逛商品</button>
             </div>
             <div style={{ display: 'flex', gap: 40, marginTop: 56 }}>
               {[{ n: '24h', l: 'AI 管家在线' }, { n: '58 篇', l: '循证科普' }, { n: '120+', l: '严选商品' }].map((s) => (
@@ -37,14 +37,14 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
             </div>
           </div>
           <div style={{ position: 'relative', aspectRatio: '1 / 1.05' }}>
-            <div style={{ position: 'absolute', top: '4%', left: '0%', width: '54%', aspectRatio: '1/1.15', borderRadius: 28, background: '#F4C28A', display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-lg)', transform: 'rotate(-3deg)' }}><Emoji text="🐶" size={160} /></div>
-            <div style={{ position: 'absolute', top: '8%', right: '0%', width: '46%', aspectRatio: '1/1', borderRadius: 24, background: '#C8DDE2', display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-lg)', transform: 'rotate(4deg)' }}><Emoji text="🐱" size={130} /></div>
-            <div style={{ position: 'absolute', bottom: '0%', left: '14%', width: '42%', aspectRatio: '1.4/1', borderRadius: 22, background: 'var(--ink)', color: 'var(--bg)', padding: 24, transform: 'rotate(-2deg)', boxShadow: 'var(--shadow-lg)' }}>
+            <div className="float-card" style={{ '--r': '-3deg', position: 'absolute', top: '4%', left: '0%', width: '54%', aspectRatio: '1/1.15', borderRadius: 28, background: '#F2CD9A', display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-lg)' }}><Emoji text="🐶" size={160} /></div>
+            <div className="float-card" style={{ '--r': '4deg', animationDelay: '1.4s', position: 'absolute', top: '8%', right: '0%', width: '46%', aspectRatio: '1/1', borderRadius: 24, background: '#D4DCE9', display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-lg)' }}><Emoji text="🐱" size={130} /></div>
+            <div className="float-card" style={{ '--r': '-2deg', animationDelay: '0.7s', position: 'absolute', bottom: '0%', left: '14%', width: '42%', aspectRatio: '1.4/1', borderRadius: 22, background: 'var(--ink)', color: 'var(--bg)', padding: 24, boxShadow: 'var(--shadow-lg)' }}>
               <div className="eyebrow" style={{ color: 'rgba(255,255,255,.6)' }}>Best Seller</div>
               <div style={{ fontSize: 18, fontWeight: 600, marginTop: 8, lineHeight: 1.3 }}>鸡胸肉条 · 训练奖励首选</div>
               <div className="mono" style={{ fontSize: 26, fontWeight: 700, marginTop: 14, letterSpacing: '-0.01em' }}>¥39 <span style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textDecoration: 'line-through', fontWeight: 400 }}>¥49</span></div>
             </div>
-            <div style={{ position: 'absolute', bottom: '8%', right: '4%', width: '38%', aspectRatio: '1/1', borderRadius: 22, background: 'var(--accent)', padding: 20, transform: 'rotate(3deg)', boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div className="float-card" style={{ '--r': '3deg', animationDelay: '2.1s', position: 'absolute', bottom: '8%', right: '4%', width: '38%', aspectRatio: '1/1', borderRadius: 22, background: 'var(--accent)', padding: 20, boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <Emoji text="🦴" size={40} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#2a1a0a' }}>新人专享</div>
@@ -56,7 +56,31 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
       </section>
 
       <section style={{ paddingTop: 0, paddingBottom: 32 }}>
-        <div className="container">
+        <Reveal>
+          <div className="container">
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
+              <div>
+                <div className="eyebrow" style={{ marginBottom: 12 }}>宠物科普 · Pawly Journal</div>
+                <h2 className="h-1" style={{ margin: 0, maxWidth: 560 }}>养宠物这件事，<br />没人天生就会。</h2>
+              </div>
+              <button onClick={() => navigate({ page: 'articles' })} className="btn btn-ghost">所有文章 →</button>
+            </div>
+          </div>
+          {/* 无缝横向滚动：列表渲染两遍循环位移，悬停暂停可点击 */}
+          <div className="marquee">
+            <div className="marquee-track">
+              {[...marqueeArticles, ...marqueeArticles].map((a, i) => (
+                <div key={`${a.id}-${i}`} style={{ width: 320, flexShrink: 0 }} aria-hidden={i >= marqueeArticles.length || undefined}>
+                  <ArticleCard a={a} onOpen={(x) => navigate({ page: 'article', id: x.id })} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      <section style={{ paddingTop: 32, paddingBottom: 32 }}>
+        <Reveal><div className="container">
           <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {[
               { e: '💬', t: '有问题，先问一句', d: '掉毛、软便、挑食、要不要驱虫……随时开口，AI 管家马上接住。' },
@@ -72,42 +96,25 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section style={{ paddingTop: 40, paddingBottom: 40 }}>
-        <div className="container">
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
-            <div>
-              <div className="eyebrow" style={{ marginBottom: 12 }}>宠物科普 · Pawly Journal</div>
-              <h2 className="h-1" style={{ margin: 0, maxWidth: 560 }}>养宠物这件事，<br />没人天生就会。</h2>
-            </div>
-            <button onClick={() => navigate({ page: 'articles' })} className="btn btn-ghost">所有文章 →</button>
-          </div>
-          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 20 }}>
-            <ArticleCard a={topArticles[0]} featured onOpen={(a) => navigate({ page: 'article', id: a.id })} />
-            <ArticleCard a={topArticles[1]} onOpen={(a) => navigate({ page: 'article', id: a.id })} />
-            <ArticleCard a={topArticles[2]} onOpen={(a) => navigate({ page: 'article', id: a.id })} />
-          </div>
-        </div>
+        </div></Reveal>
       </section>
 
       <section style={{ paddingTop: 32, paddingBottom: 32 }}>
-        <div className="container">
+        <Reveal><div className="container">
           <div className="m-4col" style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 16 }}>
             {CATEGORIES.slice(1).map((c) => (
-              <button key={c.id} onClick={() => navigate({ page: 'shop', cat: c.id })}
-                style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 18, padding: '24px 8px', textAlign: 'center', cursor: 'pointer', transition: 'transform .15s, background .15s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <button key={c.id} onClick={() => navigate({ page: 'shop', cat: c.id })} className="card-hot"
+                style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 18, padding: '24px 8px', textAlign: 'center', transition: 'transform .18s ease, box-shadow .22s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                 <Emoji text={c.icon} size={28} />
                 <span style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</span>
               </button>
             ))}
           </div>
-        </div>
+        </div></Reveal>
       </section>
 
       <section style={{ paddingTop: 56, paddingBottom: 56 }}>
-        <div className="container">
+        <Reveal><div className="container">
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
             <div>
               <div className="eyebrow" style={{ marginBottom: 12 }}>编辑精选</div>
@@ -115,14 +122,21 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
             </div>
             <button onClick={() => navigate({ page: 'shop' })} className="btn btn-ghost">查看全部 →</button>
           </div>
-          <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-            {featured.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
-          </div>
         </div>
+        {/* 商品无缝横向滚动（与科普栏反向），悬停暂停 */}
+        <div className="marquee">
+          <div className="marquee-track marquee-track-rev">
+            {[...featured, ...featured].map((p, i) => (
+              <div key={`${p.id}-${i}`} style={{ width: 300, flexShrink: 0 }} aria-hidden={i >= featured.length || undefined}>
+                <ProductCard p={p} onOpen={(x) => navigate({ page: 'product', id: x.id })} onAdd={onAdd} />
+              </div>
+            ))}
+          </div>
+        </div></Reveal>
       </section>
 
       <section style={{ paddingTop: 32, paddingBottom: 32 }}>
-        <div className="container">
+        <Reveal><div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 28, padding: '56px 56px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -40, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={280} /></div>
             <div style={{ position: 'relative' }}>
@@ -141,11 +155,11 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
               ))}
             </div>
           </div>
-        </div>
+        </div></Reveal>
       </section>
 
       <section style={{ paddingTop: 56, paddingBottom: 96 }}>
-        <div className="container">
+        <Reveal><div className="container">
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
             <div>
               <div className="eyebrow" style={{ marginBottom: 12 }}>本周新品</div>
@@ -156,7 +170,7 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
           <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {newArrivals.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
           </div>
-        </div>
+        </div></Reveal>
       </section>
     </>
   );
@@ -185,7 +199,7 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
         </div>
       </section>
 
-      <div className="m-static" style={{ position: 'sticky', top: 72, zIndex: 30, background: 'rgba(239,244,242,.78)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
+      <div className="m-static" style={{ position: 'sticky', top: 72, zIndex: 30, background: 'rgba(244,239,231,.78)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', gap: 16, flexWrap: 'wrap' }}>
           <div className="h-scroll" style={{ display: 'flex', gap: 8 }}>
             {CATEGORIES.map((c) => (
