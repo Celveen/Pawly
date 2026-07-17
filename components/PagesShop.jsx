@@ -5,7 +5,7 @@ import { PRODUCTS, CATEGORIES, ARTICLES } from './data';
 import { ProductCard, ArticleCard } from './ui';
 import { Emoji } from './Emoji';
 
-export function HomePage({ navigate, onAdd }) {
+export function HomePage({ navigate, onAdd, onAskAI }) {
   const featured = PRODUCTS.slice(0, 4);
   const newArrivals = PRODUCTS.filter((p) => p.tag === '新品' || p.cat === 'snack').slice(0, 4);
   const topArticles = ARTICLES.slice(0, 3);
@@ -15,19 +15,20 @@ export function HomePage({ navigate, onAdd }) {
       <section style={{ paddingTop: 80, paddingBottom: 64 }}>
         <div className="container m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 64, alignItems: 'center' }}>
           <div className="fade-up">
-            <div className="eyebrow" style={{ marginBottom: 24 }}>Pawly · 2026 春夏</div>
+            <div className="eyebrow" style={{ marginBottom: 24 }}>Pawly · AI 宠物管家</div>
             <h1 className="h-display" style={{ margin: 0 }}>
-              给那只<br /><span className="marker">挑剔的</span>毛孩子<br />的好东西。
+              养宠不懂就问，<br /><span className="marker">AI 管家</span><br />随时在线。
             </h1>
             <p className="body-lg" style={{ marginTop: 28, maxWidth: 460 }}>
-              我们替你挑过了——每一件都经过我们的狗狗和猫猫亲自试用，留下来的只有这些。挑得累就抄我们作业。
+              从怎么喂、怎么养，到到底该买什么——Pawly 的 AI 管家基于循证科普先帮你把问题弄明白，再替你把东西挑对。
             </p>
-            <div style={{ display: 'flex', gap: 12, marginTop: 36 }}>
-              <button onClick={() => navigate({ page: 'shop' })} className="btn btn-primary btn-lg">开始逛 <span style={{ fontSize: 16 }}>→</span></button>
+            <div className="m-wrap" style={{ display: 'flex', gap: 12, marginTop: 36 }}>
+              <button onClick={onAskAI} className="btn btn-primary btn-lg">让 AI 帮我挑 <span style={{ fontSize: 16 }}>→</span></button>
               <button onClick={() => navigate({ page: 'articles' })} className="btn btn-line btn-lg">看科普文章</button>
+              <button onClick={() => navigate({ page: 'shop' })} className="btn btn-ghost btn-lg">逛商品</button>
             </div>
             <div style={{ display: 'flex', gap: 40, marginTop: 56 }}>
-              {[{ n: '120+', l: '严选商品' }, { n: '38k', l: '铲屎官信赖' }, { n: '4.8★', l: '平均评分' }].map((s) => (
+              {[{ n: '24h', l: 'AI 管家在线' }, { n: '58 篇', l: '循证科普' }, { n: '120+', l: '严选商品' }].map((s) => (
                 <div key={s.l}>
                   <div className="mono" style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.n}</div>
                   <div className="caption" style={{ marginTop: 2 }}>{s.l}</div>
@@ -50,6 +51,43 @@ export function HomePage({ navigate, onAdd }) {
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#2a1a0a', lineHeight: 1.1, marginTop: 4 }}>首单 8 折</div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 0, paddingBottom: 32 }}>
+        <div className="container">
+          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            {[
+              { e: '💬', t: '有问题，先问一句', d: '掉毛、软便、挑食、要不要驱虫……随时开口，AI 管家马上接住。' },
+              { e: '📖', t: '答案有出处', d: '回答基于站内循证科普与权威兽医资料，不瞎编、不带货式忽悠。' },
+              { e: '🛒', t: '需要买，才推荐', d: '确实需要用到什么，AI 才会从严选清单里帮你挑，一键加购。' },
+            ].map((s) => (
+              <div key={s.t} className="card" style={{ padding: '24px 24px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <Emoji text={s.e} size={28} />
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 600 }}>{s.t}</div>
+                  <div className="caption" style={{ marginTop: 6, lineHeight: 1.55 }}>{s.d}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 40, paddingBottom: 40 }}>
+        <div className="container">
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
+            <div>
+              <div className="eyebrow" style={{ marginBottom: 12 }}>宠物科普 · Pawly Journal</div>
+              <h2 className="h-1" style={{ margin: 0, maxWidth: 560 }}>养宠物这件事，<br />没人天生就会。</h2>
+            </div>
+            <button onClick={() => navigate({ page: 'articles' })} className="btn btn-ghost">所有文章 →</button>
+          </div>
+          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 20 }}>
+            <ArticleCard a={topArticles[0]} featured onOpen={(a) => navigate({ page: 'article', id: a.id })} />
+            <ArticleCard a={topArticles[1]} onOpen={(a) => navigate({ page: 'article', id: a.id })} />
+            <ArticleCard a={topArticles[2]} onOpen={(a) => navigate({ page: 'article', id: a.id })} />
           </div>
         </div>
       </section>
@@ -89,14 +127,14 @@ export function HomePage({ navigate, onAdd }) {
             <div style={{ position: 'absolute', right: -40, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={280} /></div>
             <div style={{ position: 'relative' }}>
               <div className="eyebrow" style={{ color: 'rgba(255,255,255,.5)', marginBottom: 12 }}>Pawly Club · 会员计划</div>
-              <h2 style={{ fontSize: 40, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>每月省一袋狗粮的钱。<br />大概。</h2>
+              <h2 style={{ fontSize: 40, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>把日常开销，<br />变成会员福利。</h2>
               <p style={{ fontSize: 15, lineHeight: 1.65, color: 'rgba(255,255,255,.7)', marginTop: 16, maxWidth: 480 }}>
-                ¥29/月 解锁 9 折商品、专属客服、生日礼盒、每月一场免费宠物体检。算下来比咖啡便宜还能让你的狗变得更好。
+                ¥29/月 解锁全场 9 折、更多 AI 管家额度、生日礼盒，以及每年一次免费宠物体检。日常买粮买罐头省下的钱，往往就够回本。
               </p>
               <button onClick={() => navigate({ page: 'member', tab: 'benefits' })} className="btn btn-accent btn-lg" style={{ marginTop: 28 }}>了解会员 →</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, position: 'relative' }}>
-              {[{ e: '🎁', t: '会员礼盒' }, { e: '💳', t: '全场 9 折' }, { e: '🏥', t: '月度体检' }, { e: '🎂', t: '生日福利' }].map((it) => (
+              {[{ e: '🤖', t: 'AI 额度升级' }, { e: '💳', t: '全场 9 折' }, { e: '🏥', t: '年度体检' }, { e: '🎂', t: '生日福利' }].map((it) => (
                 <div key={it.t} style={{ background: 'rgba(255,255,255,.08)', backdropFilter: 'blur(8px)', borderRadius: 14, padding: '20px 16px', border: '1px solid rgba(255,255,255,.1)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Emoji text={it.e} size={18} />{it.t}
                 </div>
@@ -106,7 +144,7 @@ export function HomePage({ navigate, onAdd }) {
         </div>
       </section>
 
-      <section style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <section style={{ paddingTop: 56, paddingBottom: 96 }}>
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
             <div>
@@ -117,23 +155,6 @@ export function HomePage({ navigate, onAdd }) {
           </div>
           <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {newArrivals.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
-          </div>
-        </div>
-      </section>
-
-      <section style={{ paddingTop: 56, paddingBottom: 96 }}>
-        <div className="container">
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
-            <div>
-              <div className="eyebrow" style={{ marginBottom: 12 }}>宠物科普 · Pawly Journal</div>
-              <h2 className="h-1" style={{ margin: 0, maxWidth: 560 }}>养宠物这件事，<br />没人天生就会。</h2>
-            </div>
-            <button onClick={() => navigate({ page: 'articles' })} className="btn btn-ghost">所有文章 →</button>
-          </div>
-          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 20 }}>
-            <ArticleCard a={topArticles[0]} featured onOpen={(a) => navigate({ page: 'article', id: a.id })} />
-            <ArticleCard a={topArticles[1]} onOpen={(a) => navigate({ page: 'article', id: a.id })} />
-            <ArticleCard a={topArticles[2]} onOpen={(a) => navigate({ page: 'article', id: a.id })} />
           </div>
         </div>
       </section>

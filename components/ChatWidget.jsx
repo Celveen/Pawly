@@ -37,8 +37,10 @@ function readPos() {
   return { x: 24, y: 24 };
 }
 
-export default function ChatWidget({ onAdd, navigate, onCartOpen }) {
+export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) {
   const [open, setOpen] = useState(false);
+  // 页面其他位置（如首页"让 AI 帮我挑"按钮）通过递增 openSignal 唤起对话窗
+  useEffect(() => { if (openSignal) setOpen(true); }, [openSignal]);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: `你好呀铲屎官~ 我是${ASSISTANT_NAME} 🐾\n告诉我你家毛孩子的情况（比如"我家柴犬2个月"），我会记下来，照着 TA 帮你挑东西、给建议。` },
   ]);
