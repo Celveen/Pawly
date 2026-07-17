@@ -6,7 +6,7 @@ import { ProductCard, ArticleCard, Reveal } from './ui';
 import { Emoji } from './Emoji';
 
 export function HomePage({ navigate, onAdd, onAskAI }) {
-  const featured = PRODUCTS.slice(0, 4);
+  const featured = PRODUCTS.slice(0, 8);
   const newArrivals = PRODUCTS.filter((p) => p.tag === '新品' || p.cat === 'snack').slice(0, 4);
   const marqueeArticles = ARTICLES.slice(0, 10);
 
@@ -26,7 +26,6 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
             <div className="m-wrap" style={{ display: 'flex', gap: 12, marginTop: 36 }}>
               <button onClick={onAskAI} className="btn btn-primary btn-lg">让 AI 帮我挑 <span style={{ fontSize: 16 }}>→</span></button>
               <button onClick={() => navigate({ page: 'articles' })} className="btn btn-line btn-lg">看科普文章</button>
-              <button onClick={() => navigate({ page: 'shop' })} className="btn btn-ghost btn-lg">逛商品</button>
             </div>
             <div style={{ display: 'flex', gap: 40, marginTop: 56 }}>
               {[{ n: '24h', l: 'AI 管家在线' }, { n: '58 篇', l: '循证科普' }, { n: '120+', l: '严选商品' }].map((s) => (
@@ -57,26 +56,6 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
       </section>
 
       <section style={{ paddingTop: 0, paddingBottom: 32 }}>
-        <Reveal><div className="container">
-          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            {[
-              { e: '💬', t: '有问题，先问一句', d: '掉毛、软便、挑食、要不要驱虫……随时开口，AI 管家马上接住。' },
-              { e: '📖', t: '答案有出处', d: '回答基于站内循证科普与权威兽医资料，不瞎编、不带货式忽悠。' },
-              { e: '🛒', t: '需要买，才推荐', d: '确实需要用到什么，AI 才会从严选清单里帮你挑，一键加购。' },
-            ].map((s) => (
-              <div key={s.t} className="card" style={{ padding: '24px 24px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <Emoji text={s.e} size={28} />
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 600 }}>{s.t}</div>
-                  <div className="caption" style={{ marginTop: 6, lineHeight: 1.55 }}>{s.d}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div></Reveal>
-      </section>
-
-      <section style={{ paddingTop: 40, paddingBottom: 40 }}>
         <Reveal>
           <div className="container">
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
@@ -102,6 +81,26 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
 
       <section style={{ paddingTop: 32, paddingBottom: 32 }}>
         <Reveal><div className="container">
+          <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            {[
+              { e: '💬', t: '有问题，先问一句', d: '掉毛、软便、挑食、要不要驱虫……随时开口，AI 管家马上接住。' },
+              { e: '📖', t: '答案有出处', d: '回答基于站内循证科普与权威兽医资料，不瞎编、不带货式忽悠。' },
+              { e: '🛒', t: '需要买，才推荐', d: '确实需要用到什么，AI 才会从严选清单里帮你挑，一键加购。' },
+            ].map((s) => (
+              <div key={s.t} className="card" style={{ padding: '24px 24px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <Emoji text={s.e} size={28} />
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 600 }}>{s.t}</div>
+                  <div className="caption" style={{ marginTop: 6, lineHeight: 1.55 }}>{s.d}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div></Reveal>
+      </section>
+
+      <section style={{ paddingTop: 32, paddingBottom: 32 }}>
+        <Reveal><div className="container">
           <div className="m-4col" style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 16 }}>
             {CATEGORIES.slice(1).map((c) => (
               <button key={c.id} onClick={() => navigate({ page: 'shop', cat: c.id })}
@@ -123,8 +122,15 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
             </div>
             <button onClick={() => navigate({ page: 'shop' })} className="btn btn-ghost">查看全部 →</button>
           </div>
-          <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-            {featured.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
+        </div>
+        {/* 商品无缝横向滚动（与科普栏反向），悬停暂停 */}
+        <div className="marquee">
+          <div className="marquee-track marquee-track-rev">
+            {[...featured, ...featured].map((p, i) => (
+              <div key={`${p.id}-${i}`} style={{ width: 300, flexShrink: 0 }} aria-hidden={i >= featured.length || undefined}>
+                <ProductCard p={p} onOpen={(x) => navigate({ page: 'product', id: x.id })} onAdd={onAdd} />
+              </div>
+            ))}
           </div>
         </div></Reveal>
       </section>
