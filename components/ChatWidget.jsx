@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { fmt } from './util';
 import { PRODUCTS } from './data';
 import { Emoji } from './Emoji';
+import { CatMascot } from './Mascot';
 
 const ASSISTANT_NAME = '宝莉助手';
 
@@ -159,7 +160,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         <div onPointerDown={onPanelDragDown} style={{ padding: '18px 20px', borderBottom: '1px solid var(--line-2)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: 14, cursor: dragging ? 'grabbing' : 'grab', userSelect: 'none', position: 'relative' }}>
           <div style={{ position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)', width: 32, height: 4, borderRadius: 999, background: 'var(--line)', opacity: .5 }} />
           <div style={{ position: 'relative', width: 42, height: 42, borderRadius: 12, background: 'var(--primary)', display: 'grid', placeItems: 'center', boxShadow: 'inset 0 -2px 4px rgba(0,0,0,.08), 0 4px 10px -4px var(--primary)', color: 'white' }}>
-            <PawIcon size={22} color="white" />
+            <CatMascot size={34} thinking={loading} />
             <span style={{ position: 'absolute', bottom: -2, right: -2, width: 12, height: 12, borderRadius: 999, background: '#22C55E', border: '2px solid var(--surface)' }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -251,7 +252,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         </>
       )}
 
-      <button onPointerDown={onLauncherDown} aria-label="打开宝莉助手 (可拖动)" title="点击打开 · 长按拖动"
+      <button onPointerDown={onLauncherDown} className="chat-launcher" aria-label="打开宝莉助手 (可拖动)" title="点击打开 · 长按拖动"
         style={{
           position: 'fixed', left: pos.x, bottom: pos.y, zIndex: 80, width: 60, height: 60, borderRadius: 999,
           background: 'linear-gradient(135deg, var(--primary), color-mix(in oklch, var(--primary) 70%, var(--accent) 30%))',
@@ -262,7 +263,10 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         }}>
         {open ? (
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
-        ) : (<PawIcon size={26} color="white" />)}
+        ) : (
+          // 狸花猫吉祥物：耳朵略微探出按钮圆外更显眼；首次提示期间挥爪打招呼
+          <span style={{ marginTop: -6 }}><CatMascot size={52} thinking={loading} wave={showHint} /></span>
+        )}
         {!open && unread > 0 && (
           <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: 'var(--accent)', color: '#2a1a0a', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg)' }}>{unread}</span>
         )}
