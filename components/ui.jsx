@@ -31,7 +31,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 50,
-      background: 'rgba(239,244,242,.78)',
+      background: 'rgba(244,239,231,.78)',
       backdropFilter: 'blur(14px) saturate(140%)', WebkitBackdropFilter: 'blur(14px) saturate(140%)',
       borderBottom: '1px solid var(--line-2)',
     }}>
@@ -56,6 +56,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
           })}
         </nav>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <UserButton navigate={navigate} />
           <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="搜索">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
@@ -80,6 +81,52 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
       </div>
       {searchOpen && <SearchOverlay navigate={navigate} onClose={() => setSearchOpen(false)} />}
     </header>
+  );
+}
+
+// 顶栏右上角：未登录显示「登录」，已登录显示头像（点击进个人中心）
+function UserButton({ navigate }) {
+  const [me, setMe] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/auth/me').then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive) setMe(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const loggedIn = me && !me.guest;
+  if (loggedIn) {
+    return (
+      <button onClick={() => navigate({ page: 'member' })} aria-label="个人中心" title={me.phoneMasked || '个人中心'}
+        style={{
+          width: 36, height: 36, borderRadius: 999, border: '1px solid var(--line)',
+          background: 'var(--ink)', color: 'var(--bg)', display: 'grid', placeItems: 'center', padding: 0,
+        }}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+        </svg>
+      </button>
+    );
+  }
+  return (
+    <button onClick={() => navigate({ page: 'member' })} className="btn btn-line btn-sm">登录</button>
+  );
+}
+
+// 滚动进场：进入视口后加 .in 浮现（动画样式见 globals.css .reveal）
+export function Reveal({ children, delay = 0, className = '', style }) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') { setInView(true); return; }
+    const ob = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); ob.disconnect(); } }, { threshold: 0.12 });
+    ob.observe(el);
+    return () => ob.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={`reveal${inView ? ' in' : ''}${className ? ' ' + className : ''}`} style={{ ...style, transitionDelay: delay ? `${delay}ms` : undefined }}>
+      {children}
+    </div>
   );
 }
 
@@ -111,10 +158,10 @@ function SearchOverlay({ navigate, onClose }) {
   // 72px 高的 header 盒子里，导致遮罩只覆盖顶部一条、点击页面无法关闭
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(38,70,83,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(51,46,38,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="全站搜索" style={{
         position: 'relative', margin: '96px auto 0', width: 'min(640px, calc(100vw - 32px))',
-        background: 'var(--bg)', borderRadius: 24, padding: 20, boxShadow: '0 24px 64px -16px rgba(38,70,83,.35)',
+        background: 'var(--bg)', borderRadius: 24, padding: 20, boxShadow: '0 24px 64px -16px rgba(51,46,38,.35)',
         maxHeight: 'calc(100vh - 160px)', display: 'flex', flexDirection: 'column',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
@@ -306,13 +353,13 @@ export function CartDrawer({ open, onClose, items, setQty, removeItem, onCheckou
   const shipping = items.length === 0 ? 0 : subtotal >= 99 ? 0 : 12;
   return (
     <>
-      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(38,70,83,.35)', zIndex: 60, animation: 'fadeBg .2s ease' }} />}
+      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(51,46,38,.35)', zIndex: 60, animation: 'fadeBg .2s ease' }} />}
       <aside style={{
         position: 'fixed', right: 0, top: 0, bottom: 0, width: 'min(440px, 100vw)',
         background: 'var(--bg)', zIndex: 70,
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .35s cubic-bezier(.22,.61,.36,1)',
-        display: 'flex', flexDirection: 'column', boxShadow: '-12px 0 40px -8px rgba(38,70,83,.18)',
+        display: 'flex', flexDirection: 'column', boxShadow: '-12px 0 40px -8px rgba(51,46,38,.18)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--line-2)' }}>
           <div>

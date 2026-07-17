@@ -150,7 +150,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         position: 'fixed', left: panelLeft, bottom: panelBottom, zIndex: 79,
         width: `min(${panelW}px, calc(100vw - 32px))`, height: `min(${panelH}px, calc(100vh - 140px))`,
         background: 'var(--bg)', borderRadius: 24,
-        boxShadow: '0 24px 64px -16px rgba(38,70,83,.30), 0 8px 16px rgba(0,0,0,.06)',
+        boxShadow: '0 24px 64px -16px rgba(51,46,38,.30), 0 8px 16px rgba(0,0,0,.06)',
         border: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
         transformOrigin: 'bottom left',
         transform: open ? 'scale(1) translateY(0)' : 'scale(.92) translateY(12px)',
@@ -230,7 +230,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
             width: 'min(78vw, 230px)',
             background: 'var(--surface)', color: 'var(--ink)',
             border: '1px solid var(--line)', borderRadius: 16, padding: '12px 34px 12px 14px',
-            boxShadow: '0 16px 36px -10px rgba(38,70,83,.35)',
+            boxShadow: '0 16px 36px -10px rgba(51,46,38,.35)',
             animation: 'hintPop .3s cubic-bezier(.22,.61,.36,1) both',
           }}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝莉助手</div>
