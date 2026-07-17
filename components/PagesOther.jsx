@@ -580,7 +580,7 @@ function BenefitsTab({ me, onLogin }) {
     { emoji: '🏠', title: '数据跨设备同步', desc: '宠物档案、订单、收货地址、社区帖子绑定手机号，换设备登录即恢复' },
     { emoji: '🎁', title: '会员礼盒', desc: '入会礼包与节日惊喜（供应链接入后发放）', soon: true },
     { emoji: '💳', title: '全场 9 折', desc: '会员专享价（真实支付接入后生效）', soon: true },
-    { emoji: '🏥', title: '月度免费体检', desc: '合作宠物医院每月一次基础体检（城市开通中）', soon: true },
+    { emoji: '🏥', title: '年度免费体检', desc: '合作宠物医院每年一次基础体检（城市开通中）', soon: true },
     { emoji: '🎂', title: '生日福利', desc: '毛孩子生日当月双倍积分 + 生日礼（按宠物档案的生日自动触达）', soon: true },
   ];
   return (

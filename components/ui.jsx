@@ -23,9 +23,9 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const navItems = [
     { id: 'home', label: '首页' },
-    { id: 'shop', label: '商品' },
     { id: 'articles', label: '宠物科普' },
     { id: 'community', label: '社区' },
+    { id: 'shop', label: '商品' },
     { id: 'member', label: '会员' },
   ];
   return (
@@ -180,21 +180,21 @@ function SearchOverlay({ navigate, onClose }) {
 
 export function Footer({ navigate }) {
   const cols = [
-    { title: '购物', items: [
-      { t: '新品上架', to: { page: 'shop' } }, { t: '畅销商品', to: { page: 'shop' } },
-      { t: '主粮零食', to: { page: 'shop', cat: 'food' } }, { t: '玩具好物', to: { page: 'shop', cat: 'toy' } },
-    ] },
     { title: '科普', items: [
       { t: '幼犬指南', to: { page: 'articles' } }, { t: '猫咪护理', to: { page: 'articles' } },
       { t: '训练教程', to: { page: 'articles' } }, { t: '健康百科', to: { page: 'articles' } },
     ] },
-    { title: '会员', items: [
-      { t: '会员权益', to: { page: 'member', tab: 'benefits' } }, { t: '我的订单', to: { page: 'member', tab: 'orders' } },
-      { t: '宠物档案', to: { page: 'member', tab: 'pets' } }, { t: '地址管理', to: { page: 'member', tab: 'addr' } },
-    ] },
     { title: '社区', items: [
       { t: '铲屎官社区', to: { page: 'community' } }, { t: '晒宠分享', to: { page: 'community' } },
       { t: '好物种草', to: { page: 'community' } }, { t: '养宠求助', to: { page: 'community' } },
+    ] },
+    { title: '购物', items: [
+      { t: '新品上架', to: { page: 'shop' } }, { t: '畅销商品', to: { page: 'shop' } },
+      { t: '主粮零食', to: { page: 'shop', cat: 'food' } }, { t: '玩具好物', to: { page: 'shop', cat: 'toy' } },
+    ] },
+    { title: '会员', items: [
+      { t: '会员权益', to: { page: 'member', tab: 'benefits' } }, { t: '我的订单', to: { page: 'member', tab: 'orders' } },
+      { t: '宠物档案', to: { page: 'member', tab: 'pets' } }, { t: '地址管理', to: { page: 'member', tab: 'addr' } },
     ] },
   ];
   return (
