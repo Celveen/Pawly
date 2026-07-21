@@ -144,8 +144,8 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
       <div style={{
         position: 'fixed', left: panelLeft, bottom: panelBottom, zIndex: 79,
         width: `min(${panelW}px, calc(100vw - 32px))`, height: `min(${panelH}px, calc(100vh - 140px))`,
-        background: 'var(--bg)', borderRadius: 24,
-        boxShadow: '0 24px 64px -16px rgba(51,46,38,.30), 0 8px 16px rgba(0,0,0,.06)',
+        background: 'var(--bg)', borderRadius: 20,
+        boxShadow: '0 24px 64px -16px rgba(42,36,26,.30), 0 8px 16px rgba(42,36,26,.06)',
         border: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
         transformOrigin: 'bottom left',
         transform: open ? 'scale(1) translateY(0)' : 'scale(.92) translateY(12px)',
@@ -156,10 +156,10 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
           <div style={{ position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)', width: 32, height: 4, borderRadius: 999, background: 'var(--line)', opacity: .5 }} />
           <div style={{ position: 'relative', width: 42, height: 42, borderRadius: 12, background: 'var(--primary)', display: 'grid', placeItems: 'center', boxShadow: 'inset 0 -2px 4px rgba(0,0,0,.08), 0 4px 10px -4px var(--primary)', color: 'white' }}>
             <CatMascot size={34} thinking={loading} />
-            <span style={{ position: 'absolute', bottom: -2, right: -2, width: 12, height: 12, borderRadius: 999, background: '#22C55E', border: '2px solid var(--surface)' }} />
+            <span style={{ position: 'absolute', bottom: -2, right: -2, width: 12, height: 12, borderRadius: 999, background: 'var(--sage)', border: '2px solid var(--surface)' }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>{ASSISTANT_NAME}</div>
+            <div className="serif" style={{ fontSize: 16, fontWeight: 500 }}>{ASSISTANT_NAME}</div>
             <div className="caption" style={{ fontSize: 11.5, marginTop: 1 }}>在线 · 会记住你家毛孩子 · 拖动头部可移动</div>
           </div>
           <button onClick={(e) => { e.stopPropagation(); setOpen(false); }} onPointerDown={(e) => e.stopPropagation()} aria-label="收起" style={{ width: 32, height: 32, border: 0, borderRadius: 999, background: 'transparent', color: 'var(--ink-2)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
@@ -198,14 +198,14 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
               placeholder="问点什么吧... (Enter 发送)" rows={1}
               style={{ flex: 1, resize: 'none', border: 0, outline: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 14, lineHeight: 1.4, color: 'var(--ink)', padding: '8px 0', maxHeight: 100 }} />
             <button onClick={handleSend} disabled={!input.trim() || loading} aria-label="发送"
-              style={{ width: 36, height: 36, borderRadius: 999, border: 0, background: input.trim() && !loading ? 'var(--primary)' : 'var(--surface-2)', color: input.trim() && !loading ? 'white' : 'var(--ink-3)', display: 'grid', placeItems: 'center', cursor: input.trim() && !loading ? 'pointer' : 'default', transition: 'all .15s' }}>
+              style={{ width: 36, height: 36, borderRadius: 999, border: 0, background: input.trim() && !loading ? 'var(--primary)' : 'var(--surface-2)', color: input.trim() && !loading ? 'var(--primary-ink)' : 'var(--ink-3)', display: 'grid', placeItems: 'center', cursor: input.trim() && !loading ? 'pointer' : 'default', transition: 'all .15s' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /></svg>
             </button>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--ink-3)' }}>
             <span>AI 回复仅供参考</span>
             {quota && (
-              <span style={quota.used >= quota.limit ? { color: '#D9826B', fontWeight: 600 } : undefined}>
+              <span style={quota.used >= quota.limit ? { color: 'var(--accent)', fontWeight: 600 } : undefined}>
                 今日额度 {Math.min(quota.used, quota.limit)}/{quota.limit}{!quota.member && ' · 登录会员可提升'}
               </span>
             )}
@@ -225,7 +225,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
             width: 'min(78vw, 230px)',
             background: 'var(--surface)', color: 'var(--ink)',
             border: '1px solid var(--line)', borderRadius: 16, padding: '12px 34px 12px 14px',
-            boxShadow: '0 16px 36px -10px rgba(51,46,38,.35)',
+            boxShadow: '0 16px 36px -10px rgba(42,36,26,.35)',
             animation: 'hintPop .3s cubic-bezier(.22,.61,.36,1) both',
           }}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝莉助手</div>
@@ -263,7 +263,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
           <span style={{ marginTop: -8 }}><CatMascot size={66} thinking={loading} greet={showHint} /></span>
         )}
         {!open && unread > 0 && (
-          <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: 'var(--accent)', color: '#2a1a0a', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg)' }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: 'var(--accent)', color: '#FFF7EE', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg)' }}>{unread}</span>
         )}
       </button>
     </>
@@ -314,8 +314,8 @@ function Bubble({ role, text }) {
   const isUser = role === 'user';
   return (
     <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', animation: 'fadeUp .25s ease both' }}>
-      {!isUser && <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: 'var(--primary)', display: 'grid', placeItems: 'center', marginRight: 8, marginTop: 'auto', color: 'white' }}><PawIcon size={16} color="white" /></div>}
-      <div style={{ maxWidth: '78%', padding: '10px 14px', borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: isUser ? 'var(--ink)' : 'var(--surface)', color: isUser ? 'var(--bg)' : 'var(--ink)', fontSize: 13.5, lineHeight: 1.55, whiteSpace: isUser ? 'pre-wrap' : 'normal', border: isUser ? 0 : '1px solid var(--line-2)', boxShadow: isUser ? 'none' : 'var(--shadow-sm)' }}>{isUser ? text : <MarkdownText text={text} />}</div>
+      {!isUser && <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', marginRight: 8, marginTop: 'auto', color: 'var(--ink-2)' }}><PawIcon size={16} color="var(--ink-2)" /></div>}
+      <div style={{ maxWidth: '78%', padding: '10px 14px', borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: isUser ? 'var(--ink)' : 'var(--surface-2)', color: isUser ? 'var(--bg)' : 'var(--ink)', fontSize: 13.5, lineHeight: 1.55, whiteSpace: isUser ? 'pre-wrap' : 'normal', border: isUser ? 0 : '1px solid var(--line-2)', boxShadow: 'none' }}>{isUser ? text : <MarkdownText text={text} />}</div>
     </div>
   );
 }
@@ -323,8 +323,8 @@ function Bubble({ role, text }) {
 function TypingBubble() {
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: 8 }}>
-      <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: 'var(--primary)', display: 'grid', placeItems: 'center', color: 'white' }}><PawIcon size={16} color="white" /></div>
-      <div style={{ padding: '12px 16px', borderRadius: '18px 18px 18px 4px', background: 'var(--surface)', border: '1px solid var(--line-2)', display: 'flex', gap: 4, alignItems: 'center' }}>
+      <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', color: 'var(--ink-2)' }}><PawIcon size={16} color="var(--ink-2)" /></div>
+      <div style={{ padding: '12px 16px', borderRadius: '18px 18px 18px 4px', background: 'var(--surface-2)', border: '1px solid var(--line-2)', display: 'flex', gap: 4, alignItems: 'center' }}>
         <Dot delay={0} /><Dot delay={150} /><Dot delay={300} />
       </div>
       <style>{`@keyframes bounceDot { 0%, 60%, 100%{transform: translateY(0); opacity:.4;} 30%{transform: translateY(-4px); opacity: 1;} }`}</style>
@@ -344,7 +344,7 @@ function ProposalCard({ proposal, onAdopt }) {
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 14, animation: 'fadeUp .25s ease both' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 13.5, fontWeight: 600 }}>{proposal.title}</span>
-        {proposal.badge && <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--accent)', color: '#2a1a0a', whiteSpace: 'nowrap' }}>{proposal.badge}</span>}
+        {proposal.badge && <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--accent)', color: '#FFF7EE', whiteSpace: 'nowrap' }}>{proposal.badge}</span>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
         {items.map((p) => (

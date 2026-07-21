@@ -14,7 +14,7 @@ export const Logo = ({ size = 28 }) => (
       <circle cx="6" cy="18" r="2.4" fill="currentColor" />
       <path d="M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z" fill="currentColor" />
     </svg>
-    <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>Pawly</span>
+    <span className="serif" style={{ fontSize: 20, fontWeight: 600, letterSpacing: '0.01em' }}>Pawly</span>
     <span className="logo-sub" style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500, marginLeft: -2 }}>宝莉</span>
   </div>
 );
@@ -127,6 +127,18 @@ export function Reveal({ children, delay = 0, className = '', style }) {
     <div ref={ref} className={`reveal${inView ? ' in' : ''}${className ? ' ' + className : ''}`} style={{ ...style, transitionDelay: delay ? `${delay}ms` : undefined }}>
       {children}
     </div>
+  );
+}
+
+// 智能图片层：铺在设计占位（色块+emoji）之上；素材不存在时自动隐藏。
+// 素材放置约定：商品 /public/images/products/<id>.jpg，科普 /public/images/articles/<id>.jpg
+export function SmartImage({ src, alt = '' }) {
+  const [ok, setOk] = useState(true);
+  useEffect(() => { setOk(true); }, [src]);
+  if (!src || !ok) return null;
+  return (
+    <img src={src} alt={alt} draggable={false} onError={() => setOk(false)}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
   );
 }
 
@@ -245,8 +257,15 @@ export function Footer({ navigate }) {
     ] },
   ];
   return (
-    <footer style={{ background: 'var(--ink)', color: 'rgba(255,255,255,.7)', padding: '80px 0 32px' }}>
+    <footer style={{ background: 'var(--ink)', color: 'rgba(255,251,242,.72)', padding: '88px 0 32px' }}>
       <div className="container">
+        {/* 编辑风品牌陈述：大衬线句子压场 */}
+        <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(255,251,242,.12)' }}>
+          <div className="eyebrow" style={{ color: 'rgba(255,251,242,.45)', marginBottom: 20 }}>PAWLY · 宝莉</div>
+          <p className="serif m-h1" style={{ fontSize: 'clamp(28px, 3.6vw, 48px)', lineHeight: 1.25, margin: 0, color: '#FFFBF2', maxWidth: 720 }}>
+            把宠物照顾明白这件事，<br />没人天生就会——但可以问。
+          </p>
+        </div>
         <div className="m-2col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 48, marginBottom: 64 }}>
           <div className="footer-brand">
             <div style={{ color: 'white', marginBottom: 16 }}><Logo /></div>
@@ -289,9 +308,10 @@ export function ProductCard({ p, onOpen, onAdd }) {
   return (
     <div className="card card-hot fade-up" style={{ padding: 12 }} onClick={() => onOpen(p)}>
       <div className="prod-img" style={{ background: p.bg }}>
+        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
+        <SmartImage src={`/images/products/${p.id}.jpg`} alt={p.name} />
         <span className="pet-pill"><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>
         {p.tag && <span className="tag-pill">{p.tag}</span>}
-        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
       </div>
       <div style={{ padding: '14px 6px 6px' }}>
         <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35, minHeight: 38 }}>{p.name}</div>
@@ -325,17 +345,18 @@ export function ArticleCard({ a, onOpen, featured }) {
     <article className="card card-hot fade-up m-col" onClick={() => onOpen(a)}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: featured ? 'row' : 'column', gap: 0 }}>
       <div className="m-full" style={{
-        background: a.bg, width: featured ? '50%' : '100%',
+        background: a.bg, width: featured ? '50%' : '100%', overflow: 'hidden',
         aspectRatio: featured ? 'auto' : '16/10', minHeight: featured ? 160 : undefined, display: 'grid', placeItems: 'center', position: 'relative',
       }}>
-        {a.refs?.length > 0 && <span className="tag-pill" title="内容编译自权威兽医指南，文末附来源">✓ 循证</span>}
         <Emoji text={a.emoji} size={featured ? 120 : 64} style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))' }} />
+        <SmartImage src={`/images/articles/${a.id}.jpg`} alt={a.title} />
+        {a.refs?.length > 0 && <span className="tag-pill" title="内容编译自权威兽医指南，文末附来源">✓ 循证</span>}
       </div>
       <div style={{ padding: featured ? '40px' : '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div className="eyebrow" style={{ marginBottom: 12 }}>
           {ARTICLE_CATS.find((c) => c.id === a.cat)?.name} · {a.read}
         </div>
-        <h3 style={{ fontSize: featured ? 28 : 18, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.25, margin: '0 0 12px' }}>{a.title}</h3>
+        <h3 className="serif" style={{ fontSize: featured ? 30 : 19, fontWeight: 500, lineHeight: 1.3, margin: '0 0 12px' }}>{a.title}</h3>
         <p className="body" style={{ margin: 0, fontSize: featured ? 15 : 14, display: '-webkit-box', WebkitLineClamp: featured ? 3 : 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {a.excerpt}
         </p>
