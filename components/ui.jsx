@@ -21,6 +21,8 @@ export const Logo = ({ size = 28 }) => (
 
 export function Header({ route, navigate, cartCount, onCartOpen }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const navRef = useRef(null);
+  const [ind, setInd] = useState(null); // 滑动指示块的位置
   const navItems = [
     { id: 'home', label: '首页' },
     { id: 'articles', label: '宠物科普' },
@@ -28,35 +30,36 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
     { id: 'shop', label: '商品' },
     { id: 'member', label: '会员' },
   ];
+  const activeId = ['product'].includes(route.page) ? 'shop' : ['article'].includes(route.page) ? 'articles' : route.page;
+  // 指示块跟随当前项平滑滑动（浮雕白块）；窗口缩放时重新测量
+  useEffect(() => {
+    const measure = () => {
+      const el = navRef.current?.querySelector('button.active');
+      if (el) setInd({ left: el.offsetLeft, width: el.offsetWidth });
+      else setInd(null);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [activeId]);
   return (
-    <header style={{
-      position: 'sticky', top: 0, zIndex: 50,
-      background: 'rgba(244,239,231,.78)',
-      backdropFilter: 'blur(14px) saturate(140%)', WebkitBackdropFilter: 'blur(14px) saturate(140%)',
-      borderBottom: '1px solid var(--line-2)',
-    }}>
-      <div className="container site-header-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72 }}>
+    <header style={{ position: 'sticky', top: 0, zIndex: 50, pointerEvents: 'none' }}>
+      <div className="container site-header-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 76, pointerEvents: 'auto' }}>
         <button onClick={() => navigate({ page: 'home' })} style={{ border: 0, background: 'transparent', color: 'var(--ink)', padding: 0 }}>
           <Logo />
         </button>
-        <nav className="site-nav" style={{ display: 'flex', gap: 4 }}>
-          {navItems.map((it) => {
-            const active = route.page === it.id
-              || (it.id === 'shop' && ['product'].includes(route.page))
-              || (it.id === 'articles' && ['article'].includes(route.page));
-            return (
-              <button key={it.id} onClick={() => navigate({ page: it.id })}
-                style={{
-                  height: 36, padding: '0 14px', borderRadius: 999, border: 0,
-                  background: active ? 'var(--ink)' : 'transparent',
-                  color: active ? 'var(--bg)' : 'var(--ink)',
-                  fontSize: 14, fontWeight: 500, transition: 'background .15s',
-                }}>{it.label}</button>
-            );
-          })}
+        <nav className="site-nav" style={{ display: 'flex' }}>
+          <div ref={navRef} className="pill-nav glass">
+            {ind && <span className="indicator" style={{ left: ind.left, width: ind.width }} />}
+            {navItems.map((it) => (
+              <button key={it.id} onClick={() => navigate({ page: it.id })} className={activeId === it.id ? 'active' : ''}>
+                {it.label}
+              </button>
+            ))}
+          </div>
         </nav>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="搜索">
+        <div className="glass" style={{ display: 'flex', alignItems: 'center', gap: 6, borderRadius: 999, padding: 4 }}>
+          <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center', borderRadius: 999 }} aria-label="搜索">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
             </svg>
@@ -170,10 +173,10 @@ function SearchOverlay({ navigate, onClose }) {
   // 72px 高的 header 盒子里，导致遮罩只覆盖顶部一条、点击页面无法关闭
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(51,46,38,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="全站搜索" style={{
         position: 'relative', margin: '96px auto 0', width: 'min(640px, calc(100vw - 32px))',
-        background: 'var(--bg)', borderRadius: 24, padding: 20, boxShadow: '0 24px 64px -16px rgba(51,46,38,.35)',
+        background: 'var(--bg)', borderRadius: 24, padding: 20, boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)',
         maxHeight: 'calc(100vh - 160px)', display: 'flex', flexDirection: 'column',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
@@ -257,13 +260,13 @@ export function Footer({ navigate }) {
     ] },
   ];
   return (
-    <footer style={{ background: 'var(--ink)', color: 'rgba(255,251,242,.72)', padding: '88px 0 32px' }}>
+    <footer style={{ background: 'var(--ink)', color: 'rgba(244,248,242,.72)', padding: '88px 0 32px' }}>
       <div className="container">
         {/* 编辑风品牌陈述：大衬线句子压场 */}
-        <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(255,251,242,.12)' }}>
-          <div className="eyebrow" style={{ color: 'rgba(255,251,242,.45)', marginBottom: 20 }}>PAWLY · 宝莉</div>
-          <p className="serif m-h1" style={{ fontSize: 'clamp(28px, 3.6vw, 48px)', lineHeight: 1.25, margin: 0, color: '#FFFBF2', maxWidth: 720 }}>
-            把宠物照顾明白这件事，<br />没人天生就会——但可以问。
+        <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(244,248,242,.12)' }}>
+          <div className="eyebrow" style={{ color: 'rgba(244,248,242,.45)', marginBottom: 20 }}>PAWLY · 宝莉</div>
+          <p className="serif m-h1" style={{ fontSize: 'clamp(28px, 3.6vw, 48px)', lineHeight: 1.22, margin: 0, color: '#F5F9F2', maxWidth: 760 }}>
+            把宠物照顾明白这件事<br />没人天生就会 <span style={{ color: 'var(--green-soft)' }}>但可以问</span>
           </p>
         </div>
         <div className="m-2col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 48, marginBottom: 64 }}>
@@ -374,13 +377,13 @@ export function CartDrawer({ open, onClose, items, setQty, removeItem, onCheckou
   const shipping = items.length === 0 ? 0 : subtotal >= 99 ? 0 : 12;
   return (
     <>
-      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(51,46,38,.35)', zIndex: 60, animation: 'fadeBg .2s ease' }} />}
+      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(31,42,29,.35)', zIndex: 60, animation: 'fadeBg .2s ease' }} />}
       <aside style={{
         position: 'fixed', right: 0, top: 0, bottom: 0, width: 'min(440px, 100vw)',
         background: 'var(--bg)', zIndex: 70,
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .35s cubic-bezier(.22,.61,.36,1)',
-        display: 'flex', flexDirection: 'column', boxShadow: '-12px 0 40px -8px rgba(51,46,38,.18)',
+        display: 'flex', flexDirection: 'column', boxShadow: '-12px 0 40px -8px rgba(31,42,29,.18)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--line-2)' }}>
           <div>

@@ -68,6 +68,11 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   // 打开客服时收起提示
   useEffect(() => { if (open) setShowHint(false); }, [open]);
   useEffect(() => { try { localStorage.setItem('pawly.chatPos', JSON.stringify(pos)); } catch (e) {} }, [pos]);
+  // 首次访问（无保存位置）默认停靠右下角，避免挡住首屏左下的 CTA 文案
+  useEffect(() => {
+    try { if (localStorage.getItem('pawly.chatPos')) return; } catch (e) {}
+    setPos({ x: Math.max(8, window.innerWidth - 100), y: 24 });
+  }, []);
   useEffect(() => {
     const clamp = () => setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 92, p.x)), y: Math.max(8, Math.min(window.innerHeight - 92, p.y)) }));
     window.addEventListener('resize', clamp);
@@ -145,7 +150,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         position: 'fixed', left: panelLeft, bottom: panelBottom, zIndex: 79,
         width: `min(${panelW}px, calc(100vw - 32px))`, height: `min(${panelH}px, calc(100vh - 140px))`,
         background: 'var(--bg)', borderRadius: 20,
-        boxShadow: '0 24px 64px -16px rgba(42,36,26,.30), 0 8px 16px rgba(42,36,26,.06)',
+        boxShadow: '0 24px 64px -16px rgba(31,42,29,.30), 0 8px 16px rgba(31,42,29,.06)',
         border: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
         transformOrigin: 'bottom left',
         transform: open ? 'scale(1) translateY(0)' : 'scale(.92) translateY(12px)',
@@ -225,7 +230,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
             width: 'min(78vw, 230px)',
             background: 'var(--surface)', color: 'var(--ink)',
             border: '1px solid var(--line)', borderRadius: 16, padding: '12px 34px 12px 14px',
-            boxShadow: '0 16px 36px -10px rgba(42,36,26,.35)',
+            boxShadow: '0 16px 36px -10px rgba(31,42,29,.35)',
             animation: 'hintPop .3s cubic-bezier(.22,.61,.36,1) both',
           }}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝莉助手</div>
@@ -263,7 +268,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
           <span style={{ marginTop: -8 }}><CatMascot size={66} thinking={loading} greet={showHint} /></span>
         )}
         {!open && unread > 0 && (
-          <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: 'var(--accent)', color: '#FFF7EE', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg)' }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: 'var(--accent)', color: '#FFF9F2', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg)' }}>{unread}</span>
         )}
       </button>
     </>
@@ -344,7 +349,7 @@ function ProposalCard({ proposal, onAdopt }) {
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 14, animation: 'fadeUp .25s ease both' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 13.5, fontWeight: 600 }}>{proposal.title}</span>
-        {proposal.badge && <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--accent)', color: '#FFF7EE', whiteSpace: 'nowrap' }}>{proposal.badge}</span>}
+        {proposal.badge && <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--accent)', color: '#FFF9F2', whiteSpace: 'nowrap' }}>{proposal.badge}</span>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
         {items.map((p) => (

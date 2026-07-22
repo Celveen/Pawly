@@ -22,7 +22,7 @@ export function ArticlesPage({ navigate }) {
       <section style={{ paddingTop: 64, paddingBottom: 32 }}>
         <div className="container">
           <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>Pawly Journal · 宠物科普</div>
-          <h1 className="h-1" style={{ margin: 0, maxWidth: 760 }}>养它，从了解它开始。</h1>
+          <h1 className="h-1" style={{ margin: 0, maxWidth: 760 }}>养它 从<span style={{ color: 'var(--green-soft)' }}>了解它</span>开始</h1>
           <p className="body-lg" style={{ marginTop: 20, maxWidth: 620 }}>和兽医、训犬师、铲屎官一起写的实用指南。没有专业术语，只有"今晚就能用"的小知识。</p>
           <div style={{ marginTop: 32, position: 'relative', maxWidth: 480 }}>
             <input className="input" placeholder="搜索：幼犬、疫苗、训练、剪指甲..." value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
@@ -141,11 +141,11 @@ export function ArticlePage({ id, navigate }) {
               <p className="caption" style={{ margin: '12px 0 0' }}>本文由 Pawly 编辑团队编译整理自上述公开指南，仅供参考。</p>
             </div>
           )}
-          <div style={{ background: 'var(--ink)', color: '#FFFBF2', borderRadius: 16, padding: 32, marginTop: a.refs?.length ? 16 : 40, display: 'flex', gap: 20 }}>
+          <div style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 16, padding: 32, marginTop: a.refs?.length ? 16 : 40, display: 'flex', gap: 20 }}>
             <Emoji text="💡" size={36} />
             <div>
-              <div className="eyebrow" style={{ color: 'rgba(255,251,242,.55)', marginBottom: 8 }}>Pawly 提示</div>
-              <p className="serif" style={{ fontSize: 17, lineHeight: 1.65, margin: 0, color: 'rgba(255,251,242,.92)' }}>{a.refs?.length ? '内容编译自权威兽医指南，但每只宠物都是独特的。' : '这些建议来自我们的合作兽医团队，但每只宠物都是独特的。'}有任何异常情况，第一时间联系你的兽医才是最稳妥的。</p>
+              <div className="eyebrow" style={{ color: 'rgba(244,248,242,.55)', marginBottom: 8 }}>Pawly 提示</div>
+              <p className="serif" style={{ fontSize: 17, lineHeight: 1.65, margin: 0, color: 'rgba(244,248,242,.92)' }}>{a.refs?.length ? '内容编译自权威兽医指南，但每只宠物都是独特的。' : '这些建议来自我们的合作兽医团队，但每只宠物都是独特的。'}有任何异常情况，第一时间联系你的兽医才是最稳妥的。</p>
             </div>
           </div>
         </div>
@@ -422,7 +422,7 @@ export function MemberPage({ navigate, initialTab }) {
     <>
       <section style={{ paddingTop: 56, paddingBottom: 32 }}>
         <div className="container">
-          <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: '#FFFBF2', borderRadius: 22, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 22, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={260} /></div>
             <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={44} /></div>
             <div style={{ position: 'relative' }}>
@@ -433,11 +433,11 @@ export function MemberPage({ navigate, initialTab }) {
                 {/* 会员徽章与登录/退出按钮统一高度+字号，读起来是同一排"胶囊"而非大小不一 */}
                 <span className="member-pill" style={{ background: 'var(--accent)', color: '#2a1a0a' }}><Emoji text="⭐" size={12} /> Pawly Club 会员</span>
                 {me && (me.guest
-                  ? <button className="member-pill" style={{ background: 'rgba(255,251,242,.92)', color: 'var(--ink)', border: 0, cursor: 'pointer' }} onClick={() => setLoginOpen(true)}>手机号登录</button>
-                  : <button className="member-pill" style={{ background: 'rgba(255,251,242,.16)', color: '#FFFBF2', border: 0, cursor: 'pointer' }} onClick={logout}>退出登录</button>
+                  ? <button className="member-pill" style={{ background: 'rgba(244,248,242,.92)', color: 'var(--ink)', border: 0, cursor: 'pointer' }} onClick={() => setLoginOpen(true)}>手机号登录</button>
+                  : <button className="member-pill" style={{ background: 'rgba(244,248,242,.16)', color: '#F5F9F2', border: 0, cursor: 'pointer' }} onClick={logout}>退出登录</button>
                 )}
               </div>
-              <p style={{ margin: '8px 0 0', color: 'rgba(255,251,242,.7)', fontSize: 14 }}>
+              <p style={{ margin: '8px 0 0', color: 'rgba(244,248,242,.7)', fontSize: 14 }}>
                 {me && !me.guest && `已绑定 ${me.phoneMasked} · `}
                 {pets.length > 0 ? `已添加 ${pets.length} 个毛孩子档案 · ${pets.map((p) => p.name).join('、')}` : '还没有宠物档案，去"宠物档案"添加吧'}
                 {me?.guest && ' · 登录后数据可跨设备同步'}
@@ -451,7 +451,7 @@ export function MemberPage({ navigate, initialTab }) {
               ].map((s) => (
                 <div key={s.l} style={{ textAlign: 'right' }}>
                   <div className="mono" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.01em' }}>{s.n}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,251,242,.55)', marginTop: 2 }}>{s.l}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(244,248,242,.55)', marginTop: 2 }}>{s.l}</div>
                 </div>
               ))}
             </div>
@@ -781,10 +781,10 @@ function LoginDialog({ onClose, onLoggedIn }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(42,36,26,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="手机号登录" style={{
         position: 'relative', width: 'min(420px, 100%)',
-        background: 'var(--surface)', borderRadius: 20, padding: 32, boxShadow: '0 24px 64px -16px rgba(42,36,26,.35)',
+        background: 'var(--surface)', borderRadius: 20, padding: 32, boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>

@@ -5,6 +5,7 @@ import { PRODUCTS, CATEGORIES, ARTICLES } from './data';
 import { ProductCard, ArticleCard, Reveal, SmartImage } from './ui';
 import { Emoji } from './Emoji';
 import { ChatDemo } from './ChatDemo';
+import { VideoSlot } from './VideoSlot';
 
 // 首页：编辑风编排 —— 开场（衬线大标题 + AI 对话演示）→ 信任三则 → 编号章节
 export function HomePage({ navigate, onAdd, onAskAI }) {
@@ -14,35 +15,38 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
 
   return (
     <>
-      {/* —— 开场：词组弹入标题 + 自动打字的 AI 对话演示 —— */}
-      <section style={{ paddingTop: 64, paddingBottom: 72, position: 'relative', overflow: 'hidden' }}>
-        <div aria-hidden className="hero-blobs"><span className="blob b1" /><span className="blob b2" /><span className="blob b3" /></div>
-        <div className="container m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 64, alignItems: 'center', position: 'relative' }}>
-          <div>
-            <div className="eyebrow eyebrow-rule word-pop">Pawly · AI 宠物管家</div>
-            <h1 className="h-display" style={{ margin: '22px 0 0' }}>
-              <span className="word-pop d-1">养宠不懂，</span><br />
-              <span className="word-pop d-2">就问。</span><br />
-              <span className="word-pop d-3">答案</span><span className="word-pop d-4"><span className="marker">有出处</span>。</span>
+      {/* —— 开场：全屏视频背景（无素材时光流占位）+ 双色大标题 + 角落内容布局 —— */}
+      <section style={{ padding: 0, position: 'relative', overflow: 'hidden', marginTop: -76, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <VideoSlot name="hero" overlay="linear-gradient(180deg, rgba(239,243,235,.55), rgba(239,243,235,.1) 32%, rgba(239,243,235,.04) 62%, rgba(239,243,235,.6))" />
+        <div className="container" style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', paddingTop: 150, paddingBottom: 44 }}>
+          {/* 居中双色大标题：无标点，深绿+浅绿分层 */}
+          <div style={{ textAlign: 'center' }}>
+            <h1 className="h-display" style={{ margin: 0 }}>
+              <span className="word-pop d-1">养宠不懂</span>&nbsp;<span className="word-pop d-2">就问宝莉</span><br />
+              <span className="lite word-pop d-3">答案有出处的 AI 管家</span>
             </h1>
-            <p className="body-lg word-pop d-6" style={{ marginTop: 26, maxWidth: 440 }}>
-              喂养、驱虫、训练、到底该买什么——宝莉的 AI 管家基于权威兽医指南先把问题讲明白，需要买什么，才从严选清单里帮你挑。
+            <p className="word-pop d-5" style={{ fontSize: 17, lineHeight: 1.7, color: 'var(--ink-2)', maxWidth: 460, margin: '26px auto 0' }}>
+              基于权威兽医指南 先把问题讲明白 再替你把东西挑对
             </p>
-            <div className="m-wrap word-pop d-7" style={{ display: 'flex', gap: 12, marginTop: 34 }}>
-              <button onClick={onAskAI} className="btn btn-primary btn-lg">让 AI 帮我挑 <span style={{ fontSize: 16 }}>→</span></button>
-              <button onClick={() => navigate({ page: 'articles' })} className="btn btn-line btn-lg">看科普文章</button>
-            </div>
-            <div className="word-pop d-8" style={{ display: 'flex', marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--line-2)' }}>
-              {[{ n: '24h', l: 'AI 管家在线' }, { n: '58 篇', l: '循证科普' }, { n: '120+', l: '严选商品' }].map((it, i) => (
-                <div key={it.l} style={{ paddingRight: 36, marginRight: 36, borderRight: i < 2 ? '1px solid var(--line-2)' : 'none' }}>
-                  <div className="serif" style={{ fontSize: 30, fontWeight: 500, letterSpacing: '-0.01em' }}>{it.n}</div>
-                  <div className="caption" style={{ marginTop: 2 }}>{it.l}</div>
-                </div>
-              ))}
-            </div>
           </div>
-          <div className="photo-reveal d-4" style={{ display: 'grid', justifyItems: 'center' }}>
-            <ChatDemo onOpenChat={onAskAI} />
+          {/* 底部两角：左下品牌+CTA，右下 AI 对话演示玻璃卡 */}
+          <div className="m-col m-gap" style={{ marginTop: 'auto', paddingTop: 48, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 32 }}>
+            <div className="word-pop d-6" style={{ maxWidth: 380 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, color: 'var(--green)' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4 7 17M17 7l1.4-1.4" /><circle cx="12" cy="12" r="4" /></svg>
+                <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.08em' }}>PAWLY · AI 宠物管家</span>
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--ink-2)', margin: '0 0 18px' }}>
+                喂养 驱虫 训练 挑粮 一句话问到底 需要买什么 才从严选清单里帮你挑
+              </p>
+              <div className="m-wrap" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <button onClick={onAskAI} className="btn btn-primary btn-lg" style={{ borderRadius: 999 }}>让 AI 帮我挑 <span style={{ fontSize: 16 }}>→</span></button>
+                <button onClick={() => navigate({ page: 'articles' })} className="btn btn-ghost" style={{ fontWeight: 600 }}>看科普文章</button>
+              </div>
+            </div>
+            <div className="photo-reveal d-6 m-full" style={{ flexShrink: 0 }}>
+              <ChatDemo compact onOpenChat={onAskAI} />
+            </div>
           </div>
         </div>
       </section>
@@ -74,8 +78,17 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
       <section style={{ paddingTop: 40, paddingBottom: 40 }}>
         <Reveal>
           <div className="container">
-            <SectionHead no="01" en="Pawly Journal" title={<>养宠物这件事，<br />没人天生就会。</>}
-              actionLabel="所有文章" onAction={() => navigate({ page: 'articles' })} />
+            <div className="m-col m-gap" style={{ display: 'flex', alignItems: 'flex-end', gap: 32 }}>
+              <div style={{ flex: 1 }}>
+                <SectionHead no="01" en="Pawly Journal" title={<>养宠物这件事<br />没人天生就会</>}
+                  actionLabel="所有文章" onAction={() => navigate({ page: 'articles' })} />
+              </div>
+              {/* 科普氛围视频位：public/videos/journal.mp4 */}
+              <div className="m-full" style={{ position: 'relative', width: 300, height: 150, borderRadius: 18, overflow: 'hidden', flexShrink: 0, marginBottom: 40 }}>
+                <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+                <span style={{ position: 'absolute', left: 14, bottom: 12, fontSize: 12, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
+              </div>
+            </div>
           </div>
           <div className="marquee">
             <div className="marquee-track">
@@ -127,18 +140,19 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
       <section style={{ paddingTop: 24, paddingBottom: 24 }}>
         <Reveal><div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 22, padding: '60px 60px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+            <VideoSlot name="member" overlay="linear-gradient(90deg, rgba(31,42,29,.94) 22%, rgba(31,42,29,.62))" />
             <div style={{ position: 'absolute', right: -40, bottom: -60, opacity: .07 }}><Emoji text="🐾" size={280} /></div>
             <div style={{ position: 'relative' }}>
-              <div className="eyebrow" style={{ color: 'rgba(255,251,242,.5)', marginBottom: 16 }}>Pawly Club · 会员计划</div>
-              <h2 className="serif" style={{ fontSize: 'clamp(28px, 3vw, 42px)', fontWeight: 500, lineHeight: 1.18, margin: 0, color: '#FFFBF2' }}>把日常开销，<br />变成会员福利。</h2>
-              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(255,251,242,.72)', marginTop: 16, maxWidth: 480 }}>
+              <div className="eyebrow" style={{ color: 'rgba(244,248,242,.5)', marginBottom: 16 }}>Pawly Club · 会员计划</div>
+              <h2 className="serif" style={{ fontSize: 'clamp(28px, 3vw, 42px)', fontWeight: 600, lineHeight: 1.15, margin: 0, color: '#F5F9F2' }}>把日常开销<br />变成会员福利</h2>
+              <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(244,248,242,.72)', marginTop: 16, maxWidth: 480 }}>
                 ¥29/月 解锁全场 9 折、更多 AI 管家额度、生日礼盒，以及每年一次免费宠物体检。日常买粮买罐头省下的钱，往往就够回本。
               </p>
               <button onClick={() => navigate({ page: 'member', tab: 'benefits' })} className="btn btn-accent btn-lg" style={{ marginTop: 28 }}>了解会员 →</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, position: 'relative' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, position: 'relative', zIndex: 1 }}>
               {[{ e: '🤖', t: 'AI 额度升级' }, { e: '💳', t: '全场 9 折' }, { e: '🏥', t: '年度体检' }, { e: '🎂', t: '生日福利' }].map((it) => (
-                <div key={it.t} style={{ background: 'rgba(255,251,242,.08)', backdropFilter: 'blur(8px)', borderRadius: 12, padding: '20px 16px', border: '1px solid rgba(255,251,242,.12)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div key={it.t} style={{ background: 'rgba(244,248,242,.08)', backdropFilter: 'blur(8px)', borderRadius: 12, padding: '20px 16px', border: '1px solid rgba(244,248,242,.12)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Emoji text={it.e} size={18} />{it.t}
                 </div>
               ))}
@@ -196,11 +210,11 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
       <section style={{ paddingTop: 56, paddingBottom: 32 }}>
         <div className="container">
           <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>商品 / Shop all</div>
-          <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>挑货吧，铲屎官。<br />每一件都被我们的狗（或猫）批准过。</h1>
+          <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>给毛孩子挑点好的<br /><span style={{ color: 'var(--green-soft)' }}>每一件都实测把关</span></h1>
         </div>
       </section>
 
-      <div className="m-static" style={{ position: 'sticky', top: 72, zIndex: 30, background: 'rgba(245,240,230,.82)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
+      <div className="m-static" style={{ position: 'sticky', top: 72, zIndex: 30, background: 'rgba(239,243,235,.82)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', gap: 16, flexWrap: 'wrap' }}>
           <div className="h-scroll" style={{ display: 'flex', gap: 24 }}>
             {CATEGORIES.map((c) => (
@@ -290,7 +304,7 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--line-2)' }}>
                 <span className="mono" style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em' }}>{fmt(p.price)}</span>
                 {p.was && <span className="mono caption" style={{ textDecoration: 'line-through', fontSize: 16 }}>{fmt(p.was)}</span>}
-                {p.was && <span className="badge" style={{ background: 'var(--accent)', color: '#FFF7EE', borderColor: 'transparent', fontWeight: 600 }}>省 {fmt(p.was - p.price)}</span>}
+                {p.was && <span className="badge" style={{ background: 'var(--accent)', color: '#FFF9F2', borderColor: 'transparent', fontWeight: 600 }}>省 {fmt(p.was - p.price)}</span>}
               </div>
               <div style={{ marginTop: 32 }}>
                 <div className="eyebrow" style={{ marginBottom: 12 }}>规格</div>

@@ -32,7 +32,7 @@ const STEP_GAP = 900;        // 消息之间停顿
 const LOOP_GAP = 5200;       // 一轮播完后的停顿
 const USER_THINK = 700;      // 用户消息"输入中"时长
 
-export function ChatDemo({ onOpenChat }) {
+export function ChatDemo({ onOpenChat, compact }) {
   // done: 已完整显示的消息数；typing: 当前正在打字的消息已显示字数（-1 表示"输入中"点点）
   const [done, setDone] = useState(0);
   const [typed, setTyped] = useState(0);
@@ -77,8 +77,8 @@ export function ChatDemo({ onOpenChat }) {
   const curTyping = cur && cur.role === 'ai' && !cur.proposal && typed > 0;
 
   return (
-    <div className="chat-demo" role="img" aria-label="宝莉助手对话演示" onClick={onOpenChat}
-      style={{ cursor: 'pointer', height: 470, width: '100%', maxWidth: 420 }}>
+    <div className={compact ? 'chat-demo glass' : 'chat-demo'} role="img" aria-label="宝莉助手对话演示" onClick={onOpenChat}
+      style={{ cursor: 'pointer', height: compact ? 400 : 470, width: compact ? 340 : '100%', maxWidth: compact ? '100%' : 420, background: compact ? undefined : 'var(--surface)' }}>
       {/* 头部 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: '1px solid var(--line-2)', background: 'var(--surface)' }}>
         <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', position: 'relative' }}>
@@ -124,7 +124,7 @@ function DemoMsg({ m, caret }) {
       <div className="fade-up" style={{ marginLeft: 8, border: '1px solid var(--line)', borderRadius: 14, padding: 12, background: 'var(--surface)' }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
           {m.proposal.title}
-          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: 'var(--accent)', color: '#FFF7EE' }}>AI 方案</span>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: 'var(--accent)', color: '#FFF9F2' }}>AI 方案</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {m.proposal.items.map((it) => (
