@@ -4,9 +4,9 @@
    + 无衬线正文；细发丝线分隔；克制而明确的动效。
    ============================================================ */
 :root{
-  --bg: #EFF3EB;            /* 奶油浅绿 */
+  --bg: #F7F2E5;            /* 奶油黄（温馨基底） */
   --surface: #FFFFFF;
-  --surface-2: #E5ECDF;     /* 次级底（浅苔绿） */
+  --surface-2: #F0E8D3;     /* 次级底（奶油） */
   --line: rgba(31, 42, 29, 0.15);
   --line-2: rgba(31, 42, 29, 0.07);
   --ink: #1F2A1D;           /* 深林绿（文字/按钮锚色） */
@@ -201,9 +201,9 @@ a { color: inherit; text-decoration: none; }
 /* 英雄区氛围：柔和光斑缓慢漂移 */
 .hero-blobs{ position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .hero-blobs .blob{ position: absolute; border-radius: 50%; filter: blur(80px); opacity: .5; will-change: transform; }
-.hero-blobs .b1{ width: 520px; height: 520px; left: -10%; top: -24%; background: #CDE2C6; animation: blobDrift 18s ease-in-out infinite alternate; }
-.hero-blobs .b2{ width: 440px; height: 440px; right: -8%; top: 8%; background: #DDE8CF; animation: blobDrift 22s ease-in-out infinite alternate-reverse; }
-.hero-blobs .b3{ width: 380px; height: 380px; left: 36%; bottom: -32%; background: #E9E3CE; opacity: .45; animation: blobDrift 26s ease-in-out infinite alternate; }
+.hero-blobs .b1{ width: 520px; height: 520px; left: -10%; top: -24%; background: #D9E4C2; animation: blobDrift 18s ease-in-out infinite alternate; }
+.hero-blobs .b2{ width: 440px; height: 440px; right: -8%; top: 8%; background: #F2E5C2; animation: blobDrift 22s ease-in-out infinite alternate-reverse; }
+.hero-blobs .b3{ width: 380px; height: 380px; left: 36%; bottom: -32%; background: #EFE2BE; opacity: .45; animation: blobDrift 26s ease-in-out infinite alternate; }
 @keyframes blobDrift{ from{ transform: translate(0,0) scale(1); } to{ transform: translate(60px, 40px) scale(1.1); } }
 
 /* 拼贴卡片浮动（旋转角度由 --r 保留） */
@@ -284,10 +284,10 @@ a { color: inherit; text-decoration: none; }
 /* 光流占位：多层大radial渐变缓慢漂移旋转，画面自身会动 */
 .aurora{ position: absolute; inset: -20%; filter: blur(40px) saturate(120%); }
 .aurora .a{ position: absolute; border-radius: 50%; mix-blend-mode: multiply; }
-.aurora .a1{ width: 70%; height: 70%; left: -6%; top: -8%; background: radial-gradient(circle, #BCD8B2 0%, transparent 65%); animation: auroraMove 16s ease-in-out infinite alternate; }
-.aurora .a2{ width: 62%; height: 62%; right: -4%; top: 6%; background: radial-gradient(circle, #E7EFD3 0%, transparent 65%); animation: auroraMove 21s ease-in-out infinite alternate-reverse; }
-.aurora .a3{ width: 58%; height: 58%; left: 22%; bottom: -14%; background: radial-gradient(circle, #9FC4A4 0%, transparent 65%); animation: auroraMove 26s ease-in-out infinite alternate; }
-.aurora .a4{ width: 44%; height: 44%; right: 16%; bottom: -6%; background: radial-gradient(circle, #F0E2C8 0%, transparent 65%); animation: auroraMove 19s ease-in-out infinite alternate-reverse; }
+.aurora .a1{ width: 70%; height: 70%; left: -6%; top: -8%; background: radial-gradient(circle, #C9DDB8 0%, transparent 65%); animation: auroraMove 16s ease-in-out infinite alternate; }
+.aurora .a2{ width: 62%; height: 62%; right: -4%; top: 6%; background: radial-gradient(circle, #F5E6BD 0%, transparent 65%); animation: auroraMove 21s ease-in-out infinite alternate-reverse; }
+.aurora .a3{ width: 58%; height: 58%; left: 22%; bottom: -14%; background: radial-gradient(circle, #ABC9A5 0%, transparent 65%); animation: auroraMove 26s ease-in-out infinite alternate; }
+.aurora .a4{ width: 44%; height: 44%; right: 16%; bottom: -6%; background: radial-gradient(circle, #F3D9A9 0%, transparent 65%); animation: auroraMove 19s ease-in-out infinite alternate-reverse; }
 @keyframes auroraMove{
   from{ transform: translate(0,0) scale(1) rotate(0deg); }
   to{ transform: translate(9%, 6%) scale(1.18) rotate(10deg); }

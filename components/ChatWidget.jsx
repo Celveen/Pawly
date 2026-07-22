@@ -50,6 +50,8 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   const [unread, setUnread] = useState(0);
   const [quota, setQuota] = useState(null); // {used, limit, member} 后端每次回复带回
   const [pos, setPos] = useState(readPos);
+  // 记录初始渲染时是否已有保存的位置（保存 effect 会先写入默认值，不能事后再查 localStorage）
+  const hadSavedPos = useRef(typeof window !== 'undefined' && (() => { try { return !!localStorage.getItem('pawly.chatPos'); } catch (e) { return false; } })());
   const [dragging, setDragging] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const dragStateRef = useRef({ moved: false });
@@ -70,8 +72,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   useEffect(() => { try { localStorage.setItem('pawly.chatPos', JSON.stringify(pos)); } catch (e) {} }, [pos]);
   // 首次访问（无保存位置）默认停靠右下角，避免挡住首屏左下的 CTA 文案
   useEffect(() => {
-    try { if (localStorage.getItem('pawly.chatPos')) return; } catch (e) {}
-    setPos({ x: Math.max(8, window.innerWidth - 100), y: 24 });
+    if (!hadSavedPos.current) setPos({ x: Math.max(8, window.innerWidth - 100), y: 24 });
   }, []);
   useEffect(() => {
     const clamp = () => setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 92, p.x)), y: Math.max(8, Math.min(window.innerHeight - 92, p.y)) }));
@@ -226,7 +227,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
             zIndex: 79, pointerEvents: 'none', animation: 'launcherPulse 1.8s ease-out infinite',
           }} />
           <div onClick={() => setOpen(true)} role="button" style={{
-            position: 'fixed', left: pos.x, bottom: pos.y + 90, zIndex: 81, cursor: 'pointer',
+            position: 'fixed', left: Math.max(8, Math.min(pos.x, vw - 246)), bottom: pos.y + 90, zIndex: 81, cursor: 'pointer',
             width: 'min(78vw, 230px)',
             background: 'var(--surface)', color: 'var(--ink)',
             border: '1px solid var(--line)', borderRadius: 16, padding: '12px 34px 12px 14px',
