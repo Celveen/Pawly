@@ -16,12 +16,15 @@ export function VideoSlot({ name, overlay, style }) {
       )}
       {hasVideo && (
         <video
-          src={`/videos/${name}.mp4`}
           autoPlay muted loop playsInline preload="metadata"
           onError={() => setHasVideo(false)}
           onLoadedData={() => setLoaded(true)}
           style={{ opacity: loaded ? 1 : 0, transition: 'opacity .9s ease' }}
-        />
+        >
+          {/* 双源：主流浏览器用 mp4(H.264)，无 H.264 解码的环境回退 webm(VP9)；全失败则光流占位 */}
+          <source src={`/videos/${name}.mp4`} type="video/mp4" />
+          <source src={`/videos/${name}.webm`} type="video/webm" />
+        </video>
       )}
       {overlay && <div style={{ position: 'absolute', inset: 0, background: overlay }} />}
     </div>

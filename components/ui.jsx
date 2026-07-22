@@ -58,7 +58,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
             ))}
           </div>
         </nav>
-        <div className="glass" style={{ display: 'flex', alignItems: 'center', gap: 6, borderRadius: 999, padding: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center', borderRadius: 999 }} aria-label="搜索">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
