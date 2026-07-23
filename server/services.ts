@@ -7,6 +7,7 @@ import { store } from './db/store';
 import { runAgent } from './agent/runAgent';
 import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured } from './auth';
 import { petSnapshot, birthdayFromAgeMonths } from './pets';
+import { tokenMeter } from './tokenMeter';
 
 // 业务错误：带 HTTP 状态码，网关层据此返回给前端
 export class RpcError extends Error {
@@ -26,8 +27,9 @@ const POST_TOPICS = ['晒宠', '好物', '求助', '日常'];
 
 // AI 助手每日额度：游客 5 次/天；手机号登录即为 Pawly Club 会员，30 次/天。
 // 后续如分免费/付费会员，在 chatQuota 里按用户等级细分即可。
-const GUEST_CHAT_LIMIT = Number(process.env.GUEST_CHAT_LIMIT || 5);
-const MEMBER_CHAT_LIMIT = Number(process.env.MEMBER_CHAT_LIMIT || 30);
+// 额度按 token 计（仅后台记录，不在前端展示）：游客每日 10 万，会员每日 100 万
+const GUEST_CHAT_LIMIT = Number(process.env.GUEST_CHAT_TOKEN_LIMIT || 100_000);
+const MEMBER_CHAT_LIMIT = Number(process.env.MEMBER_CHAT_TOKEN_LIMIT || 1_000_000);
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -164,22 +166,21 @@ export const services: Record<string, Handler> = {
     if (q.used >= q.limit) {
       return {
         reply: q.member
-          ? `今天的 ${q.limit} 次 AI 咨询额度用完啦，明天再来找我玩吧 🐾`
-          : `今天的 ${q.limit} 次免费咨询用完啦～登录 Pawly Club 会员每天可以聊 ${MEMBER_CHAT_LIMIT} 次（会员页 → 手机号登录）`,
+          ? '今天的 AI 使用量已经到上限啦，明天再来找我玩吧 🐾'
+          : '今天的免费 AI 使用量用完啦～登录成为 Pawly Club 会员即可继续畅聊（会员页 → 手机号登录）',
         proposals: [],
-        quota: { used: q.used, limit: q.limit, member: q.member },
       };
     }
-    // 先跑 Agent、成功才计数：模型故障时不冤枉扣用户额度；
-    // 计数失败（表未同步等）也不影响回复送达
-    const result = await runAgent(userId, Array.isArray(b?.messages) ? b.messages : []);
-    let used = q.used + 1;
+    // 用 tokenMeter 包住 Agent 执行，精确累计本次消耗的 token（deepseek.ts 上报）；
+    // 成功才计量：模型故障时不冤枉扣用户额度；计量失败也不影响回复送达
+    const meter = { total: 0 };
+    const result = await tokenMeter.run(meter, () => runAgent(userId, Array.isArray(b?.messages) ? b.messages : []));
     try {
-      used = await store.incrChatUsage(userId, today());
+      await store.incrChatUsage(userId, today(), Math.max(1, meter.total));
     } catch (e: any) {
-      console.error('[quota] 额度计数失败（忽略）:', e?.message || e);
+      console.error('[quota] 额度计量失败（忽略）:', e?.message || e);
     }
-    return { ...result, quota: { used, limit: q.limit, member: q.member } };
+    return result;
   },
 
   // —— 订单 ——
@@ -223,14 +224,12 @@ export const services: Record<string, Handler> = {
 
   'auth.me': async (userId) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    const q = await chatQuota(userId);
-    const quota = { chatUsed: q.used, chatLimit: q.limit, guestChatLimit: GUEST_CHAT_LIMIT, memberChatLimit: MEMBER_CHAT_LIMIT };
-    if (!user?.phone) return { guest: true, nickname: user?.nickname || null, ...quota };
+    // 额度只在后台记录（ChatUsage 表），不再向前端透出数字
+    if (!user?.phone) return { guest: true, nickname: user?.nickname || null };
     return {
       guest: false,
       nickname: user.nickname || null,
       phoneMasked: user.phone.slice(0, 3) + '****' + user.phone.slice(7),
-      ...quota,
     };
   },
 };

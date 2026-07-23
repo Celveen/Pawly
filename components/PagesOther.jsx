@@ -4,6 +4,7 @@ import { fmt } from './util';
 import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
 import { ArticleCard, ProductCard } from './ui';
 import { Emoji } from './Emoji';
+import { VideoSlot } from './VideoSlot';
 
 const petEmoji = (sp) => (sp === '狗' ? '🐶' : '🐱');
 const petBg = (sp) => (sp === '狗' ? '#F4D7B0' : '#D3DEE2');
@@ -20,13 +21,20 @@ export function ArticlesPage({ navigate }) {
   return (
     <>
       <section style={{ paddingTop: 64, paddingBottom: 32 }}>
-        <div className="container">
-          <div className="eyebrow" style={{ marginBottom: 16 }}>Pawly Journal · 宠物科普</div>
-          <h1 className="h-1" style={{ margin: 0, maxWidth: 760 }}>养它，从了解它开始。</h1>
-          <p className="body-lg" style={{ marginTop: 20, maxWidth: 620 }}>和兽医、训犬师、铲屎官一起写的实用指南。没有专业术语，只有"今晚就能用"的小知识。</p>
-          <div style={{ marginTop: 32, position: 'relative', maxWidth: 480 }}>
-            <input className="input" placeholder="搜索：幼犬、疫苗、训练、剪指甲..." value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
-            <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <div className="container m-col m-gap" style={{ display: 'flex', alignItems: 'flex-end', gap: 48 }}>
+          <div style={{ flex: 1 }}>
+            <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>Pawly Journal · 宠物科普</div>
+            <h1 className="h-1" style={{ margin: 0, maxWidth: 760 }}>养它 从<span style={{ color: 'var(--green-soft)' }}>了解它</span>开始</h1>
+            <p className="body-lg" style={{ marginTop: 20, maxWidth: 620 }}>和兽医、训犬师、铲屎官一起写的实用指南。没有专业术语，只有"今晚就能用"的小知识。</p>
+            <div style={{ marginTop: 32, position: 'relative', maxWidth: 480 }}>
+              <input className="input" placeholder="搜索：幼犬、疫苗、训练、剪指甲..." value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
+              <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            </div>
+          </div>
+          {/* 栏目氛围视频（public/videos/journal.mp4，与首页共用素材） */}
+          <div className="m-full" style={{ position: 'relative', width: 340, height: 200, borderRadius: 20, overflow: 'hidden', flexShrink: 0, boxShadow: 'var(--shadow-lg)' }}>
+            <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+            <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
           </div>
         </div>
       </section>
@@ -93,8 +101,8 @@ export function ArticlePage({ id, navigate }) {
       </section>
       <article>
         <div className="container" style={{ maxWidth: 760 }}>
-          <div className="eyebrow" style={{ marginBottom: 16 }}>{ARTICLE_CATS.find((c) => c.id === a.cat)?.name} · {a.read}</div>
-          <h1 className="h-1 m-h1" style={{ margin: 0, fontSize: 48, letterSpacing: '-0.025em' }}>{a.title}</h1>
+          <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>{ARTICLE_CATS.find((c) => c.id === a.cat)?.name} · {a.read}</div>
+          <h1 className="h-1 m-h1" style={{ margin: 0, fontSize: 48 }}>{a.title}</h1>
           <p style={{ fontSize: 19, lineHeight: 1.65, color: 'var(--ink-2)', marginTop: 24 }}>{a.excerpt}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--line-2)' }}>
             <div style={{ width: 44, height: 44, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={20} /></div>
@@ -109,38 +117,43 @@ export function ArticlePage({ id, navigate }) {
           </div>
         </div>
         <div className="container" style={{ maxWidth: 880, marginTop: 48 }}>
-          <div style={{ background: a.bg, borderRadius: 24, aspectRatio: '21/9', display: 'grid', placeItems: 'center' }}>
+          <div style={{ background: a.bg, borderRadius: 20, aspectRatio: '21/9', display: 'grid', placeItems: 'center' }}>
             <Emoji text={a.emoji} size={200} style={{ filter: 'drop-shadow(0 8px 16px rgba(0,0,0,.06))' }} />
           </div>
         </div>
         <div className="container" style={{ maxWidth: 720, marginTop: 56 }}>
           {a.body.map((p, i) => (
             <p key={i} style={{ fontSize: 18, lineHeight: 1.75, color: 'var(--ink)', margin: '0 0 24px' }}>
-              {i === 0 && <span style={{ float: 'left', fontSize: 64, lineHeight: 1, paddingRight: 12, paddingTop: 6, fontWeight: 600, letterSpacing: '-0.04em' }}>{p[0]}</span>}
+              {i === 0 && <span className="serif" style={{ float: 'left', fontSize: 64, lineHeight: 1, paddingRight: 12, paddingTop: 6, fontWeight: 500 }}>{p[0]}</span>}
               {i === 0 ? p.slice(1) : p}
             </p>
           ))}
           {/* 参考来源：循证文章标注编译出处，点击可跳转权威机构原文 */}
           {a.refs?.length > 0 && (
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 20, padding: '24px 28px', marginTop: 40 }}>
-              <div className="eyebrow" style={{ marginBottom: 12 }}>参考来源 · References</div>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--line-2)', borderLeft: '3px solid var(--sage)', borderRadius: 14, padding: '24px 28px', marginTop: 40 }}>
+              <div className="eyebrow" style={{ color: 'var(--sage)', marginBottom: 14 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--sage)' }} />
+                参考来源 · References
+              </div>
+              <hr className="hairline" style={{ marginBottom: 14 }} />
               <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {a.refs.map((r, i) => (
                   <li key={i} style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-2)' }}>
                     <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.org}</span>
                     {' · '}
-                    <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>{r.title}</a>
+                    <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', textUnderlineOffset: 3, textDecorationColor: 'var(--sage)' }}>{r.title}</a>
                   </li>
                 ))}
               </ol>
+              <hr className="hairline" style={{ marginTop: 14 }} />
               <p className="caption" style={{ margin: '12px 0 0' }}>本文由 Pawly 编辑团队编译整理自上述公开指南，仅供参考。</p>
             </div>
           )}
-          <div style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 20, padding: 32, marginTop: a.refs?.length ? 16 : 40, display: 'flex', gap: 20 }}>
+          <div style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 16, padding: 32, marginTop: a.refs?.length ? 16 : 40, display: 'flex', gap: 20 }}>
             <Emoji text="💡" size={36} />
             <div>
-              <div className="eyebrow" style={{ color: 'rgba(255,255,255,.5)', marginBottom: 8 }}>Pawly 提示</div>
-              <p style={{ fontSize: 16, lineHeight: 1.6, margin: 0 }}>{a.refs?.length ? '内容编译自权威兽医指南，但每只宠物都是独特的。' : '这些建议来自我们的合作兽医团队，但每只宠物都是独特的。'}有任何异常情况，第一时间联系你的兽医才是最稳妥的。</p>
+              <div className="eyebrow" style={{ color: 'rgba(244,248,242,.55)', marginBottom: 8 }}>Pawly 提示</div>
+              <p className="serif" style={{ fontSize: 17, lineHeight: 1.65, margin: 0, color: 'rgba(244,248,242,.92)' }}>{a.refs?.length ? '内容编译自权威兽医指南，但每只宠物都是独特的。' : '这些建议来自我们的合作兽医团队，但每只宠物都是独特的。'}有任何异常情况，第一时间联系你的兽医才是最稳妥的。</p>
             </div>
           </div>
         </div>
@@ -267,7 +280,7 @@ export function CheckoutPage({ items, navigate, clearCart }) {
   return (
     <section style={{ paddingTop: 48, paddingBottom: 96 }}>
       <div className="container">
-        <div className="eyebrow" style={{ marginBottom: 16 }}>结算</div>
+        <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>结算</div>
         <h1 className="h-1" style={{ margin: 0 }}>填一下地址，狗子等不及了。</h1>
         <div className="m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 48, marginTop: 48 }}>
           <div>
@@ -417,22 +430,22 @@ export function MemberPage({ navigate, initialTab }) {
     <>
       <section style={{ paddingTop: 56, paddingBottom: 32 }}>
         <div className="container">
-          <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 28, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 22, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={260} /></div>
             <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={44} /></div>
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: 28, fontWeight: 600, margin: 0, letterSpacing: '-0.01em' }}>
+                <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, margin: 0 }}>
                   {me && !me.guest ? (me.nickname || me.phoneMasked) : '铲屎官（游客）'}
                 </h2>
                 {/* 会员徽章与登录/退出按钮统一高度+字号，读起来是同一排"胶囊"而非大小不一 */}
                 <span className="member-pill" style={{ background: 'var(--accent)', color: '#2a1a0a' }}><Emoji text="⭐" size={12} /> Pawly Club 会员</span>
                 {me && (me.guest
-                  ? <button className="member-pill" style={{ background: 'rgba(255,255,255,.9)', color: 'var(--ink)', border: 0, cursor: 'pointer' }} onClick={() => setLoginOpen(true)}>手机号登录</button>
-                  : <button className="member-pill" style={{ background: 'rgba(255,255,255,.14)', color: 'var(--bg)', border: 0, cursor: 'pointer' }} onClick={logout}>退出登录</button>
+                  ? <button className="member-pill" style={{ background: 'rgba(244,248,242,.92)', color: 'var(--ink)', border: 0, cursor: 'pointer' }} onClick={() => setLoginOpen(true)}>手机号登录</button>
+                  : <button className="member-pill" style={{ background: 'rgba(244,248,242,.16)', color: '#F5F9F2', border: 0, cursor: 'pointer' }} onClick={logout}>退出登录</button>
                 )}
               </div>
-              <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,.65)', fontSize: 14 }}>
+              <p style={{ margin: '8px 0 0', color: 'rgba(244,248,242,.7)', fontSize: 14 }}>
                 {me && !me.guest && `已绑定 ${me.phoneMasked} · `}
                 {pets.length > 0 ? `已添加 ${pets.length} 个毛孩子档案 · ${pets.map((p) => p.name).join('、')}` : '还没有宠物档案，去"宠物档案"添加吧'}
                 {me?.guest && ' · 登录后数据可跨设备同步'}
@@ -442,11 +455,11 @@ export function MemberPage({ navigate, initialTab }) {
               {[
                 { n: String(pets.length), l: '毛孩子' },
                 { n: String(orders.length), l: '订单' },
-                { n: me ? `${me.chatUsed ?? 0}/${me.chatLimit ?? '-'}` : '…', l: '今日AI额度' },
+                { n: me && !me.guest ? 'Club' : '游客', l: '会员身份' },
               ].map((s) => (
                 <div key={s.l} style={{ textAlign: 'right' }}>
                   <div className="mono" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.01em' }}>{s.n}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', marginTop: 2 }}>{s.l}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(244,248,242,.55)', marginTop: 2 }}>{s.l}</div>
                 </div>
               ))}
             </div>
@@ -576,7 +589,7 @@ export function MemberPage({ navigate, initialTab }) {
 function BenefitsTab({ me, onLogin }) {
   const isMember = me && !me.guest;
   const benefits = [
-    { emoji: '🐾', title: 'AI 助手额度提升', desc: `宝莉助手每日咨询次数：游客 ${me?.guestChatLimit || 5} 次 → 会员 ${me?.memberChatLimit || 30} 次，挑粮、问养护随便聊`, hot: true },
+    { emoji: '🐾', title: 'AI 助手高用量', desc: '宝莉助手每日可用量大幅提升，挑粮、问养护、做方案随便聊', hot: true },
     { emoji: '🏠', title: '数据跨设备同步', desc: '宠物档案、订单、收货地址、社区帖子绑定手机号，换设备登录即恢复' },
     { emoji: '🎁', title: '会员礼盒', desc: '入会礼包与节日惊喜（供应链接入后发放）', soon: true },
     { emoji: '💳', title: '全场 9 折', desc: '会员专享价（真实支付接入后生效）', soon: true },
@@ -595,19 +608,7 @@ function BenefitsTab({ me, onLogin }) {
         {!isMember && <button className="btn btn-primary" onClick={onLogin}>登录解锁会员</button>}
       </div>
 
-      {/* 今日 AI 额度进度 */}
-      {me && (
-        <div className="card" style={{ padding: 24, marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-            <span style={{ fontSize: 14, fontWeight: 600 }}>今日 AI 助手额度</span>
-            <span className="mono" style={{ fontSize: 14, fontWeight: 700 }}>{me.chatUsed ?? 0} / {me.chatLimit ?? '-'}</span>
-          </div>
-          <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-2)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${Math.min(100, ((me.chatUsed ?? 0) / (me.chatLimit || 1)) * 100)}%`, background: 'var(--primary)', borderRadius: 999, transition: 'width .4s ease' }} />
-          </div>
-          {me.guest && <p className="caption" style={{ margin: '10px 0 0' }}>登录后每日额度提升至 {me.memberChatLimit || 30} 次</p>}
-        </div>
-      )}
+
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
         {benefits.map((b) => (
@@ -776,16 +777,16 @@ function LoginDialog({ onClose, onLoggedIn }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(51,46,38,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="手机号登录" style={{
         position: 'relative', width: 'min(420px, 100%)',
-        background: 'var(--bg)', borderRadius: 24, padding: 32, boxShadow: '0 24px 64px -16px rgba(51,46,38,.35)',
+        background: 'var(--surface)', borderRadius: 20, padding: 32, boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
             <div className="eyebrow">Sign In</div>
-            <h2 style={{ fontSize: 22, fontWeight: 600, margin: '4px 0 0' }}>手机号登录</h2>
+            <h2 className="serif" style={{ fontSize: 24, fontWeight: 500, margin: '4px 0 0' }}>手机号登录</h2>
           </div>
           <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="关闭">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
@@ -921,7 +922,7 @@ function PetsTab({ pets, onChanged }) {
           <div key={p.name} className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ background: petBg(p.species), padding: '32px 0', display: 'grid', placeItems: 'center' }}><Emoji text={petEmoji(p.species)} size={104} /></div>
             <div style={{ padding: 24 }}>
-              <h4 style={{ fontSize: 22, fontWeight: 600, margin: 0 }}>{p.name}</h4>
+              <h4 className="serif" style={{ fontSize: 22, fontWeight: 500, margin: 0 }}>{p.name}</h4>
               <p className="caption" style={{ margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
                 {p.breed || p.species}
                 {p.weightStale && <>· <Emoji text="⚠️" size={12} /> 体重待更新</>}

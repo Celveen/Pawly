@@ -14,13 +14,15 @@ export const Logo = ({ size = 28 }) => (
       <circle cx="6" cy="18" r="2.4" fill="currentColor" />
       <path d="M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z" fill="currentColor" />
     </svg>
-    <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>Pawly</span>
+    <span className="serif" style={{ fontSize: 20, fontWeight: 600, letterSpacing: '0.01em' }}>Pawly</span>
     <span className="logo-sub" style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500, marginLeft: -2 }}>宝莉</span>
   </div>
 );
 
 export function Header({ route, navigate, cartCount, onCartOpen }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const navRef = useRef(null);
+  const [ind, setInd] = useState(null); // 滑动指示块的位置
   const navItems = [
     { id: 'home', label: '首页' },
     { id: 'articles', label: '宠物科普' },
@@ -28,35 +30,51 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
     { id: 'shop', label: '商品' },
     { id: 'member', label: '会员' },
   ];
+  const activeId = ['product'].includes(route.page) ? 'shop' : ['article'].includes(route.page) ? 'articles' : route.page;
+  // 指示块跟随当前项平滑滑动（浮雕白块）；窗口缩放时重新测量
+  useEffect(() => {
+    const measure = () => {
+      const el = navRef.current?.querySelector('button.active');
+      if (el) setInd({ left: el.offsetLeft, width: el.offsetWidth });
+      else setInd(null);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [activeId]);
+  // 只有首页首屏内顶栏透明压在视频上；滚过首屏或进入其他页面都用实底
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > window.innerHeight - 140);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  const overVideo = route.page === 'home' && !scrolled;
   return (
     <header style={{
-      position: 'sticky', top: 0, zIndex: 50,
-      background: 'rgba(244,239,231,.78)',
-      backdropFilter: 'blur(14px) saturate(140%)', WebkitBackdropFilter: 'blur(14px) saturate(140%)',
-      borderBottom: '1px solid var(--line-2)',
+      position: 'sticky', top: 0, zIndex: 50, pointerEvents: 'none',
+      background: overVideo ? 'transparent' : 'rgba(247,242,229,.86)',
+      backdropFilter: overVideo ? undefined : 'blur(14px) saturate(140%)',
+      WebkitBackdropFilter: overVideo ? undefined : 'blur(14px) saturate(140%)',
+      borderBottom: overVideo ? 'none' : '1px solid var(--line-2)',
     }}>
-      <div className="container site-header-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72 }}>
+      <div className="container site-header-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 76, pointerEvents: 'auto' }}>
         <button onClick={() => navigate({ page: 'home' })} style={{ border: 0, background: 'transparent', color: 'var(--ink)', padding: 0 }}>
           <Logo />
         </button>
-        <nav className="site-nav" style={{ display: 'flex', gap: 4 }}>
-          {navItems.map((it) => {
-            const active = route.page === it.id
-              || (it.id === 'shop' && ['product'].includes(route.page))
-              || (it.id === 'articles' && ['article'].includes(route.page));
-            return (
-              <button key={it.id} onClick={() => navigate({ page: it.id })}
-                style={{
-                  height: 36, padding: '0 14px', borderRadius: 999, border: 0,
-                  background: active ? 'var(--ink)' : 'transparent',
-                  color: active ? 'var(--bg)' : 'var(--ink)',
-                  fontSize: 14, fontWeight: 500, transition: 'background .15s',
-                }}>{it.label}</button>
-            );
-          })}
+        <nav className="site-nav" style={{ display: 'flex' }}>
+          <div ref={navRef} className="pill-nav glass">
+            {ind && <span className="indicator" style={{ left: ind.left, width: ind.width }} />}
+            {navItems.map((it) => (
+              <button key={it.id} onClick={() => navigate({ page: it.id })} className={activeId === it.id ? 'active' : ''}>
+                {it.label}
+              </button>
+            ))}
+          </div>
         </nav>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="搜索">
+          <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center', borderRadius: 999 }} aria-label="搜索">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
             </svg>
@@ -130,6 +148,18 @@ export function Reveal({ children, delay = 0, className = '', style }) {
   );
 }
 
+// 智能图片层：铺在设计占位（色块+emoji）之上；素材不存在时自动隐藏。
+// 素材放置约定：商品 /public/images/products/<id>.jpg，科普 /public/images/articles/<id>.jpg
+export function SmartImage({ src, alt = '' }) {
+  const [ok, setOk] = useState(true);
+  useEffect(() => { setOk(true); }, [src]);
+  if (!src || !ok) return null;
+  return (
+    <img src={src} alt={alt} draggable={false} onError={() => setOk(false)}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+  );
+}
+
 // 全站搜索浮层：本地检索商品 + 科普文章，点击结果直接跳转
 function SearchOverlay({ navigate, onClose }) {
   const [q, setQ] = useState('');
@@ -158,10 +188,10 @@ function SearchOverlay({ navigate, onClose }) {
   // 72px 高的 header 盒子里，导致遮罩只覆盖顶部一条、点击页面无法关闭
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(51,46,38,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="全站搜索" style={{
         position: 'relative', margin: '96px auto 0', width: 'min(640px, calc(100vw - 32px))',
-        background: 'var(--bg)', borderRadius: 24, padding: 20, boxShadow: '0 24px 64px -16px rgba(51,46,38,.35)',
+        background: 'var(--bg)', borderRadius: 24, padding: 20, boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)',
         maxHeight: 'calc(100vh - 160px)', display: 'flex', flexDirection: 'column',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
@@ -245,8 +275,15 @@ export function Footer({ navigate }) {
     ] },
   ];
   return (
-    <footer style={{ background: 'var(--ink)', color: 'rgba(255,255,255,.7)', padding: '80px 0 32px' }}>
+    <footer style={{ background: 'var(--ink)', color: 'rgba(244,248,242,.72)', padding: '88px 0 32px' }}>
       <div className="container">
+        {/* 编辑风品牌陈述：大衬线句子压场 */}
+        <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(244,248,242,.12)' }}>
+          <div className="eyebrow" style={{ color: 'rgba(244,248,242,.45)', marginBottom: 20 }}>PAWLY · 宝莉</div>
+          <p className="serif m-h1" style={{ fontSize: 'clamp(28px, 3.6vw, 48px)', lineHeight: 1.22, margin: 0, color: '#F5F9F2', maxWidth: 760 }}>
+            把宠物照顾明白这件事<br />没人天生就会 <span style={{ color: 'var(--green-soft)' }}>但可以问</span>
+          </p>
+        </div>
         <div className="m-2col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 48, marginBottom: 64 }}>
           <div className="footer-brand">
             <div style={{ color: 'white', marginBottom: 16 }}><Logo /></div>
@@ -289,9 +326,10 @@ export function ProductCard({ p, onOpen, onAdd }) {
   return (
     <div className="card card-hot fade-up" style={{ padding: 12 }} onClick={() => onOpen(p)}>
       <div className="prod-img" style={{ background: p.bg }}>
+        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
+        <SmartImage src={`/images/products/${p.id}.jpg`} alt={p.name} />
         <span className="pet-pill"><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>
         {p.tag && <span className="tag-pill">{p.tag}</span>}
-        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
       </div>
       <div style={{ padding: '14px 6px 6px' }}>
         <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35, minHeight: 38 }}>{p.name}</div>
@@ -325,17 +363,18 @@ export function ArticleCard({ a, onOpen, featured }) {
     <article className="card card-hot fade-up m-col" onClick={() => onOpen(a)}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: featured ? 'row' : 'column', gap: 0 }}>
       <div className="m-full" style={{
-        background: a.bg, width: featured ? '50%' : '100%',
+        background: a.bg, width: featured ? '50%' : '100%', overflow: 'hidden',
         aspectRatio: featured ? 'auto' : '16/10', minHeight: featured ? 160 : undefined, display: 'grid', placeItems: 'center', position: 'relative',
       }}>
-        {a.refs?.length > 0 && <span className="tag-pill" title="内容编译自权威兽医指南，文末附来源">✓ 循证</span>}
         <Emoji text={a.emoji} size={featured ? 120 : 64} style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.06))' }} />
+        <SmartImage src={`/images/articles/${a.id}.jpg`} alt={a.title} />
+        {a.refs?.length > 0 && <span className="tag-pill" title="内容编译自权威兽医指南，文末附来源">✓ 循证</span>}
       </div>
       <div style={{ padding: featured ? '40px' : '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div className="eyebrow" style={{ marginBottom: 12 }}>
           {ARTICLE_CATS.find((c) => c.id === a.cat)?.name} · {a.read}
         </div>
-        <h3 style={{ fontSize: featured ? 28 : 18, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.25, margin: '0 0 12px' }}>{a.title}</h3>
+        <h3 className="serif" style={{ fontSize: featured ? 30 : 19, fontWeight: 500, lineHeight: 1.3, margin: '0 0 12px' }}>{a.title}</h3>
         <p className="body" style={{ margin: 0, fontSize: featured ? 15 : 14, display: '-webkit-box', WebkitLineClamp: featured ? 3 : 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {a.excerpt}
         </p>
@@ -353,13 +392,13 @@ export function CartDrawer({ open, onClose, items, setQty, removeItem, onCheckou
   const shipping = items.length === 0 ? 0 : subtotal >= 99 ? 0 : 12;
   return (
     <>
-      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(51,46,38,.35)', zIndex: 60, animation: 'fadeBg .2s ease' }} />}
+      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(31,42,29,.35)', zIndex: 60, animation: 'fadeBg .2s ease' }} />}
       <aside style={{
         position: 'fixed', right: 0, top: 0, bottom: 0, width: 'min(440px, 100vw)',
         background: 'var(--bg)', zIndex: 70,
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .35s cubic-bezier(.22,.61,.36,1)',
-        display: 'flex', flexDirection: 'column', boxShadow: '-12px 0 40px -8px rgba(51,46,38,.18)',
+        display: 'flex', flexDirection: 'column', boxShadow: '-12px 0 40px -8px rgba(31,42,29,.18)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid var(--line-2)' }}>
           <div>

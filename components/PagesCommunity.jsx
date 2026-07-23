@@ -74,7 +74,7 @@ export function CommunityPage() {
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
             <div>
-              <div className="eyebrow" style={{ marginBottom: 16 }}>Pawly Community · 铲屎官社区</div>
+              <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>Pawly Community · 铲屎官社区</div>
               <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>晒宠、种草、抱团取暖。</h1>
               <p className="body-lg" style={{ marginTop: 20, maxWidth: 620 }}>发一篇你和毛孩子的日常，或者把踩过的坑分享给下一位铲屎官。</p>
             </div>
@@ -149,25 +149,25 @@ function PostDetail({ p, onClose, onLike, onDelete }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(51,46,38,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.4)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label={p.title} style={{
         position: 'relative', width: 'min(560px, 100%)', maxHeight: 'calc(100vh - 64px)',
-        background: 'var(--bg)', borderRadius: 24, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 24px 64px -16px rgba(51,46,38,.35)',
+        background: 'var(--bg)', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
         <div style={{ background: p.bg, minHeight: 180, display: 'grid', placeItems: 'center', position: 'relative', flexShrink: 0 }}>
           <span className="pet-pill" style={{ position: 'absolute', top: 14, left: 14 }}>{p.topic}</span>
           <button onClick={onClose} aria-label="关闭" style={{
             position: 'absolute', top: 10, right: 10, width: 32, height: 32, border: 0, borderRadius: 999,
-            background: 'rgba(255,255,255,.85)', color: 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer',
+            background: 'rgba(255,253,247,.9)', color: 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer',
           }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
           </button>
           <Emoji text={p.emoji} size={110} />
         </div>
         <div style={{ padding: '24px 28px', overflowY: 'auto' }}>
-          <h2 style={{ fontSize: 22, fontWeight: 600, margin: 0, lineHeight: 1.35 }}>{p.title}</h2>
+          <h2 className="serif" style={{ fontSize: 24, fontWeight: 500, margin: 0, lineHeight: 1.3 }}>{p.title}</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 16px' }}>
             <div style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={13} /></div>
             <span className="caption">{p.author} · {timeAgo(p.createdAt)}</span>
@@ -180,17 +180,17 @@ function PostDetail({ p, onClose, onLike, onDelete }) {
           <p className="body" style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: 1.75 }}>{p.content}</p>
         </div>
         <div style={{ padding: '14px 28px', borderTop: '1px solid var(--line-2)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <button onClick={onLike}
-            style={{ border: '1px solid var(--line)', background: p.likedByMe ? 'rgba(217,130,107,.08)' : 'transparent', borderRadius: 999, height: 36, padding: '0 16px', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: p.likedByMe ? '#D9826B' : 'var(--ink-2)', fontSize: 13, fontWeight: 600 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill={p.likedByMe ? '#D9826B' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button onClick={onLike} className="btn btn-line btn-sm"
+            style={{ gap: 6, background: p.likedByMe ? 'rgba(196,101,59,.08)' : 'transparent', color: p.likedByMe ? 'var(--accent)' : 'var(--ink-2)', fontWeight: 600 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={p.likedByMe ? 'var(--accent)' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 14c1.5-1.5 2-3.2 2-5a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 1.8.5 3.5 2 5l7 7 7-7Z" />
             </svg>
             {p.likedByMe ? '已赞' : '点赞'}{p.likeCount > 0 && <span className="mono">{p.likeCount}</span>}
           </button>
           <span style={{ flex: 1 }} />
           {p.mine && (
-            <button onClick={onDelete}
-              style={{ border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontSize: 13, padding: '0 16px', height: 36, borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+            <button onClick={onDelete} className="btn btn-line btn-sm"
+              style={{ gap: 6, color: 'var(--ink-2)' }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6" /></svg>
               删除帖子
             </button>
@@ -224,14 +224,14 @@ function PostCard({ p, onOpen, onLike, onDelete }) {
           <span className="caption" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.author} · {timeAgo(p.createdAt)}</span>
           {p.mine && (
             <button onClick={(e) => { e.stopPropagation(); onDelete(); }} aria-label="删除我的帖子" title="删除我的帖子"
-              style={{ border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontSize: 12, padding: '2px 8px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+              style={{ border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontSize: 12, padding: '2px 8px', borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6" /></svg>
               删除
             </button>
           )}
           <button onClick={(e) => { e.stopPropagation(); onLike(); }} aria-label="点赞"
-            style={{ border: 0, background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0, color: p.likedByMe ? '#D9826B' : 'var(--ink-3)', fontSize: 13, fontWeight: 600 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill={p.likedByMe ? '#D9826B' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            style={{ border: 0, background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0, color: p.likedByMe ? 'var(--accent)' : 'var(--ink-3)', fontSize: 13, fontWeight: 600 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={p.likedByMe ? 'var(--accent)' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 14c1.5-1.5 2-3.2 2-5a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 1.8.5 3.5 2 5l7 7 7-7Z" />
             </svg>
             {p.likeCount > 0 && <span className="mono">{p.likeCount}</span>}
@@ -277,16 +277,16 @@ function Composer({ onClose, onPosted }) {
   return (
     /* 用 flex 容器居中弹层：不给对话框本身设 transform 定位，避免与打开动效的 transform 冲突 */
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(51,46,38,.35)', animation: 'fadeBg .2s ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.4)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="发布分享" style={{
         position: 'relative', width: 'min(640px, 100%)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',
-        background: 'var(--bg)', borderRadius: 24, padding: 32, boxShadow: '0 24px 64px -16px rgba(51,46,38,.35)',
+        background: 'var(--bg)', borderRadius: 20, padding: 32, boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
             <div className="eyebrow">New Post</div>
-            <h2 style={{ fontSize: 22, fontWeight: 600, margin: '4px 0 0' }}>发布分享</h2>
+            <h2 className="serif" style={{ fontSize: 24, fontWeight: 500, margin: '4px 0 0' }}>发布分享</h2>
           </div>
           <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center' }} aria-label="关闭">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6 18 18 M18 6 6 18" /></svg>
@@ -306,7 +306,7 @@ function Composer({ onClose, onPosted }) {
           value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <textarea className="input" placeholder="分享你的养宠日常、好物心得或求助问题…（最多 1000 字）" maxLength={1000} rows={5}
           value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })}
-          style={{ marginTop: 12, resize: 'vertical', minHeight: 120, height: 'auto', lineHeight: 1.6, paddingTop: 12, borderRadius: 16 }} />
+          style={{ marginTop: 12, resize: 'vertical', minHeight: 120, height: 'auto', lineHeight: 1.6, paddingTop: 12, borderRadius: 12 }} />
 
         {/* 封面：emoji + 底色（图片上传接入对象存储后开放） */}
         <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 16, marginTop: 16, alignItems: 'start' }}>
@@ -342,7 +342,7 @@ function Composer({ onClose, onPosted }) {
             value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
         </div>
 
-        {error && <div style={{ color: '#D9826B', fontSize: 13, marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Emoji text="⚠️" size={14} /> {error}</div>}
+        {error && <div style={{ color: 'var(--accent)', fontSize: 13, marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Emoji text="⚠️" size={14} /> {error}</div>}
         <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           <button className="btn btn-primary btn-lg" style={{ flex: 1, justifyContent: 'center' }} onClick={submit} disabled={saving || !form.title.trim() || !form.content.trim()}>
             {saving ? '发布中…' : '发布'}
