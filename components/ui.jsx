@@ -42,8 +42,23 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, [activeId]);
+  // 只有首页首屏内顶栏透明压在视频上；滚过首屏或进入其他页面都用实底
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > window.innerHeight - 140);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  const overVideo = route.page === 'home' && !scrolled;
   return (
-    <header style={{ position: 'sticky', top: 0, zIndex: 50, pointerEvents: 'none' }}>
+    <header style={{
+      position: 'sticky', top: 0, zIndex: 50, pointerEvents: 'none',
+      background: overVideo ? 'transparent' : 'rgba(247,242,229,.86)',
+      backdropFilter: overVideo ? undefined : 'blur(14px) saturate(140%)',
+      WebkitBackdropFilter: overVideo ? undefined : 'blur(14px) saturate(140%)',
+      borderBottom: overVideo ? 'none' : '1px solid var(--line-2)',
+    }}>
       <div className="container site-header-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 76, pointerEvents: 'auto' }}>
         <button onClick={() => navigate({ page: 'home' })} style={{ border: 0, background: 'transparent', color: 'var(--ink)', padding: 0 }}>
           <Logo />

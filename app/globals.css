@@ -12,8 +12,8 @@
   --ink: #1F2A1D;           /* 深林绿（文字/按钮锚色） */
   --ink-2: rgba(31, 42, 29, 0.66);
   --ink-3: rgba(31, 42, 29, 0.44);
-  --green: #336443;         /* 标题主绿 */
-  --green-soft: #85AB8B;    /* 标题辅绿（双色标题的浅色层） */
+  --green: #2C563A;         /* 标题主绿（深一档，压得住视频） */
+  --green-soft: #6E9878;    /* 标题辅绿（双色标题的浅色层） */
   --accent: #DE7429;        /* 暖橙：CTA/徽标点缀（制造冲击力） */
   --accent-soft: #F3D9C2;
   --sage: #4F7A57;          /* 循证/成功 */
@@ -291,6 +291,15 @@ a { color: inherit; text-decoration: none; }
 @keyframes auroraMove{
   from{ transform: translate(0,0) scale(1) rotate(0deg); }
   to{ transform: translate(9%, 6%) scale(1.18) rotate(10deg); }
+}
+
+/* 首屏标题光晕：文字背后垫一片柔焦奶油光，把视频亮暗不均处的文字衬稳 */
+.hero-title{ position: relative; z-index: 0; }
+.hero-title::before{
+  content: ""; position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%);
+  width: min(1080px, 94vw); height: 150%; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(249,245,233,.85) 0%, rgba(249,245,233,.55) 42%, transparent 70%);
+  filter: blur(10px);
 }
 
 /* 首屏演示卡「luxe」玻璃：深毛玻璃 + 白描边 + 双层投影 + 顶部内高光 */

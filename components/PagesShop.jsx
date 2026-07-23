@@ -17,10 +17,10 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
     <>
       {/* —— 开场：全屏视频背景（无素材时光流占位）+ 双色大标题 + 角落内容布局 —— */}
       <section style={{ padding: 0, position: 'relative', overflow: 'hidden', marginTop: -76, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <VideoSlot name="hero" overlay="linear-gradient(180deg, rgba(247,242,229,.55), rgba(247,242,229,.1) 32%, rgba(247,242,229,.04) 62%, rgba(247,242,229,.6))" />
+        <VideoSlot name="hero" overlay="linear-gradient(180deg, rgba(247,242,229,.72), rgba(247,242,229,.18) 40%, rgba(247,242,229,.05) 64%, rgba(247,242,229,.62))" />
         <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', paddingTop: 84, paddingBottom: 36 }}>
           {/* 居中双色大标题：无标点，深绿+浅绿分层 */}
-          <div className="container" style={{ textAlign: 'center' }}>
+          <div className="container hero-title" style={{ textAlign: 'center' }}>
             <h1 className="h-display" style={{ margin: 0 }}>
               <span className="word-pop d-1">养宠不懂</span>&nbsp;<span className="word-pop d-2">就问宝莉</span><br />
               <span className="lite word-pop d-3">答案有出处的 AI 管家</span>
@@ -214,7 +214,7 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
         </div>
       </section>
 
-      <div className="m-static" style={{ position: 'sticky', top: 72, zIndex: 30, background: 'rgba(247,242,229,.82)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
+      <div className="m-static" style={{ position: 'sticky', top: 76, zIndex: 30, background: 'rgba(247,242,229,.82)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', gap: 16, flexWrap: 'wrap' }}>
           <div className="h-scroll" style={{ display: 'flex', gap: 24 }}>
             {CATEGORIES.map((c) => (
