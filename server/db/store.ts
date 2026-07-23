@@ -290,11 +290,11 @@ export const store = {
     return row?.count || 0;
   },
 
-  async incrChatUsage(userId: string, date: string) {
+  async incrChatUsage(userId: string, date: string, by = 1) {
     const row = await prisma.chatUsage.upsert({
       where: { userId_date: { userId, date } },
-      update: { count: { increment: 1 } },
-      create: { userId, date, count: 1 },
+      update: { count: { increment: by } },
+      create: { userId, date, count: by },
     });
     return row.count;
   },

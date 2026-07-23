@@ -18,19 +18,19 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
       {/* —— 开场：全屏视频背景（无素材时光流占位）+ 双色大标题 + 角落内容布局 —— */}
       <section style={{ padding: 0, position: 'relative', overflow: 'hidden', marginTop: -76, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <VideoSlot name="hero" overlay="linear-gradient(180deg, rgba(247,242,229,.55), rgba(247,242,229,.1) 32%, rgba(247,242,229,.04) 62%, rgba(247,242,229,.6))" />
-        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', paddingTop: 150, paddingBottom: 44 }}>
+        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', paddingTop: 84, paddingBottom: 36 }}>
           {/* 居中双色大标题：无标点，深绿+浅绿分层 */}
           <div className="container" style={{ textAlign: 'center' }}>
             <h1 className="h-display" style={{ margin: 0 }}>
               <span className="word-pop d-1">养宠不懂</span>&nbsp;<span className="word-pop d-2">就问宝莉</span><br />
               <span className="lite word-pop d-3">答案有出处的 AI 管家</span>
             </h1>
-            <p className="word-pop d-5" style={{ fontSize: 17, lineHeight: 1.7, color: 'var(--ink-2)', maxWidth: 460, margin: '26px auto 0' }}>
+            <p className="word-pop d-5" style={{ fontSize: 17, lineHeight: 1.7, color: 'var(--ink-2)', maxWidth: 460, margin: '18px auto 0' }}>
               基于权威兽医指南 先把问题讲明白 再替你把东西挑对
             </p>
           </div>
           {/* 底部两角：贴屏幕两边（不受 1280 容器限制），左下品牌+CTA，右下演示玻璃卡 */}
-          <div className="m-col m-gap m-pad" style={{ marginTop: 'auto', paddingTop: 48, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 32, width: '100%', paddingLeft: 'clamp(24px, 4vw, 72px)', paddingRight: 'clamp(100px, 7vw, 140px)' }}>
+          <div className="m-col m-gap m-pad" style={{ marginTop: 'auto', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 32, width: '100%', paddingLeft: 'clamp(24px, 4vw, 72px)', paddingRight: 'clamp(100px, 7vw, 140px)' }}>
             <div className="word-pop d-6" style={{ maxWidth: 380 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, color: 'var(--green)' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4 7 17M17 7l1.4-1.4" /><circle cx="12" cy="12" r="4" /></svg>

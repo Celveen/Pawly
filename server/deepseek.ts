@@ -1,4 +1,5 @@
 // DeepSeek 调用封装（OpenAI 兼容接口）。Key 只在服务端，前端永远拿不到。
+import { addTokens } from './tokenMeter';
 
 const BASE = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/chat/completions';
 const MODEL = process.env.PAWLY_MODEL || 'deepseek-v4-flash';
@@ -19,5 +20,8 @@ export async function deepseekChat(body: Record<string, unknown>): Promise<any> 
   if (!r.ok) {
     throw new Error(`DeepSeek API ${r.status}: ${await r.text()}`);
   }
-  return r.json();
+  const data = await r.json();
+  // 累计本次请求消耗的 token（用于每日额度计量，见 server/tokenMeter.ts）
+  addTokens(Number(data?.usage?.total_tokens) || 0);
+  return data;
 }

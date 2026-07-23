@@ -48,7 +48,6 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [unread, setUnread] = useState(0);
-  const [quota, setQuota] = useState(null); // {used, limit, member} 后端每次回复带回
   const [pos, setPos] = useState(readPos);
   // 记录初始渲染时是否已有保存的位置（保存 effect 会先写入默认值，不能事后再查 localStorage）
   const hadSavedPos = useRef(typeof window !== 'undefined' && (() => { try { return !!localStorage.getItem('pawly.chatPos'); } catch (e) { return false; } })());
@@ -86,8 +85,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
     setLoading(true);
     try {
       const claudeMessages = newMsgs.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }));
-      const { reply, proposals, quota: q } = await callAI(claudeMessages);
-      if (q) setQuota(q);
+      const { reply, proposals } = await callAI(claudeMessages);
       setMessages((m) => [...m, { role: 'assistant', text: reply || '抱歉，我刚走神了，再说一次？', proposals: proposals && proposals.length ? proposals : undefined }]);
       if (!open) setUnread((u) => u + 1);
     } catch (e) {
@@ -210,11 +208,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--ink-3)' }}>
             <span>AI 回复仅供参考</span>
-            {quota && (
-              <span style={quota.used >= quota.limit ? { color: 'var(--accent)', fontWeight: 600 } : undefined}>
-                今日额度 {Math.min(quota.used, quota.limit)}/{quota.limit}{!quota.member && ' · 登录会员可提升'}
-              </span>
-            )}
+            <span>会员可享更高每日用量</span>
           </div>
         </div>
       </div>

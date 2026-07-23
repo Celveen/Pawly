@@ -45,7 +45,7 @@ a { color: inherit; text-decoration: none; }
 /* —— 字阶：大标题一律衬线（杂志感），正文无衬线 —— */
 .h-display {
   font-family: var(--font-display);
-  font-size: clamp(44px, 6.4vw, 92px);
+  font-size: clamp(42px, 6vw, 84px);
   font-weight: 600; letter-spacing: -0.035em; line-height: 1.0; color: var(--green);
 }
 .h-display .lite{ color: var(--green-soft); }
@@ -291,6 +291,16 @@ a { color: inherit; text-decoration: none; }
 @keyframes auroraMove{
   from{ transform: translate(0,0) scale(1) rotate(0deg); }
   to{ transform: translate(9%, 6%) scale(1.18) rotate(10deg); }
+}
+
+/* 首屏演示卡「luxe」玻璃：深毛玻璃 + 白描边 + 双层投影 + 顶部内高光 */
+.demo-luxe{
+  background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.66)) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  backdrop-filter: blur(26px) saturate(170%);
+  border: 1px solid rgba(255,255,255,.8) !important;
+  box-shadow: 0 30px 70px -22px rgba(31,42,29,.5), 0 3px 10px rgba(31,42,29,.12), inset 0 1px 0 rgba(255,255,255,.95) !important;
+  border-radius: 24px !important;
 }
 
 /* 顶部胶囊导航：磨砂玻璃 + 滑动"浮雕"指示块（白色凸起块平滑滑到当前项） */

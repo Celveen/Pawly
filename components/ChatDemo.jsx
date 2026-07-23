@@ -77,10 +77,10 @@ export function ChatDemo({ onOpenChat, compact }) {
   const curTyping = cur && cur.role === 'ai' && !cur.proposal && typed > 0;
 
   return (
-    <div className={compact ? 'chat-demo glass' : 'chat-demo'} role="img" aria-label="宝莉助手对话演示" onClick={onOpenChat}
-      style={{ cursor: 'pointer', height: compact ? 400 : 470, width: compact ? 340 : '100%', maxWidth: compact ? '100%' : 420, background: compact ? undefined : 'var(--surface)' }}>
+    <div className={compact ? 'chat-demo demo-luxe' : 'chat-demo'} role="img" aria-label="宝莉助手对话演示" onClick={onOpenChat}
+      style={{ cursor: 'pointer', height: compact ? 384 : 470, width: compact ? 344 : '100%', maxWidth: compact ? '100%' : 420, background: compact ? undefined : 'var(--surface)' }}>
       {/* 头部 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: '1px solid var(--line-2)', background: 'var(--surface)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: '1px solid var(--line-2)', background: compact ? 'transparent' : 'var(--surface)' }}>
         <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', position: 'relative' }}>
           <CatMascot size={32} />
           <span style={{ position: 'absolute', bottom: -2, right: -2, width: 10, height: 10, borderRadius: 999, background: '#5FA46B', border: '2px solid var(--surface)' }} />
@@ -106,7 +106,7 @@ export function ChatDemo({ onOpenChat, compact }) {
       </div>
 
       {/* 底部：引导真实对话 */}
-      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--line-2)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--line-2)', background: compact ? 'transparent' : 'var(--surface)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ flex: 1, height: 38, borderRadius: 9, border: '1px solid var(--line)', display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 13, color: 'var(--ink-3)' }}>
           点这里，问问你家毛孩子的事…
         </div>

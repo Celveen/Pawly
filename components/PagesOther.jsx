@@ -4,6 +4,7 @@ import { fmt } from './util';
 import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
 import { ArticleCard, ProductCard } from './ui';
 import { Emoji } from './Emoji';
+import { VideoSlot } from './VideoSlot';
 
 const petEmoji = (sp) => (sp === '狗' ? '🐶' : '🐱');
 const petBg = (sp) => (sp === '狗' ? '#F4D7B0' : '#D3DEE2');
@@ -20,13 +21,20 @@ export function ArticlesPage({ navigate }) {
   return (
     <>
       <section style={{ paddingTop: 64, paddingBottom: 32 }}>
-        <div className="container">
-          <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>Pawly Journal · 宠物科普</div>
-          <h1 className="h-1" style={{ margin: 0, maxWidth: 760 }}>养它 从<span style={{ color: 'var(--green-soft)' }}>了解它</span>开始</h1>
-          <p className="body-lg" style={{ marginTop: 20, maxWidth: 620 }}>和兽医、训犬师、铲屎官一起写的实用指南。没有专业术语，只有"今晚就能用"的小知识。</p>
-          <div style={{ marginTop: 32, position: 'relative', maxWidth: 480 }}>
-            <input className="input" placeholder="搜索：幼犬、疫苗、训练、剪指甲..." value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
-            <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <div className="container m-col m-gap" style={{ display: 'flex', alignItems: 'flex-end', gap: 48 }}>
+          <div style={{ flex: 1 }}>
+            <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>Pawly Journal · 宠物科普</div>
+            <h1 className="h-1" style={{ margin: 0, maxWidth: 760 }}>养它 从<span style={{ color: 'var(--green-soft)' }}>了解它</span>开始</h1>
+            <p className="body-lg" style={{ marginTop: 20, maxWidth: 620 }}>和兽医、训犬师、铲屎官一起写的实用指南。没有专业术语，只有"今晚就能用"的小知识。</p>
+            <div style={{ marginTop: 32, position: 'relative', maxWidth: 480 }}>
+              <input className="input" placeholder="搜索：幼犬、疫苗、训练、剪指甲..." value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
+              <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            </div>
+          </div>
+          {/* 栏目氛围视频（public/videos/journal.mp4，与首页共用素材） */}
+          <div className="m-full" style={{ position: 'relative', width: 340, height: 200, borderRadius: 20, overflow: 'hidden', flexShrink: 0, boxShadow: 'var(--shadow-lg)' }}>
+            <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+            <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
           </div>
         </div>
       </section>
@@ -447,7 +455,7 @@ export function MemberPage({ navigate, initialTab }) {
               {[
                 { n: String(pets.length), l: '毛孩子' },
                 { n: String(orders.length), l: '订单' },
-                { n: me ? `${me.chatUsed ?? 0}/${me.chatLimit ?? '-'}` : '…', l: '今日AI额度' },
+                { n: me && !me.guest ? 'Club' : '游客', l: '会员身份' },
               ].map((s) => (
                 <div key={s.l} style={{ textAlign: 'right' }}>
                   <div className="mono" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.01em' }}>{s.n}</div>
@@ -581,7 +589,7 @@ export function MemberPage({ navigate, initialTab }) {
 function BenefitsTab({ me, onLogin }) {
   const isMember = me && !me.guest;
   const benefits = [
-    { emoji: '🐾', title: 'AI 助手额度提升', desc: `宝莉助手每日咨询次数：游客 ${me?.guestChatLimit || 5} 次 → 会员 ${me?.memberChatLimit || 30} 次，挑粮、问养护随便聊`, hot: true },
+    { emoji: '🐾', title: 'AI 助手高用量', desc: '宝莉助手每日可用量大幅提升，挑粮、问养护、做方案随便聊', hot: true },
     { emoji: '🏠', title: '数据跨设备同步', desc: '宠物档案、订单、收货地址、社区帖子绑定手机号，换设备登录即恢复' },
     { emoji: '🎁', title: '会员礼盒', desc: '入会礼包与节日惊喜（供应链接入后发放）', soon: true },
     { emoji: '💳', title: '全场 9 折', desc: '会员专享价（真实支付接入后生效）', soon: true },
@@ -600,19 +608,7 @@ function BenefitsTab({ me, onLogin }) {
         {!isMember && <button className="btn btn-primary" onClick={onLogin}>登录解锁会员</button>}
       </div>
 
-      {/* 今日 AI 额度进度 */}
-      {me && (
-        <div className="card" style={{ padding: 24, marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-            <span style={{ fontSize: 14, fontWeight: 600 }}>今日 AI 助手额度</span>
-            <span className="mono" style={{ fontSize: 14, fontWeight: 700 }}>{me.chatUsed ?? 0} / {me.chatLimit ?? '-'}</span>
-          </div>
-          <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-2)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${Math.min(100, ((me.chatUsed ?? 0) / (me.chatLimit || 1)) * 100)}%`, background: 'var(--primary)', borderRadius: 999, transition: 'width .4s ease' }} />
-          </div>
-          {me.guest && <p className="caption" style={{ margin: '10px 0 0' }}>登录后每日额度提升至 {me.memberChatLimit || 30} 次</p>}
-        </div>
-      )}
+
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
         {benefits.map((b) => (
