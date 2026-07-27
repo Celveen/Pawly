@@ -28,6 +28,7 @@ type Article = {
   author: string;
   date: string;
   body: string[];
+  species?: string[];
 };
 
 type SpeciesScope = string;
@@ -175,6 +176,7 @@ function buildEvidenceSnippet(article: Article, matchedParagraph?: string, cauti
 
 // #文章物种范围推断
 function inferArticleSpeciesScope(article: Article): SpeciesScope {
+  if (article.species?.length === 1) return article.species[0];
   return inferPrimarySpeciesScope(article.title, [article.title, article.excerpt].join('\n'), article.body.join('\n'));
 }
 

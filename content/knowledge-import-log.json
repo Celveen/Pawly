@@ -1,0 +1,442 @@
+[
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "缺少 DEEPSEEK_API_KEY，请在 .env.local 填入",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:38:38.523Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "缺少 DEEPSEEK_API_KEY，请在 .env.local 填入",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:38:39.570Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "error",
+    "reason": "缺少 DEEPSEEK_API_KEY，请在 .env.local 填入",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:38:40.681Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "缺少 DEEPSEEK_API_KEY，请在 .env.local 填入",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:43:41.892Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "缺少 DEEPSEEK_API_KEY，请在 .env.local 填入",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:43:42.495Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "error",
+    "reason": "缺少 DEEPSEEK_API_KEY，请在 .env.local 填入",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:43:43.387Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "内容未达到自动发布门槛 confidence=0, risk=low",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:44:18.666Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "内容未达到自动发布门槛 confidence=0.8, risk=low",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:44:29.992Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "error",
+    "reason": "内容未达到自动发布门槛 confidence=0, risk=low",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:44:48.236Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "模型返回了无效科普分类",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:45:26.125Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:45:45.361Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "published",
+    "reason": "通过来源授权和文章质量门槛",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "articleId": "auto-f0d722095f",
+    "title": "研究揭示宠物标准体重：猫狗兔豚鼠成年期及年均体重变化",
+    "checkedAt": "2026-07-26T07:46:08.607Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "模型返回了无效科普分类",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:47:23.517Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "模型返回了无效科普分类",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:47:36.904Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "published",
+    "reason": "通过来源授权和文章质量门槛",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "articleId": "auto-f0d722095f",
+    "title": "宠物标准体重新参考：狗猫兔豚鼠的生长与体重趋势",
+    "checkedAt": "2026-07-26T07:47:56.871Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "模型返回了无效科普分类",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:52:42.333Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "模型返回了无效科普分类",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:52:55.428Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "published",
+    "reason": "通过来源授权和文章质量门槛",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "articleId": "auto-f0d722095f",
+    "title": "宠物标准体重研究揭示：猫狗兔豚鼠成年体重与成长规律",
+    "checkedAt": "2026-07-26T07:53:16.749Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0309068",
+    "status": "error",
+    "reason": "模型返回了无效科普分类",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:53:28.212Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0336661",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:53:47.971Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299315",
+    "status": "error",
+    "reason": "内容包含具体用药、诊断或治疗表述",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:53:59.052Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:54:50.470Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:54:58.627Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "published",
+    "reason": "通过来源授权和文章质量门槛",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "articleId": "auto-f0d722095f",
+    "title": "宠物成年体重和生长周期的新发现",
+    "checkedAt": "2026-07-26T07:55:17.874Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0309068",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:55:29.757Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0336661",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:55:50.136Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299315",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:56:04.720Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:57:34.688Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:57:55.167Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:58:08.786Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0309068",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:58:22.099Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0336661",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:58:49.030Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299315",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T07:59:00.137Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "published",
+    "reason": "通过来源授权和文章质量门槛",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "articleId": "auto-09cd1f4c9d",
+    "title": "猫狗同住：并非天敌，但习性有别",
+    "checkedAt": "2026-07-26T08:01:40.345Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "Unterminated string in JSON at position 150 (line 7 column 32)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:02:05.553Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：health|nutri",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:02:23.309Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0309068",
+    "status": "error",
+    "reason": "模型未返回完整 JSON",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:02:50.903Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0336661",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：breed|train",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:03:10.052Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299315",
+    "status": "error",
+    "reason": "terminated",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:05:42.702Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0285372",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:06:09.363Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299464",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:06:33.527Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0262658",
+    "status": "error",
+    "reason": "内容未达到自动发布门槛 risk=medium",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:06:57.502Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0322682",
+    "status": "published",
+    "reason": "通过来源授权和文章质量门槛",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "articleId": "auto-623035025c",
+    "title": "复杂围栏一定更好？鬃狮蜥的环境设计研究揭秘",
+    "checkedAt": "2026-07-26T08:07:24.881Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:11:39.722Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:11:51.400Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:12:05.387Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0309068",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:12:20.069Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0336661",
+    "status": "error",
+    "reason": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:12:48.386Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299315",
+    "status": "error",
+    "reason": "模型返回了无效科普分类：(空)",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:13:05.803Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0285372",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:13:27.315Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299464",
+    "status": "published",
+    "reason": "通过来源授权和文章质量门槛",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "articleId": "auto-eae0877896",
+    "title": "豚鼠常见健康问题：趾甲过长、真菌感染与眼部损伤",
+    "checkedAt": "2026-07-26T08:13:52.138Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0262658",
+    "status": "error",
+    "reason": "Unexpected end of JSON input",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "checkedAt": "2026-07-26T08:14:21.094Z"
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0322682",
+    "status": "published",
+    "reason": "通过来源授权和文章质量门槛",
+    "sourcePolicyStatus": "reference",
+    "sourceOrg": "PLOS",
+    "articleId": "auto-623035025c",
+    "title": "鬃狮蜥的饲养环境：复杂度不等于福利提升",
+    "checkedAt": "2026-07-26T08:14:54.320Z"
+  }
+]

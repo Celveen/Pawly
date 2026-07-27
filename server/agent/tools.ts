@@ -74,7 +74,7 @@ const registeredTools: RegisteredTool[] = [
       type: 'object',
       properties: {
         name: { type: 'string', description: '宠物名（必填）' },
-        species: { type: 'string', description: '物种（当前主要支持猫狗，字段保持字符串以便后续扩展）' },
+        species: { type: 'string', description: '宠物一级物种：狗、猫、兔子、宠物鸟、仓鼠、豚鼠、水族宠物、爬宠、小香猪' },
         breed: { type: 'string', description: '品种，如"柴犬"' },
         sex: { type: 'string', enum: ['男', '女'] },
         ageMonths: { type: 'number', description: '当前月龄（会自动换算成出生日期存储，以后年龄自动增长）' },
@@ -106,7 +106,7 @@ const registeredTools: RegisteredTool[] = [
       type: 'object',
       properties: {
         keyword: { type: 'string' },
-        species: { type: 'string', description: '当前商品目录主要支持狗/猫，字段保持字符串便于后续扩展' },
+        species: { type: 'string', description: '宠物一级物种：狗、猫、兔子、宠物鸟、仓鼠、豚鼠、水族宠物、爬宠、小香猪' },
         category: { type: 'string', description: 'food/snack/toy/wash/out/home/health' },
         maxPrice: { type: 'number' },
         inStockOnly: { type: 'boolean' },
@@ -364,7 +364,7 @@ const registeredTools: RegisteredTool[] = [
           type: 'object',
           description: '当前问题相关的宠物信息；物种不要写死，便于未来扩展到猫狗以外',
           properties: {
-            species: { type: 'string', description: '宠物物种，如狗、猫，后续可扩展到其他宠物' },
+            species: { type: 'string', description: '宠物物种，如狗、猫、兔子、宠物鸟、仓鼠、豚鼠、水族宠物、爬宠、小香猪' },
             breed: { type: 'string' },
             ageMonths: { type: 'number' },
             sex: { type: 'string' },

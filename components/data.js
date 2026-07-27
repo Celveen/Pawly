@@ -1,5 +1,7 @@
 // 前端展示数据。商品统一从后端种子导出（单一数据源，前后台一致）。
 export { PRODUCTS } from '@/lib/catalog';
+export { PET_SPECIES } from '@/lib/pet-species';
+import AUTO_ARTICLES from '@/content/auto-articles.json';
 
 export const CATEGORIES = [
   { id: 'all',    name: '全部',  icon: '✨' },
@@ -10,6 +12,154 @@ export const CATEGORIES = [
   { id: 'out',    name: '外出',  icon: '🎒' },
   { id: 'home',   name: '家居',  icon: '🛏️' },
   { id: 'health', name: '保健',  icon: '💊' },
+];
+
+const EXTRA_ARTICLES = [
+  { id: 'a61', cat: 'nutri', emoji: '🌾', bg: '#E8DCCF', title: '兔子到底该吃什么？牧草、蔬菜和兔粮怎么安排',
+    excerpt: '兔子的饮食重点不是胡萝卜，而是持续可获得的优质牧草和清洁饮水。',
+    read: '5 分钟', author: 'Pawly 循证编辑', date: '7 月 26 日',
+    body: [
+      '兔子的肠胃和牙齿都需要持续、充足的纤维。日常照护的重点是提供清洁、气味正常的优质牧草或草，并让它随时可以吃到；饮水也要持续供应。',
+      '叶菜可以作为饮食的一部分，但新食物要逐步引入，观察粪便、食欲和精神状态。水果、胡萝卜等高糖食物更适合作为少量偶尔奖励，不要把它们当主食。',
+      '兔粮不是越多越好，具体种类和喂量要结合年龄、体况和是否处于生长期，并按包装说明或兽医建议调整。如果突然不吃、粪便明显减少或精神变差，应尽快联系熟悉异宠的兽医。',
+    ], refs: [
+      { org: 'RSPCA', title: 'Feeding Your Pet Rabbit a Healthy Diet', url: 'https://www.rspca.org.uk/adviceandwelfare/pets/rabbits/diet' },
+      { org: 'Merck Veterinary Manual', title: 'Nutrition of Rabbits', url: 'https://www.merckvetmanual.com/exotic-and-laboratory-animals/rabbits/nutrition-of-rabbits' },
+    ] },
+  { id: 'a62', cat: 'groom', emoji: '🦷', bg: '#DCE5D4', title: '兔子为什么要一直吃草？不只是为了填饱肚子',
+    excerpt: '牧草同时关系到兔子的消化系统和持续生长的牙齿。',
+    read: '4 分钟', author: 'Pawly 循证编辑', date: '7 月 26 日',
+    body: [
+      '兔子的牙齿会持续生长，咀嚼牧草和草本植物提供的粗纤维，有助于自然磨耗；纤维也支持正常的肠道运动。',
+      '牧草应该保持干燥、清洁、无霉味和低尘。可以把牧草放在干净的草架或觅食位置，既减少污染，也增加一点探索和取食的机会。',
+      '如果兔子突然拒绝牧草、流口水、咀嚼困难或粪便变少，不要只靠磨牙玩具解决，牙齿和肠胃问题都需要由异宠兽医判断。',
+    ], refs: [
+      { org: 'RSPCA', title: 'Enhancing Your Rabbit’s Diet', url: 'https://www.rspca.org.uk/en/adviceandwelfare/pets/rabbits/behaviour/enrichment/dietary' },
+    ] },
+  { id: 'a63', cat: 'nutri', emoji: '🌻', bg: '#F2DDC1', title: '仓鼠不是只吃瓜子：主粮、垫料和单笼误区',
+    excerpt: '高脂种子不能成为仓鼠的全部饮食，居住环境也要满足挖掘、筑巢和运动需求。',
+    read: '5 分钟', author: 'Pawly 循证编辑', date: '7 月 26 日',
+    body: [
+      '仓鼠需要营养完整的商业化日粮，不能只把瓜子、坚果等高脂种子当主食。它们会优先挑喜欢的食物，长期挑食可能造成营养不均衡和体重问题。',
+      '垫料应选择无强香味、低尘、适合挖掘和筑巢的材料，并保持干燥。跑轮要按体型选择，让仓鼠跑动时背部保持自然，不要明显弯曲。',
+      '很多仓鼠，尤其是成年后，会有明显领地性。合笼并不等于更快乐，出现追咬、打斗或持续躲避时应立即分笼；具体品种和个体情况可以咨询异宠兽医。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Providing a Home for a Hamster', url: 'https://www.merckvetmanual.com/all-other-pets/hamsters/providing-a-home-for-a-hamster' },
+    ] },
+  { id: 'a64', cat: 'groom', emoji: '🛞', bg: '#D9E5C5', title: '仓鼠跑轮怎么选？先看背部是否自然',
+    excerpt: '合适的跑轮应让仓鼠保持自然姿势，连续跑面比网格跑面更安全。',
+    read: '4 分钟', author: 'Pawly 宠物编辑', date: '7 月 26 日',
+    body: [
+      '给仓鼠选跑轮时，重点看跑步姿势和跑面。跑动时背部应尽量保持自然，不能长期弓成明显的弧形；不同品种和个体需要的尺寸不同。',
+      '连续跑面比带空隙的网格面更不容易卡脚。安装后检查底座是否稳固、转动是否顺畅，并观察仓鼠是否会撞到周围物品。',
+      '跑轮是环境丰富化的一部分，不代表可以替代足够的活动空间、垫料深度和躲避处。若出现跛行或活动异常，暂停使用并咨询兽医。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Providing a Home for a Hamster', url: 'https://www.merckvetmanual.com/all-other-pets/hamsters/providing-a-home-for-a-hamster' },
+    ] },
+  { id: 'a65', cat: 'nutri', emoji: '🌿', bg: '#DCE5D4', title: '宠物鸟不能只吃一把瓜子：颗粒粮和蔬果怎么搭配',
+    excerpt: '单一或偏种子饮食可能造成营养不足，换粮也要慢慢来。',
+    read: '5 分钟', author: 'Pawly 循证编辑', date: '7 月 26 日',
+    body: [
+      '很多宠物鸟会主动挑选高脂种子和坚果，但“爱吃”不等于营养完整。鸟种差异很大，日粮应根据具体鸟种，优先考虑营养完整的颗粒粮，并搭配适合的蔬果。',
+      '如果鸟已经长期吃种子，不要突然把食物全部换掉。换粮期间要每天观察体重、粪便、精神和进食情况，出现明显变化应停止自行调整并联系鸟类兽医。',
+      '不同鸟种的营养需求并不相同，尤其是鹦鹉、文鸟和其他小型鸟类不能简单套用同一套比例。购买粮食前先确认鸟种和年龄。',
+    ], refs: [
+      { org: 'RSPCA', title: 'What To Feed Your Pet Bird', url: 'https://www.rspca.org.uk/adviceandwelfare/pets/birds/diet' },
+      { org: 'Merck Veterinary Manual', title: 'Nutritional Disorders of Pet Birds', url: 'https://www.merckvetmanual.com/bird-owners/disorders-and-diseases-of-birds/nutritional-disorders-of-pet-birds' },
+    ] },
+  { id: 'a66', cat: 'train', emoji: '🪶', bg: '#D3DEE2', title: '宠物鸟的笼舍不是越小越省事：先满足伸翅和活动',
+    excerpt: '笼舍尺寸、栖木和日常安全活动，决定了鸟能不能舒展和探索。',
+    read: '4 分钟', author: 'Pawly 宠物编辑', date: '7 月 26 日',
+    body: [
+      '笼舍要给鸟留下伸展和活动的空间，尺寸至少应让它能够舒展翅膀并在不同位置移动。栖木可以有不同直径，但要检查表面是否安全、无尖刺和有害涂层。',
+      '鸟类需要日常活动和环境丰富化，但放飞前要关闭门窗、风扇和其他危险设备，并避开厨房烟雾、香薰和不明喷雾。',
+      '新鸟或生病的鸟不要仅凭网上经验安排合笼和训练，先让熟悉鸟类的兽医评估健康状态，再逐步适应环境。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Providing a Home for a Bird', url: 'https://www.merckvetmanual.com/bird-owners/choosing-and-taking-care-of-a-pet-bird/providing-a-home-for-a-bird' },
+    ] },
+  { id: 'a67', cat: 'nutri', emoji: '🫑', bg: '#EAD9DE', title: '豚鼠为什么需要维生素 C？牧草之外还要注意什么',
+    excerpt: '豚鼠不能自行合成足够的维生素 C，日常饮食要关注新鲜蔬菜和合适的颗粒粮。',
+    read: '5 分钟', author: 'Pawly 循证编辑', date: '7 月 26 日',
+    body: [
+      '豚鼠需要持续获得优质牧草或草作为高纤维基础，同时还需要维生素 C 来源。适合的蔬菜和新鲜颗粒粮可以参与补充，但不要只靠一种食物解决全部营养需求。',
+      '维生素 C 会随时间和空气暴露下降，所以颗粒粮应注意保质期和开封后的保存，不要无限期只往旧粮上补新粮。具体喂量要结合年龄、体重、怀孕或哺乳状态调整。',
+      '饮食变化要逐步进行。如果出现不吃、粪便减少、精神差或体重下降，应尽快联系熟悉异宠的兽医，不要只自行补充营养品。',
+    ], refs: [
+      { org: 'RSPCA', title: 'What To Feed a Guinea Pig', url: 'https://www.rspca.org.uk/adviceandwelfare/pets/rodents/guineapigs/diet' },
+    ] },
+  { id: 'a68', cat: 'groom', emoji: '🏠', bg: '#F2DDC1', title: '豚鼠的家怎么布置？牧草、躲避处和活动空间都要有',
+    excerpt: '豚鼠需要安全躲藏、干净饮水和持续可获得的高纤维食物。',
+    read: '4 分钟', author: 'Pawly 宠物编辑', date: '7 月 26 日',
+    body: [
+      '豚鼠是容易受到惊吓的小型草食动物，环境里应有足够的躲避处，让它能在需要时离开视线。躲避屋要安全、无尖锐边缘，并方便清洁。',
+      '牧草和清洁饮水应持续供应，垫料保持干燥，明显污染区域及时清理。豚鼠需要活动空间和日常探索，不能只依靠一个很小的笼子。',
+      '兔子和豚鼠虽然都吃草，但营养需求并不完全相同，尤其是维生素 C 需求不同，不建议把两者当成同一种宠物照顾。',
+    ], refs: [
+      { org: 'RSPCA', title: 'Keeping Rabbits & Guinea Pigs Together', url: 'https://www.rspca.org.uk/adviceandwelfare/pets/rabbits/company/rabbitsandguineapigs' },
+    ] },
+  { id: 'a69', cat: 'health', emoji: '🧪', bg: '#C8DDE2', title: '养鱼先学会看水：新鱼缸为什么不能急着下鱼',
+    excerpt: '水质检测、过滤和循序渐进，比一次买很多鱼更重要。',
+    read: '5 分钟', author: 'Pawly 水族编辑', date: '7 月 26 日',
+    body: [
+      '水族宠物生活在水里，水质就是它们的生活环境。新缸在加入鱼只前，应先确认水质条件适合目标鱼种，不要因为水看起来清澈就认为已经安全。',
+      '过滤器负责循环和承载过滤材料，但不能代替检测和维护。新增鱼只时要控制数量，观察鱼的呼吸、游姿、食欲和体表变化，避免短时间内造成水质负担。',
+      '换水时要按照鱼种和检测结果制定计划，避免一次性大幅改变水温和水质。鱼出现异常时，先检测水质并隔离评估，再考虑用药。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Providing a Home for Fish', url: 'https://www.merckvetmanual.com/all-other-pets/fish/providing-a-home-for-fish' },
+      { org: 'Merck Veterinary Manual', title: 'Management of Aquarium Fish', url: 'https://www.merckvetmanual.com/exotic-and-laboratory-animals/aquarium-fish/management-of-aquarium-fish' },
+    ] },
+  { id: 'a70', cat: 'groom', emoji: '🐟', bg: '#D3DEE2', title: '水族箱日常维护清单：过滤、水质和新鱼隔离',
+    excerpt: '规律观察和小幅维护，比鱼生病后临时大换水更稳妥。',
+    read: '4 分钟', author: 'Pawly 水族编辑', date: '7 月 26 日',
+    body: [
+      '日常维护可以从三件事开始：观察鱼的状态、按计划检测水质、检查过滤和加热设备是否正常。记录变化比凭感觉更容易发现问题。',
+      '新鱼先隔离观察，有助于减少把疾病带入主缸的风险。鱼缸过度拥挤、喂食过量和过滤维护不足，都可能让水质更快恶化。',
+      '如果鱼出现持续浮头、急促呼吸、失去平衡或大面积异常，不要反复添加不明药物，优先咨询水族专业人士或兽医。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Routine Health Care of Fish', url: 'https://www.merckvetmanual.com/all-other-pets/fish/routine-health-care-of-fish' },
+      { org: 'Merck Veterinary Manual', title: 'Disorders and Diseases of Fish', url: 'https://www.merckvetmanual.com/all-other-pets/fish/disorders-and-diseases-of-fish' },
+    ] },
+  { id: 'a71', cat: 'health', emoji: '🌡️', bg: '#D5E0CC', title: '爬宠饲养箱不是摆设：温度、湿度和 UVB 要按物种设置',
+    excerpt: '爬宠的环境参数不能一套模板通用，先确认物种需求再买设备。',
+    read: '6 分钟', author: 'Pawly 异宠编辑', date: '7 月 26 日',
+    body: [
+      '爬宠依赖外界环境调节体温，饲养箱需要根据具体物种搭建适合的温度梯度、湿度和躲避区域。不能只看箱内某一个点的温度，也不能把不同爬宠的参数直接套用。',
+      '部分日行性蜥蜴和龟类需要合适的 UVB 来帮助维生素 D3 合成和钙代谢，但灯具的波段、距离、遮蔽物和更换周期都很重要，购买前应查清物种资料。',
+      '温湿度计和定期记录很有必要。若爬宠出现长期不吃、行动异常、蜕皮困难或骨骼问题，尽快找异宠兽医评估，不要只增加补钙粉。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Nutrition in Reptiles', url: 'https://www.merckvetmanual.com/management-and-nutrition/nutrition-exotic-and-zoo-animals/nutrition-in-reptiles' },
+      { org: 'Merck Veterinary Manual', title: 'Providing a Home for a Reptile', url: 'https://www.merckvetmanual.com/all-other-pets/reptiles/providing-a-home-for-a-reptile' },
+    ] },
+  { id: 'a72', cat: 'nutri', emoji: '🦗', bg: '#E8D8C3', title: '爬宠吃什么不能一概而论：先分清物种和食性',
+    excerpt: '食虫、杂食和草食爬宠的饮食差异很大，补充剂也不能盲目加。',
+    read: '5 分钟', author: 'Pawly 异宠编辑', date: '7 月 26 日',
+    body: [
+      '爬宠的饮食要先看物种：有的以昆虫为主，有的需要植物性食物，有的还需要按照年龄调整。不能因为都叫“爬宠”就使用同一种粮或同一套补充方案。',
+      '饲料昆虫应来自可靠来源，活体投喂要注意尺寸和安全；冷冻或死亡饲料也要按物种和兽医建议处理。钙粉、维生素和 UVB 的关系需要综合判断，过量补充同样可能有风险。',
+      '如果宠物拒食、体重下降、排泄异常或行动迟缓，应记录温湿度、饮食和排泄情况，带给异宠兽医，而不是只增加食物种类。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Nutrition in Reptiles', url: 'https://www.merckvetmanual.com/management-and-nutrition/nutrition-exotic-and-zoo-animals/nutrition-in-reptiles' },
+    ] },
+  { id: 'a73', cat: 'nutri', emoji: '🥣', bg: '#F4D7B0', title: '小香猪怎么喂才不容易胖？定量、分餐和饮水很重要',
+    excerpt: '小香猪不是“想吃多少就吃多少”，均衡日粮和体重管理要从小开始。',
+    read: '5 分钟', author: 'Pawly 异宠编辑', date: '7 月 26 日',
+    body: [
+      '小香猪需要均衡日粮和持续清洁饮水，不能长期用零食、水果或人类食物代替主粮。高热量食物可以作为训练奖励，但要计入全天总量。',
+      '把每日食物分成至少两餐，并按照体重、年龄和生长阶段调整。体重过快增长会增加关节负担，定期记录体重和体况，比只看食欲更可靠。',
+      '新食物要逐步引入，出现持续腹泻、呕吐、精神差或明显不吃时，应尽快咨询熟悉猪类或异宠的兽医。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Feeding and Nutrition of Miniature Pet Pigs', url: 'https://www.merckvetmanual.com/exotic-and-laboratory-animals/miniature-pet-pigs/feeding-and-nutrition-of-miniature-pet-pigs' },
+    ] },
+  { id: 'a74', cat: 'train', emoji: '🐷', bg: '#EAD9DE', title: '小香猪适合什么样的家庭？空间、清洁和训练先想清楚',
+    excerpt: '小香猪需要长期照护，不是“长不大的迷你宠物”，养之前要评估空间和兽医资源。',
+    read: '5 分钟', author: 'Pawly 异宠编辑', date: '7 月 26 日',
+    body: [
+      '小香猪的体型和照护需求会随着成长变化，不能只按幼年体型准备空间。家庭需要提前考虑活动区域、防滑地面、休息区、清洁和长期医疗资源。',
+      '它们可以通过正向奖励学习固定地点、等待和简单互动，但不要用体罚处理挖掘、叫声或护食等行为。稳定的作息和清晰的边界更容易建立信任。',
+      '带回家前先确认当地饲养规定、附近是否有能接诊猪类的兽医，并准备好持续饮水、均衡食物和安全活动空间。',
+    ], refs: [
+      { org: 'Merck Veterinary Manual', title: 'Feeding and Nutrition of Miniature Pet Pigs', url: 'https://www.merckvetmanual.com/exotic-and-laboratory-animals/miniature-pet-pigs/feeding-and-nutrition-of-miniature-pet-pigs' },
+    ] },
 ];
 
 export const ARTICLE_CATS = [
@@ -23,6 +173,7 @@ export const ARTICLE_CATS = [
 ];
 
 export const ARTICLES = [
+  ...AUTO_ARTICLES,
   // —— 循证科普：编译自权威兽医指南，refs 为参考来源（详情页展示）——
   { id: "a19", cat: "puppy", emoji: "💉", bg: "#D9E2EA", title: "幼犬幼猫疫苗时间表：首免、加强针、成年后多久打一次",
     excerpt: "几周开始打、一共打几针、成年后是不是要年年打？按 WSAVA 2024 指南，一次把核心疫苗的节奏说清楚。",
@@ -494,7 +645,7 @@ export const ARTICLES = [
       "起步别急：先让它把牙膏当零食舔几天，再换指套刷或软毛牙刷，重点刷牙齿外侧面，目标是每天一次。挑洁齿产品时，可以认 VOHC（兽医口腔健康委员会）的认证标志。要是已经口臭明显、牙龈红肿、流口水变多，先约兽医检查——刷牙防的是新问题，代替不了治疗。",
     ],
     refs: [
-      { org: "VOHC", title: "VOHC Accepted Products（认证洁齿产品清单）", url: "http://www.vohc.org/" },
+      { org: "VOHC", title: "VOHC Accepted Products（认证洁齿产品清单）", url: "https://www.vohc.org/" },
       { org: "AAHA", title: "2019 AAHA Dental Care Guidelines for Dogs and Cats", url: "https://www.aaha.org/" },
     ] },
   { id: "a56", cat: "train", emoji: "🐕", bg: "#D9E5C5", title: "训狗用奖励还是惩罚？AVSAB：奖励",
@@ -562,7 +713,7 @@ export const ARTICLES = [
       '第一晚怎么办？三件事：第一，准备一个温暖的小窝，放在你能听到的地方但不要直接放床上；第二，塞一个能发热的玩偶模拟同伴体温；第三，做好心理建设，因为可能要哭三晚。',
       '关于厕所训练：8 周龄幼犬大约每 1 小时需要排泄一次。吃饭后 15 分钟、睡醒后立刻、玩耍后 10 分钟——这三个时刻抱去厕所，命中率很高。',
       '疫苗和驱虫别忘记。幼犬一般在 6 周开始首针，之后每 2-4 周一针，共 3-4 针。完整免疫前不要落地遛弯。',
-    ] },
+    ], refs: [{ org: 'WSAVA 世界小动物兽医协会', title: '2024 Guidelines for the Vaccination of Dogs and Cats', url: 'https://wsava.org/global-guidelines/vaccination-guidelines/' }] },
   { id: 'a2', cat: 'nutri', emoji: '🥗', bg: '#D9E5C5', title: '狗到底能不能吃水果？一张表帮你分清',
     excerpt: '苹果可以、葡萄绝对不行、香蕉适量——这些"民间智慧"哪些是真的？',
     read: '5 分钟', author: '李医生', date: '5 月 7 日',
@@ -571,7 +722,7 @@ export const ARTICLES = [
       '绝对禁止：葡萄/葡萄干（可致急性肾损伤）、樱桃（核含氰化物）、牛油果（含 persin）、过量柑橘类（刺激胃肠）。',
       '小心使用：草莓（高糖）、菠萝（少量，酸刺激）、桃子（核绝对不行）。',
       '记住一个原则：水果只是"小零食"，不要超过狗狗每日总热量的 10%。再喜欢吃，也别让它当饭吃。',
-    ] },
+    ], refs: [{ org: 'ASPCA', title: 'People Foods to Avoid Feeding Your Pets', url: 'https://www.aspca.org/pet-care/aspca-poison-control/people-foods-avoid-feeding-your-pets' }] },
   { id: 'a3', cat: 'train', emoji: '🎯', bg: '#CFE0E6', title: '"坐下、握手、趴下"：三个动作两周教会',
     excerpt: '别再追着狗满屋子跑了。正向训练法 + 一袋鸡肉条，谁都能做到。',
     read: '6 分钟', author: '训犬师老周', date: '5 月 4 日',
@@ -580,7 +731,7 @@ export const ARTICLES = [
       '坐下：手拿零食从狗鼻子上方慢慢往后移，它抬头看的时候屁股自然就坐下了。立刻给零食 +"好棒！"',
       '握手：狗坐下后，轻碰它的脚，它抬起来的瞬间——给零食。重复几次，加上口令"握手"。',
       '趴下：从坐姿开始，零食从鼻子往地面下滑，狗会跟着趴下。每天 5 分钟，两周左右成形。',
-    ] },
+    ], refs: [{ org: 'AVSAB', title: 'Humane Dog Training Position Statement', url: 'https://avsab.org/resources/position-statements/' }] },
   { id: 'a4', cat: 'health', emoji: '🩺', bg: '#E8D2D2', title: '猫咪呕吐是常态还是危险信号？',
     excerpt: '猫一天吐两次毛球可能没事，但这 5 种情况建议尽快送医。',
     read: '7 分钟', author: '王医生', date: '5 月 2 日',
@@ -590,7 +741,7 @@ export const ARTICLES = [
       '警告信号 2：连续呕吐超过 24 小时 —— 有脱水风险。',
       '警告信号 3：呕吐伴随嗜睡、不吃不喝 —— 需尽快就医排查。',
       '提醒：本文仅作科普参考，宠物出现异常请第一时间咨询专业兽医。',
-    ] },
+    ], refs: [{ org: 'Merck Veterinary Manual', title: 'Digestive Disorders of Cats', url: 'https://www.merckvetmanual.com/cat-owners/digestive-disorders-of-cats' }] },
   { id: 'a5', cat: 'groom', emoji: '✂️', bg: '#E4DDC9', title: '在家给狗剪指甲的正确姿势',
     excerpt: '三步法 + 一个小工具，慢慢来自己也能搞定。',
     read: '4 分钟', author: '汪老师', date: '4 月 28 日',
@@ -599,7 +750,7 @@ export const ARTICLES = [
       '判断血线：白指甲对光看，粉色部分就是血线；黑指甲剪一小段看横截面，出现黑点立刻停。',
       '步骤：固定爪子 → 露出指甲 → 与指甲呈 45° 角剪掉尖端一点点 → 立刻给零食。',
       '害怕怎么办？先用零食让它适应工具，每天只剪一两只爪，循序渐进。',
-    ] },
+    ], refs: [{ org: 'RSPCA', title: 'Dog care and welfare resources', url: 'https://www.rspca.org.uk/adviceandwelfare/pets/dogs' }] },
   { id: 'a6', cat: 'breed', emoji: '🐕', bg: '#D9D4E0', title: '柯基为什么这么短？关于短腿汪的冷知识',
     excerpt: '威尔士柯基的短腿不是"可爱设定"，而是几百年前为了赶牛进化出的本事。',
     read: '6 分钟', author: '品种百科', date: '4 月 25 日',
@@ -608,7 +759,7 @@ export const ARTICLES = [
       '短腿来自基因变异（FGF4），这种变异让它能贴地躲开牛的踢腿——典型的"工作犬"特征。',
       '柯基精力旺盛，每天需要一小时以上运动。别看腿短，跑起来一点不输。',
       '注意：柯基相对容易出现椎间盘问题，尽量减少频繁上下楼梯、跳沙发。',
-    ] },
+    ], refs: [{ org: 'American Kennel Club', title: 'Pembroke Welsh Corgi breed information', url: 'https://www.akc.org/dog-breeds/pembroke-welsh-corgi/' }] },
   { id: 'a7', cat: 'health', emoji: '💉', bg: '#D5E0DA', title: '猫三联、狂犬、驱虫——疫苗时间表',
     excerpt: '什么时候打、打几针？一篇大致说清。',
     read: '5 分钟', author: '李医生', date: '4 月 20 日',
@@ -617,7 +768,7 @@ export const ARTICLES = [
       '狂犬疫苗：3 月龄以上，按当地规定接种。',
       '驱虫：体内、体外按产品与医嘱定期进行，幼宠频次更高。',
       '建议在正规医院接种，有冷链保障，也能让医生顺便检查健康状况。',
-    ] },
+    ], refs: [{ org: 'WSAVA 世界小动物兽医协会', title: '2024 Guidelines for the Vaccination of Dogs and Cats', url: 'https://wsava.org/global-guidelines/vaccination-guidelines/' }] },
   { id: 'a8', cat: 'nutri', emoji: '⚖️', bg: '#E7E0CB', title: '怎么判断猫狗是不是胖了？',
     excerpt: '体重数字会骗人，BCS 体况评分更靠谱。',
     read: '4 分钟', author: '王医生', date: '4 月 18 日',
@@ -626,7 +777,7 @@ export const ARTICLES = [
       '理想状态：能摸到肋骨但看不到；从上往下看有腰线；从侧面看肚子上收。',
       '偏胖信号：摸不到肋骨、没有腰线、肚子下垂。',
       '调整原则：循序渐进，每周减重不超过当前体重的 1% 左右，急减伤身。',
-    ] },
+    ], refs: [{ org: 'WSAVA 世界小动物兽医协会', title: 'Body Condition Score Chart', url: 'https://wsava.org/wp-content/uploads/2020/01/Body-Condition-Score-Dog.pdf' }] },
   { id: 'a9', cat: 'train', emoji: '🍚', bg: '#E8C39E', title: '狗狗护食、护玩具怎么纠正？',
     excerpt: '一靠近饭碗就低吼？用"靠近=有好事"重新建立信任。',
     read: '6 分钟', author: '训犬师老周', date: '4 月 15 日',
@@ -635,7 +786,7 @@ export const ARTICLES = [
       '第一阶段：它吃饭时，你在远处往碗里丢一块更香的零食，然后离开。让它把"你接近"和"加餐"联系起来。',
       '第二阶段：逐步缩短距离，始终保持"加餐后离开"，不要去抢碗。',
       '如果出现龇牙、低吼升级或咬人倾向，请暂停并咨询专业训犬师，不要硬碰硬。',
-    ] },
+    ], refs: [{ org: 'AVSAB', title: 'Humane Dog Training Position Statement', url: 'https://avsab.org/resources/position-statements/' }] },
   { id: 'a10', cat: 'health', emoji: '💩', bg: '#E4D2BD', title: '狗狗软便、拉稀，先别慌，排查这几点',
     excerpt: '换粮太快、吃多了、着凉、应激……大多是小问题，但这些情况要就医。',
     read: '5 分钟', author: '王医生', date: '4 月 12 日',
@@ -644,7 +795,7 @@ export const ARTICLES = [
       '其它常见诱因：一次吃太多、吃了人食或捡食、着凉、到新环境的应激。',
       '可以先做的：少量多餐、清淡、保证饮水；换粮过急的话退回慢慢换。',
       '尽快就医的情况：拉稀带血、伴随呕吐/精神差/不吃、幼犬持续腹泻（易脱水）。本文仅供参考。',
-    ] },
+    ], refs: [{ org: 'AAHA 美国动物医院协会', title: '2021 AAHA Nutrition and Weight Management Guidelines', url: 'https://www.aaha.org/resources/2021-aaha-nutrition-and-weight-management-guidelines/home/' }] },
   { id: 'a11', cat: 'nutri', emoji: '🐱', bg: '#C8DDE2', title: '猫一天喂几次、喂多少才合适？',
     excerpt: '自由采食还是定时定量？看猫的年龄和体型。',
     read: '5 分钟', author: '李医生', date: '4 月 9 日',
@@ -653,7 +804,7 @@ export const ARTICLES = [
       '成猫一天 2 次较稳妥。易胖、绝育后的猫建议定时定量，避免自由采食吃过量。',
       '喂多少：参考粮袋上按体重给出的推荐量作为起点，再根据体况（BCS）微调。',
       '记得 24 小时提供干净饮水；多喝水对猫的泌尿健康很重要。',
-    ] },
+    ], refs: [{ org: 'WSAVA 世界小动物兽医协会', title: 'Global Nutrition Guidelines', url: 'https://wsava.org/global-guidelines/global-nutrition-guidelines/' }] },
   { id: 'a12', cat: 'groom', emoji: '🪮', bg: '#E2D5E4', title: '给猫梳毛的正确方法（换毛季必看）',
     excerpt: '梳毛不只是好看——减少误吞毛发、顺便检查皮肤。',
     read: '4 分钟', author: '汪老师', date: '4 月 6 日',
@@ -662,7 +813,7 @@ export const ARTICLES = [
       '顺着毛发生长方向梳，从背部开始，腹部和腋下轻一点，这些地方猫比较敏感。',
       '梳毛能减少猫舔进肚子的浮毛，配合化毛膏帮助日常排毛。',
       '边梳边摸，顺便检查有没有结块、皮屑、红点或寄生虫，早发现早处理。',
-    ] },
+    ], refs: [{ org: 'International Cat Care', title: 'Grooming your cat', url: 'https://icatcare.org/' }] },
   { id: 'a13', cat: 'puppy', emoji: '🍼', bg: '#F7E2D4', title: '幼猫断奶后怎么喂养？',
     excerpt: '从奶到粮的过渡期，喂错容易拉肚子。',
     read: '6 分钟', author: '李医生', date: '4 月 3 日',
@@ -671,7 +822,7 @@ export const ARTICLES = [
       '过渡方法：用温水（不要用牛奶，很多猫乳糖不耐）把幼猫粮泡软成糊，再逐渐减少水量过渡到干粮。',
       '少量多餐，一天 4 次左右；观察便便状态，软便说明过渡太快，放慢节奏。',
       '保持环境温暖、提供干净饮水；体重和精神状态是最直观的健康指标。',
-    ] },
+    ], refs: [{ org: 'Merck Veterinary Manual', title: 'Cat Owners: Feeding and Nutrition', url: 'https://www.merckvetmanual.com/cat-owners' }] },
   { id: 'a14', cat: 'breed', emoji: '😺', bg: '#D3DEE2', title: '布偶猫的性格与饲养要点',
     excerpt: '"仙女猫"黏人又安静，但毛发和心脏健康要上心。',
     read: '6 分钟', author: '品种百科', date: '3 月 30 日',
@@ -680,7 +831,7 @@ export const ARTICLES = [
       '长毛需要勤打理：每天梳毛减少打结，换毛季尤其要注意排毛。',
       '布偶属于大型猫，发育期长，注意营养均衡、控制体重，别让它太胖。',
       '该品种相对需要关注心脏健康，建议定期体检，选购时了解父母的健康筛查情况。',
-    ] },
+    ], refs: [{ org: 'International Cat Care', title: 'Preventative health care for your cat', url: 'https://icatcare.org/' }] },
   { id: 'a15', cat: 'health', emoji: '👂', bg: '#D5E0CC', title: '狗狗耳朵清洁与耳螨预防',
     excerpt: '又抓耳朵又甩头、耳道有异味？该清洁了。',
     read: '5 分钟', author: '王医生', date: '3 月 27 日',
@@ -689,7 +840,7 @@ export const ARTICLES = [
       '清洁方法：滴入宠物专用洁耳液，轻揉耳根十几秒软化耳垢，让狗自己甩头，再用棉片擦干净外耳，不要用棉签往深处捅。',
       '频率：日常 1-2 周一次即可，洗澡、游泳后及时擦干耳朵。',
       '出现大量褐色分泌物、明显异味、红肿或频繁抓挠，可能是耳螨或耳道感染，建议就医。',
-    ] },
+    ], refs: [{ org: 'RSPCA', title: 'Dog care and welfare resources', url: 'https://www.rspca.org.uk/adviceandwelfare/pets/dogs' }] },
   { id: 'a16', cat: 'train', emoji: '🛋️', bg: '#EBDDC4', title: '猫咪乱抓沙发怎么办？',
     excerpt: '抓挠是天性，堵不如疏——给它一个更爽的选择。',
     read: '5 分钟', author: '训犬师老周', date: '3 月 24 日',
@@ -698,5 +849,6 @@ export const ARTICLES = [
       '在它常抓的沙发旁放一个稳固的猫抓板/抓柱，撒点猫薄荷吸引它过去。',
       '在沙发被抓的位置临时贴防抓贴或双面胶，降低吸引力，"此路不通"。',
       '它去抓抓板时立刻夸奖给零食，把"正确选择"和"好事"绑定，慢慢就改过来了。',
-    ] },
+    ], refs: [{ org: 'AAFP / ISFM', title: 'Feline Environmental Needs Guidelines', url: 'https://catvets.com/resource/aafp-isfm-environmental-needs-guidelines/' }] },
+  ...EXTRA_ARTICLES,
 ];

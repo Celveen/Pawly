@@ -57,7 +57,7 @@ model Pet {
   userId          String
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String
-  species         String // '狗' | '猫'
+  species         String // 一级物种名称，如：狗、猫、兔子、宠物鸟、仓鼠、豚鼠、水族宠物、爬宠、小香猪
   breed           String?
   sex             String?
   birthday        DateTime?

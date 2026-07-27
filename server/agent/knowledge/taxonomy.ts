@@ -61,50 +61,48 @@ const SPECIES_REGISTRY: SpeciesRegistryItem[] = [
     guidanceCategories: ['主粮', '零食', '保健', '猫砂', '洗护', '玩具', '家居'],
     profileEnabled: true,
   },
-  // {
-  //   scope: 'rabbit',
-  //   category: 'mammal',
-  //   aliases: ['兔', '兔子', '垂耳兔', '侏儒兔'],
-  //   breedAliases: [
-  //     { scope: '垂耳兔', aliases: ['垂耳兔'] },
-  //     { scope: '侏儒兔', aliases: ['侏儒兔'] },
-  //   ],
-  //   supportedTopicDomains: ['digestive', 'urinary', 'respiratory', 'eye', 'oral', 'behavior', 'nutrition', 'preventive_care'],
-  //   guidanceCategories: ['主粮', '零食', '保健', '垫料', '玩具', '家居'],
-  // },
-  // {
-  //   scope: 'hamster',
-  //   category: 'mammal',
-  //   aliases: ['仓鼠', '金丝熊', '侏儒仓鼠'],
-  //   breedAliases: [
-  //     { scope: '金丝熊', aliases: ['金丝熊', '熊类仓鼠'] },
-  //     { scope: '侏儒仓鼠', aliases: ['侏儒仓鼠', '三线', '一线'] },
-  //   ],
-  //   supportedTopicDomains: ['digestive', 'respiratory', 'skin', 'eye', 'behavior', 'nutrition', 'preventive_care'],
-  //   guidanceCategories: ['主粮', '零食', '垫料', '玩具', '家居'],
-  // },
-  // {
-  //   scope: 'bird',
-  //   category: 'bird',
-  //   aliases: ['鸟', '鹦鹉', '文鸟', '虎皮', '玄凤'],
-  //   breedAliases: [
-  //     { scope: '虎皮鹦鹉', aliases: ['虎皮', '虎皮鹦鹉'] },
-  //     { scope: '玄凤鹦鹉', aliases: ['玄凤', '玄凤鹦鹉'] },
-  //   ],
-  //   supportedTopicDomains: ['digestive', 'respiratory', 'skin', 'eye', 'behavior', 'nutrition', 'preventive_care'],
-  //   guidanceCategories: ['主粮', '零食', '保健', '玩具', '家居'],
-  // },
-  // {
-  //   scope: 'reptile',
-  //   category: 'reptile',
-  //   aliases: ['爬宠', '爬行动物', '乌龟', '守宫', '蜥蜴'],
-  //   breedAliases: [
-  //     { scope: '乌龟', aliases: ['乌龟', '龟'] },
-  //     { scope: '守宫', aliases: ['守宫'] },
-  //   ],
-  //   supportedTopicDomains: ['digestive', 'skin', 'eye', 'behavior', 'nutrition', 'preventive_care'],
-  //   guidanceCategories: ['主粮', '保健', '环境', '家居'],
-  // },
+  {
+    scope: 'rabbit', category: 'mammal', aliases: ['兔', '兔子'],
+    breedAliases: [{ scope: '垂耳兔', aliases: ['垂耳兔'] }, { scope: '侏儒兔', aliases: ['侏儒兔'] }],
+    supportedTopicDomains: ['digestive', 'urinary', 'respiratory', 'eye', 'oral', 'behavior', 'nutrition', 'preventive_care'],
+    guidanceCategories: ['主粮', '零食', '保健', '垫料', '玩具', '家居'], profileEnabled: true,
+  },
+  {
+    scope: 'hamster', category: 'mammal', aliases: ['仓鼠', '金丝熊', '侏儒仓鼠'],
+    breedAliases: [{ scope: '金丝熊', aliases: ['金丝熊', '熊类仓鼠'] }, { scope: '侏儒仓鼠', aliases: ['侏儒仓鼠', '三线', '一线'] }],
+    supportedTopicDomains: ['digestive', 'respiratory', 'skin', 'eye', 'behavior', 'nutrition', 'preventive_care'],
+    guidanceCategories: ['主粮', '零食', '垫料', '玩具', '家居'], profileEnabled: true,
+  },
+  {
+    scope: 'bird', category: 'bird', aliases: ['鸟', '宠物鸟', '鹦鹉', '文鸟', '虎皮', '玄凤'],
+    breedAliases: [{ scope: '虎皮鹦鹉', aliases: ['虎皮', '虎皮鹦鹉'] }, { scope: '玄凤鹦鹉', aliases: ['玄凤', '玄凤鹦鹉'] }],
+    supportedTopicDomains: ['digestive', 'respiratory', 'skin', 'eye', 'behavior', 'nutrition', 'preventive_care'],
+    guidanceCategories: ['主粮', '保健', '笼舍', '玩具', '家居'], profileEnabled: true,
+  },
+  {
+    scope: 'guinea_pig', category: 'mammal', aliases: ['豚鼠', '荷兰猪', '天竺鼠'],
+    breedAliases: [],
+    supportedTopicDomains: ['digestive', 'respiratory', 'skin', 'eye', 'oral', 'behavior', 'nutrition', 'preventive_care'],
+    guidanceCategories: ['主粮', '零食', '保健', '垫料', '家居'], profileEnabled: true,
+  },
+  {
+    scope: 'aquatic', category: 'aquatic', aliases: ['水族', '鱼', '观赏鱼', '金鱼', '锦鲤', '虾', '螺'],
+    breedAliases: [],
+    supportedTopicDomains: ['digestive', 'skin', 'behavior', 'nutrition', 'preventive_care'],
+    guidanceCategories: ['饲料', '鱼缸', '过滤', '水质', '装饰'], profileEnabled: true,
+  },
+  {
+    scope: 'reptile', category: 'reptile', aliases: ['爬宠', '爬行动物', '乌龟', '守宫', '蜥蜴', '蛇', '蛙'],
+    breedAliases: [{ scope: '乌龟', aliases: ['乌龟', '龟'] }, { scope: '守宫', aliases: ['守宫'] }],
+    supportedTopicDomains: ['digestive', 'respiratory', 'skin', 'eye', 'behavior', 'nutrition', 'preventive_care'],
+    guidanceCategories: ['主粮', '保健', '环境', '灯具', '家居'], profileEnabled: true,
+  },
+  {
+    scope: 'mini_pig', category: 'other', aliases: ['小香猪', '迷你猪', '宠物猪'],
+    breedAliases: [],
+    supportedTopicDomains: ['digestive', 'respiratory', 'skin', 'behavior', 'nutrition', 'preventive_care'],
+    guidanceCategories: ['主粮', '零食', '保健', '家居'], profileEnabled: true,
+  },
 ];
 
 // #品种注册表
@@ -181,7 +179,7 @@ export const KNOWLEDGE_TAXONOMY = {
     { tag: 'disease', aliases: ['疾病', '炎症', '感染', '发烧', '疼痛', '没精神', '精神差'] },
   ],
   intentSignals: {
-    guidance: ['推荐', '挑选', '帮我挑', '想挑', '购买', '选购', '哪个', '哪款', '预算', '组合', '下单', '狗粮', '猫粮', '猫砂', '玩具', '洗护', '主食', '零食'],
+    guidance: ['推荐', '挑选', '帮我挑', '想挑', '购买', '选购', '哪个', '哪款', '预算', '组合', '下单', '狗粮', '猫粮', '兔粮', '鸟粮', '仓鼠粮', '豚鼠粮', '龟粮', '猫砂', '垫料', '鱼缸', '玩具', '洗护', '主食', '零食'],
     community: ['社区', '帖子', '经验', '大家都怎么说', '别人怎么说', '种草', '晒宠', '求助', '大家都怎么选', '都怎么选', '都用什么', '用哪款'],
     communityPreference: ['大家都怎么选', '都怎么选', '别人怎么选', '都用什么', '大家都用什么', '用哪款比较多', '社区里怎么选'],
     service: ['地址', '收货', '登录', '订单', '帖子', '社区', '点赞', '发帖'],

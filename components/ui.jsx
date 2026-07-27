@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { fmt } from './util';
 import { ARTICLE_CATS, PRODUCTS, ARTICLES } from './data';
 import { Emoji } from './Emoji';
+import { getPetSpecies } from '@/lib/pet-species';
 
 export const Logo = ({ size = 28 }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -177,7 +178,7 @@ function SearchOverlay({ navigate, onClose }) {
     // 整词命中优先；否则拆成单字全部命中即可（"狗粮"→"狗"匹配宠物类型+"粮"匹配名称）
     const hit = (text) => text.includes(kw) || Array.from(kw).every((ch) => text.includes(ch));
     return {
-      prods: PRODUCTS.filter((p) => hit(`${p.pet}${p.pet === '狗' ? '犬' : ''}${p.name}${p.sub}${p.desc}${(p.badges || []).join('')}`)).slice(0, 6),
+      prods: PRODUCTS.filter((p) => hit(`${p.pet}${p.name}${p.sub}${p.desc}${(p.badges || []).join('')}`)).slice(0, 6),
       arts: ARTICLES.filter((a) => hit(`${a.title}${a.excerpt}`)).slice(0, 4),
     };
   }, [kw]);
@@ -328,7 +329,7 @@ export function ProductCard({ p, onOpen, onAdd }) {
       <div className="prod-img" style={{ background: p.bg }}>
         <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
         <SmartImage src={`/images/products/${p.id}.jpg`} alt={p.name} />
-        <span className="pet-pill"><Emoji text={p.pet === '狗' ? '🐶' : '🐱'} size={14} /> {p.pet === '狗' ? '狗狗' : '猫咪'}</span>
+        <span className="pet-pill"><Emoji text={getPetSpecies(p.pet).emoji} size={14} /> {getPetSpecies(p.pet).label}</span>
         {p.tag && <span className="tag-pill">{p.tag}</span>}
       </div>
       <div style={{ padding: '14px 6px 6px' }}>

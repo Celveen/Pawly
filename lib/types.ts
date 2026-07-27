@@ -3,7 +3,7 @@
 export interface Product {
   id: string;
   cat: string;
-  pet: '狗' | '猫';
+  pet: string;
   emoji: string;
   bg: string;
   name: string;
@@ -22,7 +22,7 @@ export interface Product {
 export interface Pet {
   id: string;
   name: string;
-  species: '狗' | '猫';
+  species: string;
   breed: string;
   sex: '男' | '女';
   emoji: string;
