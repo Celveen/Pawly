@@ -5,16 +5,20 @@ import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
 import { ArticleCard, ProductCard } from './ui';
 import { Emoji } from './Emoji';
 import { VideoSlot } from './VideoSlot';
+import { PET_FILTERS, PET_SPECIES, getPetSpecies } from '@/lib/pet-species';
 
-const petEmoji = (sp) => (sp === '狗' ? '🐶' : '🐱');
-const petBg = (sp) => (sp === '狗' ? '#F4D7B0' : '#D3DEE2');
+const petEmoji = (sp) => getPetSpecies(sp).emoji;
+const petBg = (sp) => ({ dog: '#F4D7B0', cat: '#D3DEE2', rabbit: '#E8DCCF', bird: '#DCE5D4', hamster: '#F2DDC1', guinea_pig: '#EAD9DE', aquatic: '#C8DDE2', reptile: '#D5E0CC', mini_pig: '#F4D7B0' }[getPetSpecies(sp).id] || '#D3DEE2');
 
 export function ArticlesPage({ navigate }) {
   const [cat, setCat] = useState('all');
+  const [species, setSpecies] = useState('all');
   const [q, setQ] = useState('');
   const filtered = useMemo(
-    () => ARTICLES.filter((a) => (cat === 'all' || a.cat === cat) && (q === '' || a.title.includes(q) || a.excerpt.includes(q))),
-    [cat, q],
+    () => ARTICLES
+      .filter((a) => (cat === 'all' || a.cat === cat) && (species === 'all' || articleMatchesSpecies(a, species)) && (q === '' || a.title.includes(q) || a.excerpt.includes(q)))
+      .sort((a, b) => articlePublicationTime(b) - articlePublicationTime(a)),
+    [cat, species, q],
   );
   const [hero, ...rest] = filtered;
 
@@ -42,7 +46,16 @@ export function ArticlesPage({ navigate }) {
         <div className="container">
           <div className="h-scroll" style={{ display: 'flex', gap: 4, padding: '8px 0' }}>
             {ARTICLE_CATS.map((c) => (
-              <button key={c.id} onClick={() => setCat(c.id)} style={{ height: 40, padding: '0 16px', borderRadius: 999, border: 0, background: cat === c.id ? 'var(--ink)' : 'transparent', color: cat === c.id ? 'var(--bg)' : 'var(--ink)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap' }}>{c.name}</button>
+              <button key={c.id} onClick={() => { setCat(c.id); if (c.id === 'all') setSpecies('all'); }} style={{ height: 40, padding: '0 16px', borderRadius: 999, border: 0, background: cat === c.id ? 'var(--ink)' : 'transparent', color: cat === c.id ? 'var(--bg)' : 'var(--ink)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap' }}>{c.name}</button>
+            ))}
+          </div>
+          <div className="h-scroll" style={{ display: 'flex', gap: 4, padding: '0 0 10px' }}>
+            <span className="caption" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px 0 2px', whiteSpace: 'nowrap' }}>按宠物</span>
+            <button onClick={() => { setCat('all'); setSpecies('all'); }} style={speciesFilterStyle(species === 'all')}>全部</button>
+            {PET_FILTERS.filter((item) => item.id !== 'all').map((item) => (
+              <button key={item.id} onClick={() => setSpecies(item.id)} style={speciesFilterStyle(species === item.id)}>
+                <Emoji text={item.emoji} size={14} /> {item.label}
+              </button>
             ))}
           </div>
         </div>
@@ -63,6 +76,50 @@ export function ArticlesPage({ navigate }) {
       </section>
     </>
   );
+}
+
+function articlePublicationTime(article) {
+  const machineReadableDate = article.publishedAt || article.importedAt;
+  if (machineReadableDate) {
+    const timestamp = Date.parse(machineReadableDate);
+    if (!Number.isNaN(timestamp)) return timestamp;
+  }
+
+  // 现有人工录入内容仅展示月日；这些历史内容均为 2026 年发布。
+  const match = String(article.date || '').match(/(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日?/);
+  if (!match) return 0;
+  const [, year, month, day] = match;
+  return Date.UTC(Number(year || 2026), Number(month) - 1, Number(day));
+}
+
+function articleMatchesSpecies(article, speciesName) {
+  const filter = PET_FILTERS.find((item) => item.id === speciesName);
+  if (!filter || filter.id === 'all') return true;
+  if (Array.isArray(article.species) && article.species.length) {
+    return filter.speciesIds.some((id) => article.species.includes(id));
+  }
+  const text = `${article.title} ${article.excerpt}`.toLowerCase();
+  return filter.speciesIds.some((id) => {
+    const species = PET_SPECIES.find((item) => item.id === id);
+    return species?.aliases.some((alias) => text.includes(alias.toLowerCase())) || text.includes(species?.name.toLowerCase() || '');
+  });
+}
+
+function speciesFilterStyle(active) {
+  return {
+    height: 32,
+    padding: '0 12px',
+    borderRadius: 999,
+    border: 0,
+    background: active ? 'var(--surface-2)' : 'transparent',
+    color: 'var(--ink)',
+    fontSize: 12,
+    fontWeight: active ? 600 : 500,
+    whiteSpace: 'nowrap',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+  };
 }
 
 export function ArticlePage({ id, navigate }) {
@@ -889,7 +946,7 @@ function PetsTab({ pets, onChanged }) {
               title={editing ? '名字不可修改（如需改名请删除后重建）' : ''}
               style={{ opacity: editing ? 0.6 : 1 }}
               onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <select className="input" value={form.species} onChange={(e) => setForm({ ...form, species: e.target.value })}><option value="狗">狗</option><option value="猫">猫</option></select>
+            <select className="input" value={form.species} onChange={(e) => setForm({ ...form, species: e.target.value })}>{PET_SPECIES.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}</select>
             <input className="input" placeholder="品种（如 金渐层）" value={form.breed} onChange={(e) => setForm({ ...form, breed: e.target.value })} />
 
             {/* 年龄：数字 + 岁/月 单位 */}

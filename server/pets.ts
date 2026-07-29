@@ -18,9 +18,9 @@ export function formatAge(birthday: string, now: Date = new Date()): string {
 }
 
 /** 生命阶段（影响选粮）。狗猫阈值略有差异，这里给通用版。 */
-export function lifeStage(species: '狗' | '猫', ageMonths: number): '幼年' | '成年' | '老年' {
+export function lifeStage(species: string, ageMonths: number): '幼年' | '成年' | '老年' {
   if (ageMonths < 12) return '幼年';
-  const seniorAt = species === '狗' ? 7 * 12 : 10 * 12;
+  const seniorAt = species === '狗' ? 7 * 12 : species === '猫' ? 10 * 12 : 5 * 12;
   return ageMonths >= seniorAt ? '老年' : '成年';
 }
 
@@ -62,7 +62,7 @@ export function petSnapshot(pet: PetLike, now: Date = new Date()) {
     sex: pet.sex ?? null,
     ageText: bday ? formatAge(bday, now) : '未知（建议补充月龄或出生日期）',
     ageMonths,
-    lifeStage: ageMonths != null ? lifeStage(pet.species as '狗' | '猫', ageMonths) : null,
+    lifeStage: ageMonths != null ? lifeStage(pet.species, ageMonths) : null,
     weightKg: pet.weightKg ?? null,
     weightUpdatedAt: pet.weightUpdatedAt ? toISODate(pet.weightUpdatedAt) : null,
     weightStale: pet.weightUpdatedAt ? isStale(toISODate(pet.weightUpdatedAt), 60, now) : false,

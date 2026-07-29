@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0237822",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "Laura Menchetti; Silvia Calipari; Chiara Mariti; Angelo Gazzano; Silvana Diverio",
+    "expectedSpecies": ["dog", "cat"],
+    "expectedCategories": ["train", "health"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253292",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "Andrew Knight; Liam Satchell",
+    "expectedSpecies": ["dog", "cat"],
+    "expectedCategories": ["nutri"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0318734",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "S. D. Becker; D. G. O'Neill; S.-M. Frosini; L. E. Stapleton; D. M. Hughes; D. C. Brodbelt",
+    "expectedSpecies": ["dog", "cat", "rabbit", "guinea_pig"],
+    "expectedCategories": ["nutri", "health"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0309068",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "Mia M. Delgado; Jessica L. Stella; Christopher C. Croney; John A. Serpell",
+    "expectedSpecies": ["dog", "cat"],
+    "expectedCategories": ["train"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0336661",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "E. Youens; D. G. O’Neill; Z. Belshaw; J. Neufuss; M. S. Tivers; R. M. A. Packer",
+    "expectedSpecies": ["dog"],
+    "expectedCategories": ["breed", "train"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299315",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "S. A. Corr; T. B. Lund; P. Sandøe; S. Springer",
+    "expectedSpecies": ["dog", "cat"],
+    "expectedCategories": ["health"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0285372",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "Benedict D. Chivers; Melissa R. D. Keeler; Charlotte C. Burn",
+    "expectedSpecies": ["rabbit"],
+    "expectedCategories": ["health"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0299464",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "Dan G. O’Neill; Jacques L. Taffinder; Dave C. Brodbelt; Vicki Baldrey",
+    "expectedSpecies": ["guinea_pig"],
+    "expectedCategories": ["health"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0262658",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "PLOS ONE article authors",
+    "expectedSpecies": ["rabbit", "guinea_pig", "hamster"],
+    "expectedCategories": ["groom", "health"]
+  },
+  {
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0322682",
+    "sourceId": "plos",
+    "licenseType": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "PLOS ONE article authors",
+    "expectedSpecies": ["reptile"],
+    "expectedCategories": ["health", "groom"]
+  }
+]
