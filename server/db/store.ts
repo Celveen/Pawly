@@ -145,7 +145,20 @@ export const store = {
         _count: { select: { comments: true } },
       },
     });
-    return posts.map((p) => serializePost(p, viewerId));
+    return posts.map((p) => serializePost(p, viewerId, true));
+  },
+
+  // 单帖详情（带全部图片；列表为省流量只带封面）
+  async getPost(postId: string, viewerId: string) {
+    const p = await prisma.post.findUnique({
+      where: { id: postId },
+      include: {
+        user: { select: { id: true, nickname: true, avatarEmoji: true } },
+        likes: { select: { userId: true } },
+        _count: { select: { comments: true } },
+      },
+    });
+    return p ? serializePost(p, viewerId) : null;
   },
 
   // 关键词检索帖子（标题/正文/话题），供全站搜索使用
@@ -168,7 +181,7 @@ export const store = {
         _count: { select: { comments: true } },
       },
     });
-    return posts.map((p) => serializePost(p, viewerId));
+    return posts.map((p) => serializePost(p, viewerId, true));
   },
 
   // 某用户的帖子（对外主页）
@@ -183,7 +196,7 @@ export const store = {
         _count: { select: { comments: true } },
       },
     });
-    return posts.map((p) => serializePost(p, viewerId));
+    return posts.map((p) => serializePost(p, viewerId, true));
   },
 
   async createPost(userId: string, data: { title: string; content: string; topic: string; emoji: string; bg: string; petName?: string | null; nickname?: string | null; images?: string[]; topics?: string[] }) {
@@ -519,15 +532,18 @@ export const store = {
   },
 };
 
-// 帖子序列化（列表/搜索/主页共用）
-function serializePost(p: any, viewerId: string) {
+// 帖子序列化（列表/搜索/主页共用）。light=true 时 images 只保留封面首图，
+// 避免列表接口把整组 dataURL 图片全量下发（页面体积会成倍膨胀）。
+function serializePost(p: any, viewerId: string, light = false) {
+  const allImages = p.images ? JSON.parse(p.images) : [];
   return {
     id: p.id,
     title: p.title,
     content: p.content,
     topic: p.topic,
     topics: p.topics ? JSON.parse(p.topics) : [],
-    images: p.images ? JSON.parse(p.images) : [],
+    images: light ? allImages.slice(0, 1) : allImages,
+    imagesCount: allImages.length,
     emoji: p.emoji,
     bg: p.bg,
     petName: p.petName,

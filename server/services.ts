@@ -188,6 +188,13 @@ export const services: Record<string, Handler> = {
     }
   },
 
+  'posts.get': async (userId, b) => {
+    if (!b?.id) throw new RpcError(400, '缺少 id');
+    const post = await store.getPost(String(b.id), userId);
+    if (!post) throw new RpcError(404, '帖子不存在');
+    return post;
+  },
+
   // —— 帖子检索（全站搜索用）——
   'posts.search': async (userId, b) => {
     const q = String(b?.q || '').trim();

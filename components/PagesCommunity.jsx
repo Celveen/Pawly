@@ -153,7 +153,7 @@ export function CommunityPage({ navigate, initialPostId }) {
           )}
           {shown && shown.length > 0 && (
             /* 瀑布流：CSS columns，卡片高度随图片/内容自适应 */
-            <div style={{ columns: '4 240px', columnGap: 20 }}>
+            <div style={{ columns: '5 210px', columnGap: 16 }}>
               {shown.map((p) => (
                 <PostCard key={p.id} p={p}
                   onOpen={() => setDetailId(p.id)}
@@ -180,36 +180,36 @@ export function PostCard({ p, onOpen, onLike, onAuthor }) {
   const cover = p.images?.[0];
   return (
     <article className="card card-hot fade-up" onClick={onOpen}
-      style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', breakInside: 'avoid', marginBottom: 20, display: 'block' }}>
+      style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', breakInside: 'avoid', marginBottom: 16, display: 'block' }}>
       {cover ? (
         <div style={{ position: 'relative' }}>
-          <img src={cover} alt={p.title} style={{ width: '100%', display: 'block', maxHeight: 360, objectFit: 'cover' }} />
+          <img src={cover} alt={p.title} style={{ width: '100%', display: 'block', maxHeight: 240, objectFit: 'cover' }} />
           <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>
-          {p.images.length > 1 && (
+          {(p.imagesCount || p.images.length) > 1 && (
             <span style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(31,42,29,.55)', color: '#fff', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999 }}>
-              {p.images.length} 图
+              {p.imagesCount || p.images.length} 图
             </span>
           )}
         </div>
       ) : (
-        <div style={{ background: p.bg, aspectRatio: '4/3', display: 'grid', placeItems: 'center', position: 'relative' }}>
+        <div style={{ background: p.bg, aspectRatio: '16/10', display: 'grid', placeItems: 'center', position: 'relative' }}>
           <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>
-          <Emoji text={p.emoji} size={88} />
+          <Emoji text={p.emoji} size={64} />
         </div>
       )}
-      <div style={{ padding: 16 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4, margin: 0 }}>{p.title}</h3>
+      <div style={{ padding: 12 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.title}</h3>
         {!cover && (
-          <p className="body" style={{ fontSize: 13, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          <p className="body" style={{ fontSize: 12.5, margin: '6px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {p.content}
           </p>
         )}
         {p.topics?.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-            {p.topics.map((t) => <span key={t} style={{ fontSize: 12, color: 'var(--sage)', fontWeight: 600 }}>#{t}</span>)}
+            {p.topics.slice(0, 2).map((t) => <span key={t} style={{ fontSize: 11.5, color: 'var(--sage)', fontWeight: 600 }}>#{t}</span>)}
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line-2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line-2)' }}>
           <button onClick={(e) => { e.stopPropagation(); onAuthor(); }} aria-label={`查看 ${p.author} 的主页`}
             style={{ border: 0, background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1, minWidth: 0 }}>
             <span style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={p.authorAvatar || '👤'} size={13} /></span>
@@ -233,10 +233,21 @@ export function PostCard({ p, onOpen, onLike, onAuthor }) {
 }
 
 // —— 帖子详情：图片轮播/大图 + 关注作者 + 评论区 + 分享海报 ——
-export function PostDetail({ p, onClose, onLike, onDelete, onTag, navigate }) {
+export function PostDetail({ p: pIn, onClose, onLike, onDelete, onTag, navigate }) {
   const [imgIdx, setImgIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const [following, setFollowing] = useState(null); // null=未知（游客也可点，后端建档）
+  const [fullImages, setFullImages] = useState(null);
+  // 列表接口为省流量只带封面图；多图帖打开详情时补拉全部图片
+  useEffect(() => {
+    if ((pIn.imagesCount || 0) > (pIn.images?.length || 0)) {
+      fetch(`/api/posts?id=${encodeURIComponent(pIn.id)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d?.images) setFullImages(d.images); })
+        .catch(() => {});
+    }
+  }, [pIn.id, pIn.imagesCount, pIn.images]);
+  const p = fullImages ? { ...pIn, images: fullImages } : pIn;
   const hasImages = p.images?.length > 0;
 
   useEffect(() => {
@@ -259,7 +270,7 @@ export function PostDetail({ p, onClose, onLike, onDelete, onTag, navigate }) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.4)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label={p.title} style={{
-        position: 'relative', width: 'min(620px, 100%)', maxHeight: 'calc(100vh - 64px)',
+        position: 'relative', width: 'min(560px, 100%)', maxHeight: 'calc(100vh - 64px)',
         background: 'var(--bg)', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column',
         boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)',
         animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both',
@@ -267,7 +278,7 @@ export function PostDetail({ p, onClose, onLike, onDelete, onTag, navigate }) {
         {/* 封面：图片轮播（点击看大图）或 emoji 色块 */}
         {hasImages ? (
           <div style={{ position: 'relative', flexShrink: 0, background: '#111', cursor: 'zoom-in' }} onClick={() => setLightbox(true)}>
-            <img src={p.images[imgIdx]} alt={`${p.title} 图 ${imgIdx + 1}`} style={{ width: '100%', maxHeight: 340, objectFit: 'contain', display: 'block' }} />
+            <img src={p.images[imgIdx]} alt={`${p.title} 图 ${imgIdx + 1}`} style={{ width: '100%', maxHeight: 300, objectFit: 'contain', display: 'block' }} />
             <span className="pet-pill" style={{ position: 'absolute', top: 14, left: 14 }}>{p.topic}</span>
             {p.images.length > 1 && (
               <>

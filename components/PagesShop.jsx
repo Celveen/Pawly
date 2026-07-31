@@ -210,9 +210,16 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
   return (
     <>
       <section style={{ paddingTop: 56, paddingBottom: 32 }}>
-        <div className="container">
-          <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>商品 / Shop all</div>
-          <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>给毛孩子挑点好的<br /><span style={{ color: 'var(--green-soft)' }}>每一件都实测把关</span></h1>
+        <div className="container m-col m-gap" style={{ display: 'flex', alignItems: 'flex-end', gap: 48 }}>
+          <div style={{ flex: 1 }}>
+            <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>商品 / Shop all</div>
+            <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>给毛孩子挑点好的<br /><span style={{ color: 'var(--green-soft)' }}>每一件都实测把关</span></h1>
+          </div>
+          {/* 栏目氛围视频（public/videos/products.mp4） */}
+          <div className="m-full" style={{ position: 'relative', width: 340, height: 190, borderRadius: 20, overflow: 'hidden', flexShrink: 0, boxShadow: 'var(--shadow-lg)' }}>
+            <VideoSlot name="products" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+            <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>被毛孩子亲测过的好东西</span>
+          </div>
         </div>
       </section>
 

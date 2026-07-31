@@ -7,8 +7,12 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const topic = new URL(req.url).searchParams.get('topic');
-  const r = await rpc('posts.list', getOrCreateUserId(), { topic });
+  const sp = new URL(req.url).searchParams;
+  const id = sp.get('id');
+  // 带 id：取单帖详情（含全部图片）；否则取列表（只带封面图，省流量）
+  const r = id
+    ? await rpc('posts.get', getOrCreateUserId(), { id })
+    : await rpc('posts.list', getOrCreateUserId(), { topic: sp.get('topic') });
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
   return NextResponse.json(r.data);
 }
