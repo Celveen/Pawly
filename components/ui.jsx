@@ -397,11 +397,17 @@ export function Footer({ navigate }) {
     <footer style={{ background: 'var(--ink)', color: 'rgba(244,248,242,.72)', padding: '88px 0 32px' }}>
       <div className="container">
         {/* 编辑风品牌陈述：大衬线句子压场 */}
-        <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(244,248,242,.12)' }}>
+        <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(244,248,242,.12)', position: 'relative', overflow: 'hidden' }}>
           <div className="eyebrow" style={{ color: 'rgba(244,248,242,.45)', marginBottom: 20 }}>PAWLY · 宝莉</div>
           <p className="serif m-h1" style={{ fontSize: 'clamp(28px, 3.6vw, 48px)', lineHeight: 1.22, margin: 0, color: '#F5F9F2', maxWidth: 760 }}>
             把宠物照顾明白这件事<br />没人天生就会 <span style={{ color: 'var(--green-soft)' }}>但可以问</span>
           </p>
+          {/* 右侧低透明度贴纸群：打破深绿大面积纯色 */}
+          <div aria-hidden className="m-none" style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-55%)', opacity: .16, display: 'flex', gap: 36, alignItems: 'flex-end' }}>
+            <span style={{ transform: 'rotate(-10deg)' }}><Emoji text="🦴" size={90} /></span>
+            <span style={{ transform: 'translateY(-28px) rotate(8deg)' }}><Emoji text="🐾" size={130} /></span>
+            <span style={{ transform: 'rotate(-6deg)' }}><Emoji text="🧶" size={80} /></span>
+          </div>
         </div>
         <div className="m-2col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 48, marginBottom: 64 }}>
           <div className="footer-brand">
@@ -434,7 +440,7 @@ export function Footer({ navigate }) {
           fontSize: 12, color: 'rgba(255,255,255,.4)',
         }}>
           <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗 · Emoji graphics by Microsoft Fluent Emoji (MIT)</span>
-          <span className="mono">v 3.0 · 上海 → 你家门口</span>
+          <span className="mono" style={{ whiteSpace: 'nowrap' }}>v 3.0 · 上海 → 你家门口</span>
         </div>
       </div>
     </footer>
@@ -444,8 +450,8 @@ export function Footer({ navigate }) {
 export function ProductCard({ p, onOpen, onAdd }) {
   return (
     <div className="card card-hot fade-up" style={{ padding: 12 }} onClick={() => onOpen(p)}>
-      <div className="prod-img" style={{ background: p.bg }}>
-        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
+      <div className="prod-img" style={{ background: `radial-gradient(closest-side at 42% 38%, rgba(255,255,255,.42), transparent), ${p.bg}` }}>
+        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(56px, 8vw, 104px)', height: 'clamp(56px, 8vw, 104px)', filter: 'drop-shadow(0 10px 18px rgba(31,42,29,.14))' }} />
         <SmartImage src={`/images/products/${p.id}.jpg`} alt={p.name} />
         <span className="pet-pill"><Emoji text={getPetSpecies(p.pet).emoji} size={14} /> {getPetSpecies(p.pet).label}</span>
         {p.tag && <span className="tag-pill">{p.tag}</span>}

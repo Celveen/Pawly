@@ -30,8 +30,10 @@ const LEGACY_ILLO_TO_EMOJI: Record<string, string> = {
   food: '🥣', ball: '🎾', vet: '🩺', camera: '📷', heart: '🎁', home: '🏠',
 };
 
-// 社区首次访问：没有任何帖子时，用一个官方账号灌入几条示例帖，避免空荡荡的首屏。
-// 与 ensureProducts 同样的"惰性初始化 + 幂等"思路（按官方昵称判存在）。
+// 社区首次访问：灌入官方账号 + 一批示例用户/帖子/评论/点赞，避免空荡荡的首屏。
+// 幂等：以 demo-momo 示例用户是否存在为标记，只灌一次（老库升级也会补灌新示例内容）。
+import { SEED_USERS, SEED_OFFICIAL_POSTS, SEED_DEMO_POSTS, SEED_COMMENTS, SEED_LIKES } from './community-seed';
+
 let communityReady: Promise<void> | null = null;
 function ensureCommunitySeed(): Promise<void> {
   if (!communityReady) {
@@ -42,19 +44,43 @@ function ensureCommunitySeed(): Promise<void> {
         ),
       );
 
-      const count = await prisma.post.count();
-      if (count > 0) return;
+      const marker = await prisma.user.findUnique({ where: { id: 'demo-momo' } });
+      if (marker) return;
+
       const official = await prisma.user.upsert({
         where: { id: 'pawly-official' },
-        update: {},
-        create: { id: 'pawly-official', nickname: 'Pawly 官方' },
+        update: { avatarEmoji: '🐾', bio: 'Pawly 小编，分享靠谱养宠知识' },
+        create: { id: 'pawly-official', nickname: 'Pawly 官方', avatarEmoji: '🐾', bio: 'Pawly 小编，分享靠谱养宠知识' },
       });
-      await prisma.post.createMany({
-        data: [
-          { userId: official.id, topic: '日常', emoji: '🐾', bg: '#F4D7B0', title: '欢迎来到 Pawly 社区！', content: '这里是铲屎官们的分享角落：晒宠、好物安利、养宠求助都可以发。发帖时可以选一个表情封面和底色，图片上传功能在路上啦～' },
-          { userId: official.id, topic: '好物', emoji: '🧶', bg: '#D3DEE2', title: '新手养猫最容易买错的三样东西', content: '1. 太小的猫窝——猫更爱纸箱；2. 带铃铛的项圈——大多数猫会应激；3. 劣质猫砂——粉尘大伤呼吸道。先从基础款买起，观察主子偏好再升级。' },
-          { userId: official.id, topic: '求助', emoji: '🩺', bg: '#E8D8C3', title: '发求助帖小提示', content: '描述症状时尽量写清：年龄、品种、持续时间、饮食变化。社区经验仅供参考，紧急情况请第一时间联系兽医！' },
-        ],
+      for (const u of SEED_USERS) {
+        await prisma.user.upsert({
+          where: { id: u.id },
+          update: { nickname: u.nickname, avatarEmoji: u.avatarEmoji, bio: u.bio },
+          create: { id: u.id, nickname: u.nickname, avatarEmoji: u.avatarEmoji, bio: u.bio },
+        });
+      }
+
+      // 老库可能已有旧版官方 3 帖（无 id 标记）：官方还没有帖子时才补官方帖
+      const officialPostCount = await prisma.post.count({ where: { userId: official.id } });
+      const now = Date.now();
+      const toRow = (p: (typeof SEED_DEMO_POSTS)[number]) => ({
+        id: p.id, userId: p.userId, topic: p.topic, title: p.title, content: p.content,
+        emoji: p.emoji, bg: p.bg, petName: p.petName ?? null,
+        topics: p.topics ? JSON.stringify(p.topics) : null,
+        images: p.images ? JSON.stringify(p.images) : null,
+        createdAt: new Date(now - p.hoursAgo * 3600_000),
+      });
+      const rows = [...(officialPostCount === 0 ? SEED_OFFICIAL_POSTS : []), ...SEED_DEMO_POSTS].map(toRow);
+      await prisma.post.createMany({ data: rows, skipDuplicates: true });
+      await prisma.comment.createMany({
+        data: SEED_COMMENTS.map((c, i) => ({
+          postId: c.postId, userId: c.userId, content: c.content,
+          createdAt: new Date(now - 3600_000 + i * 60_000),
+        })),
+        skipDuplicates: true,
+      });
+      await prisma.postLike.createMany({
+        data: SEED_LIKES.flatMap((l) => l.userIds.map((uid) => ({ userId: uid, postId: l.postId }))),
         skipDuplicates: true,
       });
     })();

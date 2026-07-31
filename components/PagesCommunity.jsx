@@ -99,7 +99,7 @@ export function CommunityPage({ navigate, initialPostId }) {
 
   return (
     <>
-      <section style={{ paddingTop: 64, paddingBottom: 32 }}>
+      <section style={{ paddingTop: 64, paddingBottom: 40 }}>
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
             <div>
@@ -107,32 +107,39 @@ export function CommunityPage({ navigate, initialPostId }) {
               <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>晒宠 种草 抱团取暖</h1>
               <p className="body-lg" style={{ marginTop: 20, maxWidth: 620 }}>发一篇你和毛孩子的日常，或者把踩过的坑分享给下一位铲屎官。</p>
             </div>
-            <button className="btn btn-primary btn-lg" onClick={() => setComposing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <Emoji text="✏️" size={16} /> 发布分享
-            </button>
+            {/* 右侧贴纸簇：填补标题与按钮之间的大片空白 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+              <div aria-hidden style={{ position: 'relative', width: 150, height: 96, flexShrink: 0 }} className="m-none">
+                <span style={{ position: 'absolute', left: 0, bottom: 0, width: 96, height: 96, borderRadius: 999, background: 'rgba(222,116,41,.12)' }} />
+                <span style={{ position: 'absolute', left: 14, bottom: 12, transform: 'rotate(-8deg)' }}><Emoji text="🐱" size={64} /></span>
+                <span style={{ position: 'absolute', right: 22, top: 0, transform: 'rotate(10deg)' }}><Emoji text="🧶" size={40} /></span>
+                <span style={{ position: 'absolute', right: 0, bottom: 6, transform: 'rotate(-14deg)' }}><Emoji text="🦴" size={34} /></span>
+              </div>
+              <button className="btn btn-primary btn-lg" onClick={() => setComposing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Emoji text="✏️" size={16} /> 发布分享
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      <div style={{ borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className="h-scroll" style={{ display: 'flex', gap: 4, padding: '8px 0', flex: 1 }}>
+      <section className="tint-band" style={{ padding: '32px 0 96px', borderRadius: '36px 36px 0 0' }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+          <div className="h-scroll" style={{ display: 'flex', gap: 6, flex: 1 }}>
             {TOPICS.map((t) => (
               <button key={t.id} onClick={() => { setTopic(t.id); setTag(null); }}
-                style={{ height: 40, padding: '0 16px', borderRadius: 999, border: 0, background: topic === t.id && !tag ? 'var(--ink)' : 'transparent', color: topic === t.id && !tag ? 'var(--bg)' : 'var(--ink)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                style={{ height: 38, padding: '0 16px', borderRadius: 999, border: topic === t.id && !tag ? '1px solid var(--ink)' : '1px solid rgba(31,42,29,.14)', background: topic === t.id && !tag ? 'var(--ink)' : 'rgba(255,253,246,.7)', color: topic === t.id && !tag ? 'var(--bg)' : 'var(--ink)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 {t.emoji && <Emoji text={t.emoji} size={14} />}{t.name}
               </button>
             ))}
           </div>
+          {posts && posts.length > 0 && <span className="caption" style={{ whiteSpace: 'nowrap' }}>{shown?.length ?? 0} 篇分享</span>}
           {tag && (
             <button onClick={() => setTag(null)} className="badge" style={{ cursor: 'pointer', height: 30, gap: 6, background: 'var(--ink)', color: 'var(--bg)', border: 0 }}>
               #{tag} ×
             </button>
           )}
         </div>
-      </div>
-
-      <section style={{ paddingTop: 48, paddingBottom: 96 }}>
         <div className="container">
           {posts === null && <p className="caption" style={{ textAlign: 'center', padding: '64px 0' }}>加载中…</p>}
           {posts && loadError && (
@@ -152,8 +159,8 @@ export function CommunityPage({ navigate, initialPostId }) {
             </div>
           )}
           {shown && shown.length > 0 && (
-            /* 瀑布流：CSS columns，卡片高度随图片/内容自适应 */
-            <div style={{ columns: '5 210px', columnGap: 16 }}>
+            /* 瀑布流：CSS columns，卡片高度随图片/内容自适应；移动端固定两列 */
+            <div className="masonry">
               {shown.map((p) => (
                 <PostCard key={p.id} p={p}
                   onOpen={() => setDetailId(p.id)}
@@ -182,8 +189,9 @@ export function PostCard({ p, onOpen, onLike, onAuthor }) {
     <article className="card card-hot fade-up" onClick={onOpen}
       style={{ padding: 0, overflow: 'hidden', cursor: 'pointer', breakInside: 'avoid', marginBottom: 16, display: 'block' }}>
       {cover ? (
+        /* 图片封面统一 4:3 裁切，保证瀑布流内容尺寸一致（小红书式规整感） */
         <div style={{ position: 'relative' }}>
-          <img src={cover} alt={p.title} style={{ width: '100%', display: 'block', maxHeight: 240, objectFit: 'cover' }} />
+          <img src={cover} alt={p.title} style={{ width: '100%', display: 'block', aspectRatio: '4/3', objectFit: 'cover' }} />
           <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>
           {(p.imagesCount || p.images.length) > 1 && (
             <span style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(31,42,29,.55)', color: '#fff', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999 }}>
@@ -192,9 +200,9 @@ export function PostCard({ p, onOpen, onLike, onAuthor }) {
           )}
         </div>
       ) : (
-        <div style={{ background: p.bg, aspectRatio: '16/10', display: 'grid', placeItems: 'center', position: 'relative' }}>
+        <div style={{ background: `radial-gradient(closest-side at 50% 45%, rgba(255,255,255,.4), transparent), ${p.bg}`, aspectRatio: '16/10', display: 'grid', placeItems: 'center', position: 'relative' }}>
           <span className="pet-pill" style={{ position: 'absolute', top: 10, left: 10 }}>{p.topic}</span>
-          <Emoji text={p.emoji} size={64} />
+          <Emoji text={p.emoji} size={64} style={{ filter: 'drop-shadow(0 6px 12px rgba(31,42,29,.15))' }} />
         </div>
       )}
       <div style={{ padding: 12 }}>
@@ -212,7 +220,7 @@ export function PostCard({ p, onOpen, onLike, onAuthor }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line-2)' }}>
           <button onClick={(e) => { e.stopPropagation(); onAuthor(); }} aria-label={`查看 ${p.author} 的主页`}
             style={{ border: 0, background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1, minWidth: 0 }}>
-            <span style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={p.authorAvatar || '👤'} size={13} /></span>
+            <span style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={p.authorAvatar || '🐾'} size={13} /></span>
             <span className="caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.author}</span>
           </button>
           <span className="caption" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -267,7 +275,7 @@ export function PostDetail({ p: pIn, onClose, onLike, onDelete, onTag, navigate 
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'grid', placeItems: 'center', padding: 16 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.4)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label={p.title} style={{
         position: 'relative', width: 'min(560px, 100%)', maxHeight: 'calc(100vh - 64px)',
@@ -277,8 +285,10 @@ export function PostDetail({ p: pIn, onClose, onLike, onDelete, onTag, navigate 
       }}>
         {/* 封面：图片轮播（点击看大图）或 emoji 色块 */}
         {hasImages ? (
-          <div style={{ position: 'relative', flexShrink: 0, background: '#111', cursor: 'zoom-in' }} onClick={() => setLightbox(true)}>
-            <img src={p.images[imgIdx]} alt={`${p.title} 图 ${imgIdx + 1}`} style={{ width: '100%', maxHeight: 300, objectFit: 'contain', display: 'block' }} />
+          <div style={{ position: 'relative', flexShrink: 0, background: 'var(--surface-2)', cursor: 'zoom-in', overflow: 'hidden' }} onClick={() => setLightbox(true)}>
+            {/* 同图放大模糊做垫底，避免 contain 留出的两侧空档露出遮罩 */}
+            <img src={p.images[imgIdx]} alt="" aria-hidden style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(28px) brightness(1.05)', transform: 'scale(1.15)' }} />
+            <img src={p.images[imgIdx]} alt={`${p.title} 图 ${imgIdx + 1}`} style={{ position: 'relative', width: '100%', maxHeight: 300, objectFit: 'contain', display: 'block' }} />
             <span className="pet-pill" style={{ position: 'absolute', top: 14, left: 14 }}>{p.topic}</span>
             {p.images.length > 1 && (
               <>
@@ -307,7 +317,7 @@ export function PostDetail({ p: pIn, onClose, onLike, onDelete, onTag, navigate 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 14px' }}>
             <button onClick={() => navigate && navigate({ page: 'profile', userId: p.authorId })}
               style={{ border: 0, background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <span style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text={p.authorAvatar || '👤'} size={15} /></span>
+              <span style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text={p.authorAvatar || '🐾'} size={15} /></span>
               <span style={{ fontSize: 13, fontWeight: 600 }}>{p.author}</span>
             </button>
             <span className="caption">· {timeAgo(p.createdAt)}</span>
@@ -494,7 +504,7 @@ function CommentRow({ c, reply, onReply, onDelete }) {
   return (
     <div style={{ display: 'flex', gap: 10 }}>
       <span style={{ width: reply ? 22 : 26, height: reply ? 22 : 26, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-        <Emoji text={c.authorAvatar || '👤'} size={reply ? 12 : 14} />
+        <Emoji text={c.authorAvatar || '🐾'} size={reply ? 12 : 14} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12.5, color: 'var(--ink-3)', fontWeight: 600 }}>
@@ -639,7 +649,7 @@ function Composer({ onClose, onPosted }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'grid', placeItems: 'center', padding: 16 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.4)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="发布分享" style={{
         position: 'relative', width: 'min(640px, 100%)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',

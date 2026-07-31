@@ -89,7 +89,11 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
     if (!hadSavedPos.current) setPos({ x: Math.max(8, window.innerWidth - 100), y: 24 });
   }, []);
   useEffect(() => {
-    const clamp = () => setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 92, p.x)), y: Math.max(8, Math.min(window.innerHeight - 92, p.y)) }));
+    const clamp = () => {
+      // 忽略截图工具/极端情况触发的超小视口 resize，避免把保存的位置挤到角落
+      if (window.innerWidth < 320 || window.innerHeight < 320) return;
+      setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 92, p.x)), y: Math.max(8, Math.min(window.innerHeight - 92, p.y)) }));
+    };
     window.addEventListener('resize', clamp);
     return () => window.removeEventListener('resize', clamp);
   }, []);

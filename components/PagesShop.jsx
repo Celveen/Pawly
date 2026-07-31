@@ -196,16 +196,19 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
   const [cat, setCat] = useState(initialCat || 'all');
   const [pet, setPet] = useState('all');
   const [sort, setSort] = useState('热度');
+  const [q, setQ] = useState('');
 
   const filtered = useMemo(() => {
     const petFilter = PET_FILTERS.find((item) => item.id === pet);
-    let list = PRODUCTS.filter((p) => (cat === 'all' || p.cat === cat) && (!petFilter || petFilter.speciesIds.some((id) => id === getPetSpecies(p.pet).id)));
+    const kw = q.trim();
+    const hit = (p) => kw === '' || p.name.includes(kw) || (p.sub || '').includes(kw) || (p.desc || '').includes(kw) || (p.tag || '').includes(kw) || (p.badges || []).some((b) => b.includes(kw));
+    let list = PRODUCTS.filter((p) => (cat === 'all' || p.cat === cat) && (!petFilter || petFilter.speciesIds.some((id) => id === getPetSpecies(p.pet).id)) && hit(p));
     if (sort === '价格升序') list = [...list].sort((a, b) => a.price - b.price);
     else if (sort === '价格降序') list = [...list].sort((a, b) => b.price - a.price);
     else if (sort === '评分') list = [...list].sort((a, b) => b.rating - a.rating);
     else list = [...list].sort((a, b) => b.sold - a.sold);
     return list;
-  }, [cat, pet, sort]);
+  }, [cat, pet, sort, q]);
 
   return (
     <>
@@ -214,6 +217,16 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
           <div style={{ flex: 1 }}>
             <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>商品 / Shop all</div>
             <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>给毛孩子挑点好的<br /><span style={{ color: 'var(--green-soft)' }}>每一件都实测把关</span></h1>
+            <div style={{ marginTop: 28, position: 'relative', maxWidth: 480 }}>
+              <input className="input" placeholder="搜索：冻干、猫砂、磨牙棒、主粮..." value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
+              <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span className="caption">大家在搜</span>
+              {['冻干', '猫砂', '磨牙', '主食粮'].map((k) => (
+                <button key={k} onClick={() => setQ(k)} style={{ height: 28, padding: '0 12px', borderRadius: 999, border: '1px solid rgba(31,42,29,.14)', background: 'rgba(255,253,246,.7)', color: 'var(--ink-2)', fontSize: 12, cursor: 'pointer' }}>{k}</button>
+              ))}
+            </div>
           </div>
           {/* 栏目氛围视频（public/videos/products.mp4） */}
           <div className="m-full" style={{ position: 'relative', width: 340, height: 190, borderRadius: 20, overflow: 'hidden', flexShrink: 0, boxShadow: 'var(--shadow-lg)' }}>
@@ -233,8 +246,8 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div style={{ display: 'inline-flex', borderRadius: 8, padding: 3, background: 'var(--surface-2)', border: '1px solid var(--line-2)' }}>
+          <div className="m-full" style={{ display: 'flex', gap: 12, alignItems: 'center', maxWidth: '100%', minWidth: 0 }}>
+            <div className="h-scroll" style={{ display: 'inline-flex', borderRadius: 8, padding: 3, background: 'var(--surface-2)', border: '1px solid var(--line-2)', maxWidth: '100%', flexShrink: 1 }}>
               {PET_FILTERS.map((filter) => (
                 <button key={filter.id} onClick={() => setPet(filter.id)}
                   style={{ height: 28, padding: '0 14px', borderRadius: 6, border: 0, background: pet === filter.id ? 'var(--surface)' : 'transparent', boxShadow: pet === filter.id ? 'var(--shadow-sm)' : 'none', color: 'var(--ink)', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -243,27 +256,53 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
               ))}
             </div>
             <select value={sort} onChange={(e) => setSort(e.target.value)}
-              style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1px solid var(--line-2)', background: 'var(--surface)', fontSize: 12, color: 'var(--ink)', fontFamily: 'inherit' }}>
+              style={{ height: 34, padding: '0 12px', borderRadius: 999, border: '1px solid var(--line-2)', background: 'var(--surface)', fontSize: 12, color: 'var(--ink)', fontFamily: 'inherit', flexShrink: 0 }}>
               <option>热度</option><option>评分</option><option>价格升序</option><option>价格降序</option>
             </select>
           </div>
         </div>
       </div>
 
-      <section style={{ paddingTop: 32, paddingBottom: 96 }}>
-        <div className="container">
-          <div className="caption" style={{ marginBottom: 24 }}>共 {filtered.length} 件商品</div>
-          <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-            {filtered.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
-          </div>
-          {filtered.length === 0 && (
-            <div style={{ padding: '96px 0', textAlign: 'center' }}>
-              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Emoji text="🥹" size={64} /></div>
-              <p className="body">没有找到合适的商品，试试别的分类？</p>
-            </div>
-          )}
+      {/* 浏览全部时按类目分组：分区标题 + 交替底色，打破一铺到底的均一长网格 */}
+      {cat === 'all' && q.trim() === '' && filtered.length > 0 ? (
+        <div style={{ paddingTop: 8, paddingBottom: 64 }}>
+          {CATEGORIES.filter((c) => c.id !== 'all')
+            .map((c) => ({ ...c, items: filtered.filter((p) => p.cat === c.id) }))
+            .filter((g) => g.items.length > 0)
+            .map((g, gi) => (
+              <section key={g.id} className={gi % 2 === 1 ? 'tint-band' : undefined}
+                style={{ padding: '40px 0 48px', borderRadius: gi % 2 === 1 ? 36 : 0 }}>
+                <div className="container">
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
+                    <Emoji text={g.icon} size={24} style={{ alignSelf: 'center' }} />
+                    <h2 className="h-3" style={{ margin: 0 }}>{g.name}</h2>
+                    <span className="caption">{g.items.length} 件</span>
+                    <span style={{ flex: 1 }} />
+                    <button className="btn btn-ghost btn-sm" onClick={() => setCat(g.id)}>只看{g.name} →</button>
+                  </div>
+                  <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+                    {g.items.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
+                  </div>
+                </div>
+              </section>
+            ))}
         </div>
-      </section>
+      ) : (
+        <section style={{ paddingTop: 32, paddingBottom: 96 }}>
+          <div className="container">
+            <div className="caption" style={{ marginBottom: 24 }}>共 {filtered.length} 件商品{q.trim() && ` · 关键词「${q.trim()}」`}</div>
+            <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+              {filtered.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
+            </div>
+            {filtered.length === 0 && (
+              <div style={{ padding: '96px 0', textAlign: 'center' }}>
+                <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Emoji text="🥹" size={64} /></div>
+                <p className="body">没有找到合适的商品，换个关键词或分类试试？</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </>
   );
 }
@@ -294,9 +333,10 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
                 {p.tag && <span className="tag-pill">{p.tag}</span>}
                 <Emoji text={p.emoji} size={220} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 12 }}>
-                {[p.emoji, '📷', '📐', '🎬'].map((e, i) => (
-                  <div key={i} style={{ aspectRatio: '1/1', borderRadius: 12, background: i === 0 ? p.bg : 'var(--surface-2)', display: 'grid', placeItems: 'center', border: i === 0 ? '2px solid var(--ink)' : '1px solid var(--line-2)', cursor: 'pointer' }}><Emoji text={e} size={28} /></div>
+              {/* 卖点小贴条：替代原先的假缩略图占位 */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                {(p.badges || []).map((b) => (
+                  <span key={b} style={{ fontSize: 12, fontWeight: 600, color: 'var(--green)', background: 'rgba(79,122,87,.10)', padding: '6px 12px', borderRadius: 999 }}>✓ {b}</span>
                 ))}
               </div>
             </div>
@@ -341,10 +381,9 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
         </div>
       </section>
 
-      {/* 商品介绍 + 规格参数 */}
-      <section style={{ paddingTop: 8, paddingBottom: 64 }}>
+      {/* 商品介绍 + 规格参数：sage 染色带分区，替代发丝线分隔 */}
+      <section className="tint-band" style={{ padding: '56px 0', borderRadius: 36 }}>
         <div className="container">
-          <hr className="hairline" style={{ marginBottom: 48 }} />
           <div className="m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 48 }}>
             <div>
               <div className="eyebrow eyebrow-rule" style={{ marginBottom: 12 }}>商品介绍</div>
@@ -439,15 +478,17 @@ function ReviewsSection({ product, navigate }) {
 
         {list === null && <p className="caption">加载中…</p>}
         {list && list.length === 0 && (
-          <div className="card" style={{ padding: 32, textAlign: 'center' }}>
-            <p className="body" style={{ margin: 0 }}>还没有评价 买过的铲屎官快来晒一单~</p>
+          <div className="card" style={{ padding: '40px 32px', textAlign: 'center', background: 'rgba(79,122,87,.05)' }}>
+            <div style={{ display: 'grid', placeItems: 'center', marginBottom: 12 }}><Emoji text="📷" size={56} /></div>
+            <p className="body" style={{ margin: '0 0 16px' }}>还没有评价 买过的铲屎官快来晒一单~</p>
+            <button className="btn btn-line btn-sm" onClick={() => setWriting(true)}>写下第一条评价</button>
           </div>
         )}
         <div style={{ display: 'grid', gap: 14 }}>
           {(list || []).map((r) => (
             <div key={r.id} className="card" style={{ padding: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text={r.authorAvatar || '👤'} size={16} /></span>
+                <span style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text={r.authorAvatar || '🐾'} size={16} /></span>
                 <span style={{ fontSize: 13.5, fontWeight: 600 }}>{r.author}</span>
                 <Stars n={r.rating} />
                 <span className="caption" style={{ marginLeft: 'auto' }}>{new Date(r.createdAt).toLocaleDateString('zh-CN')}</span>

@@ -490,7 +490,7 @@ export function MemberPage({ navigate, initialTab }) {
         <div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 22, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={260} /></div>
-            <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', display: 'grid', placeItems: 'center' }}><Emoji text={me?.avatarEmoji || '👤'} size={44} /></div>
+            <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', border: '3px solid rgba(247,242,229,.6)', display: 'grid', placeItems: 'center' }}><Emoji text={me?.avatarEmoji || '🐱'} size={44} /></div>
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, margin: 0 }}>
@@ -540,7 +540,6 @@ export function MemberPage({ navigate, initialTab }) {
         <div className="container">
           {tab === 'overview' && (
             <>
-            <CheckinBar me={me} />
             <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
               <div className="card" style={{ padding: 28 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -548,7 +547,13 @@ export function MemberPage({ navigate, initialTab }) {
                   <button onClick={() => setTab('pets')} className="btn btn-ghost btn-sm">查看全部 →</button>
                 </div>
                 {pets.length === 0 ? (
-                  <p className="caption">还没有档案，去"宠物档案"添加，或直接问右下角的宝莉助手。</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '8px 0' }}>
+                    <Emoji text="🐶" size={52} />
+                    <div>
+                      <p className="caption" style={{ margin: '0 0 10px' }}>还没有档案，建好档案后宝莉能给出更贴合的建议。</p>
+                      <button className="btn btn-sm" onClick={() => setTab('pets')} style={{ background: 'var(--green)', color: '#FFF9F2', borderRadius: 999 }}>去建立档案</button>
+                    </div>
+                  </div>
                 ) : (
                   <div style={{ display: 'flex', gap: 16 }}>
                     {pets.map((p) => (
@@ -566,7 +571,15 @@ export function MemberPage({ navigate, initialTab }) {
                   <h3 className="h-3" style={{ margin: 0 }}>最近订单</h3>
                   <button onClick={() => setTab('orders')} className="btn btn-ghost btn-sm">全部订单 →</button>
                 </div>
-                {orders.length === 0 && <p className="caption" style={{ margin: 0 }}>还没有订单，去商品页逛逛吧~</p>}
+                {orders.length === 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '8px 0' }}>
+                    <Emoji text="📦" size={52} />
+                    <div>
+                      <p className="caption" style={{ margin: '0 0 10px' }}>还没有订单，毛孩子的好东西都在商品页等着~</p>
+                      <button className="btn btn-sm" onClick={() => navigate({ page: 'shop' })} style={{ background: 'var(--green)', color: '#FFF9F2', borderRadius: 999 }}>去逛逛</button>
+                    </div>
+                  </div>
+                )}
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                   {orders.slice(0, 3).map((o) => (
                     <li key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--line-2)' }}>
@@ -599,6 +612,7 @@ export function MemberPage({ navigate, initialTab }) {
                 </div>
               </div>
             </div>
+            <CheckinBar />
             </>
           )}
 
@@ -1034,29 +1048,19 @@ function CheckinBar() {
     } catch {} finally { setBusy(false); }
   }
 
+  // 低调的签到条：放在概览底部，不抢核心功能的注意力
   return (
-    <div className="card m-col" style={{ padding: '20px 28px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
-        <Emoji text="🎯" size={30} />
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 700 }}>每日签到</div>
-          <div className="caption">连续签到第 7 天起每次 10 积分 · 积分未来可换优惠券</div>
-        </div>
+    <div className="m-col" style={{ marginTop: 24, padding: '12px 20px', borderRadius: 14, background: 'rgba(79,122,87,.07)', border: '1px dashed rgba(79,122,87,.35)', display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+        <Emoji text="🎯" size={18} />
+        <span className="caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          每日签到 · 当前 {st ? st.points : '…'} 积分{st && st.streak > 1 ? ` · 已连续 ${st.streak} 天` : ''} · 积分未来可换优惠券
+        </span>
       </div>
-      <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 700 }}>{st ? st.points : '…'}</div>
-          <div className="caption" style={{ fontSize: 11 }}>积分</div>
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 700 }}>{st ? st.streak : '…'}</div>
-          <div className="caption" style={{ fontSize: 11 }}>连续天数</div>
-        </div>
-        <button className="btn btn-sm" disabled={busy || !st || st.done} onClick={doCheckin}
-          style={{ background: st?.done ? 'var(--surface-2)' : 'var(--accent)', color: st?.done ? 'var(--ink-3)' : '#FFF9F2', borderRadius: 999, minWidth: 96, justifyContent: 'center' }}>
-          {st?.done ? (justDone ? '签到成功 ✓' : '今日已签') : '签到 +5'}
-        </button>
-      </div>
+      <button className="btn btn-sm" disabled={busy || !st || st.done} onClick={doCheckin}
+        style={{ borderRadius: 999, minWidth: 88, justifyContent: 'center', border: st?.done ? '1px solid var(--line-2)' : '1px solid var(--accent)', background: 'transparent', color: st?.done ? 'var(--ink-3)' : 'var(--accent)', fontWeight: 600 }}>
+        {st?.done ? (justDone ? '签到成功 ✓' : '今日已签') : '签到 +5'}
+      </button>
     </div>
   );
 }

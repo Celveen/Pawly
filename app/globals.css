@@ -335,6 +335,23 @@ section { padding: 96px 0; }
 @media (max-width: 720px) { section { padding: 64px 0; } }
 
 /* ============================================================
+   分区底色节奏：sage 微染色带 + 低透明度爪印纹理，打破大面积纯色
+   ============================================================ */
+.tint-band{
+  background-color: #EDF1EA; /* sage 8% 混奶油 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='%232C563A' fill-opacity='0.045'%3E%3Cpath d='M52 46c-6 0-10-6-10-12s4-10 10-10 10 4 10 10-4 12-10 12zm-22-16c-4 0-8-4-8-9s4-8 8-8 8 3 8 8-4 9-8 9zm44 0c-4 0-8-4-8-9s4-8 8-8 8 3 8 8-4 9-8 9zm-33-18c-4 0-7-4-7-8s3-7 7-7 7 3 7 7-3 8-7 8zm22 0c-4 0-7-4-7-8s3-7 7-7 7 3 7 7-3 8-7 8z'/%3E%3Cpath d='M162 176c-6 0-10-6-10-12s4-10 10-10 10 4 10 10-4 12-10 12zm-22-16c-4 0-8-4-8-9s4-8 8-8 8 3 8 8-4 9-8 9zm44 0c-4 0-8-4-8-9s4-8 8-8 8 3 8 8-4 9-8 9zm-33-18c-4 0-7-4-7-8s3-7 7-7 7 3 7 7-3 8-7 8zm22 0c-4 0-7-4-7-8s3-7 7-7 7 3 7 7-3 8-7 8z'/%3E%3C/g%3E%3C/svg%3E");
+}
+.tint-band-warm{
+  background-color: #F4E8D6; /* 暖橙 6% 混奶油 */
+}
+/* 染色带上的卡片：米白底 + 柔和投影，与底色拉开一层 */
+.tint-band .card{ background: #FFFDF6; box-shadow: 0 8px 24px -12px rgba(31,42,29,.10); }
+
+/* 社区瀑布流：桌面多列自适应，移动端固定两列（小红书式） */
+.masonry{ columns: 5 210px; column-gap: 16px; }
+@media (max-width: 640px){ .masonry{ columns: 2 !important; column-gap: 10px; } }
+
+/* ============================================================
    移动端适配：仅 ≤720px 生效，桌面端不受影响。
    组件里大量布局是内联样式，这里用工具类 + !important 在小屏覆盖。
    ============================================================ */
@@ -366,4 +383,7 @@ section { padding: 96px 0; }
 
   /* 页脚品牌块占满一行 */
   .footer-brand{ grid-column: 1 / -1; }
+
+  /* 小屏隐藏纯装饰元素 */
+  .m-none{ display: none !important; }
 }
