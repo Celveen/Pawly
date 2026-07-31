@@ -20,10 +20,3 @@ export function Emoji({ text, size = 20, style, className }) {
     />
   );
 }
-
-export function Avatar({ value, size = 20, fallback = '👤', style, className }) {
-  if (value && value.startsWith('data:image/')) {
-    return <img src={value} alt="头像" draggable={false} className={className} style={{ width: size, height: size, borderRadius: '50%', verticalAlign: '-15%', display: 'inline-block', objectFit: 'cover', ...style }} />;
-  }
-  return <Emoji text={value || fallback} size={size} style={style} className={className} />;
-}
