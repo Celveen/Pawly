@@ -24,6 +24,7 @@ async function ensureUser(id: string) {
 }
 
 const POST_TOPICS = ['晒宠', '好物', '求助', '日常'];
+const PROFILE_AVATARS = ['🐶', '🐱', '🐰', '🦊', '🐼', '🐨', '🐸', '🐵', '🦁', '🐯', '🐷', '🐹'];
 
 // AI 助手每日额度：游客 5 次/天；手机号登录即为 Pawly Club 会员，30 次/天。
 // 后续如分免费/付费会员，在 chatQuota 里按用户等级细分即可。
@@ -225,12 +226,25 @@ export const services: Record<string, Handler> = {
   'auth.me': async (userId) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     // 额度只在后台记录（ChatUsage 表），不再向前端透出数字
-    if (!user?.phone) return { guest: true, nickname: user?.nickname || null };
+    if (!user?.phone) return { guest: true, nickname: user?.nickname || null, avatar: user?.avatar || null };
     return {
       guest: false,
       nickname: user.nickname || null,
+      avatar: user.avatar || null,
       phoneMasked: user.phone.slice(0, 3) + '****' + user.phone.slice(7),
     };
+  },
+
+  // —— 个人资料 ——
+  'profile.update': async (userId, b) => {
+    const nickname = String(b?.nickname || '').trim();
+    const avatar = String(b?.avatar || '').trim();
+    if (nickname.length > 20) throw new RpcError(400, '网名最多 20 个字');
+    const uploadedAvatar = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar) && avatar.length <= 700_000;
+    if (avatar && !PROFILE_AVATARS.includes(avatar) && !uploadedAvatar) throw new RpcError(400, '头像格式无效或图片过大');
+    await ensureUser(userId);
+    const user = await prisma.user.update({ where: { id: userId }, data: { nickname: nickname || null, avatar: avatar || null } });
+    return { ok: true, nickname: user.nickname, avatar: user.avatar };
   },
 };
 

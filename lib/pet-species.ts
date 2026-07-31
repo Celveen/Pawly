@@ -26,6 +26,29 @@ export const PET_FILTERS = [
   { id: 'mini_pig', label: '猪', speciesIds: ['mini_pig'], emoji: '🐷' },
 ] as const;
 
+// 科普页专用分类：把仓鼠及其他“鼠类”集中展示，但保留豚鼠的独立入口。
+// speciesIds 也预留了暂未进入宠物档案主列表的常见宠物鼠，方便后续文章直接标注。
+export const PET_CONTENT_FILTERS = [
+  PET_FILTERS[0],
+  PET_FILTERS[1],
+  PET_FILTERS[2],
+  PET_FILTERS[3],
+  PET_FILTERS[4],
+  { id: 'rodent', label: '鼠', speciesIds: ['rodent', 'hamster', 'chinchilla', 'gerbil', 'rat', 'mouse', 'degu'], emoji: '🐹' },
+  PET_FILTERS[6],
+  PET_FILTERS[7],
+  PET_FILTERS[8],
+  PET_FILTERS[9],
+];
+
+// 兼容科普页现有命名；商品页与科普页统一使用 PET_CONTENT_FILTERS。
+export const ARTICLE_PET_FILTERS = PET_CONTENT_FILTERS;
+
+export const RODENT_ALIASES = [
+  '鼠', '鼠类', '仓鼠', '金丝熊', '侏儒仓鼠', '龙猫', '毛丝鼠',
+  '沙鼠', '蒙古沙鼠', '花枝鼠', '宠物大鼠', '宠物鼠', '小鼠', '八齿鼠', '松鼠',
+];
+
 export function getPetSpecies(name?: string | null) {
   return PET_SPECIES.find((item) => item.id === name || item.name === name || item.aliases.some((alias) => alias === name)) || PET_SPECIES[0];
 }

@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { fmt } from './util';
 import { ARTICLE_CATS, PRODUCTS, ARTICLES } from './data';
-import { Emoji } from './Emoji';
+import { Avatar, Emoji } from './Emoji';
 import { getPetSpecies } from '@/lib/pet-species';
 
 export const Logo = ({ size = 28 }) => (
@@ -119,9 +119,7 @@ function UserButton({ navigate }) {
           width: 36, height: 36, borderRadius: 999, border: '1px solid var(--line)',
           background: 'var(--ink)', color: 'var(--bg)', display: 'grid', placeItems: 'center', padding: 0,
         }}>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
-        </svg>
+        <Avatar value={me.avatar} size={24} />
       </button>
     );
   }

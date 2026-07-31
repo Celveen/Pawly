@@ -15,6 +15,7 @@ model User {
   id        String     @id @default(cuid())
   phone     String?    @unique // 手机号登录后绑定；游客为 null
   nickname  String?
+  avatar    String? // 头像：使用内置 emoji，避免依赖外部对象存储
   createdAt DateTime   @default(now())
   pets      Pet[]
   orders    Order[]

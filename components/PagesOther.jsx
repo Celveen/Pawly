@@ -3,12 +3,13 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { fmt } from './util';
 import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
 import { ArticleCard, ProductCard } from './ui';
-import { Emoji } from './Emoji';
+import { Avatar, Emoji } from './Emoji';
 import { VideoSlot } from './VideoSlot';
-import { PET_FILTERS, PET_SPECIES, getPetSpecies } from '@/lib/pet-species';
+import { PET_CONTENT_FILTERS, PET_SPECIES, RODENT_ALIASES, getPetSpecies } from '@/lib/pet-species';
 
 const petEmoji = (sp) => getPetSpecies(sp).emoji;
 const petBg = (sp) => ({ dog: '#F4D7B0', cat: '#D3DEE2', rabbit: '#E8DCCF', bird: '#DCE5D4', hamster: '#F2DDC1', guinea_pig: '#EAD9DE', aquatic: '#C8DDE2', reptile: '#D5E0CC', mini_pig: '#F4D7B0' }[getPetSpecies(sp).id] || '#D3DEE2');
+const PROFILE_AVATARS = ['🐶', '🐱', '🐰', '🦊', '🐼', '🐨', '🐸', '🐵', '🦁', '🐯', '🐷', '🐹'];
 
 export function ArticlesPage({ navigate }) {
   const [cat, setCat] = useState('all');
@@ -52,7 +53,7 @@ export function ArticlesPage({ navigate }) {
           <div className="h-scroll" style={{ display: 'flex', gap: 4, padding: '0 0 10px' }}>
             <span className="caption" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px 0 2px', whiteSpace: 'nowrap' }}>按宠物</span>
             <button onClick={() => { setCat('all'); setSpecies('all'); }} style={speciesFilterStyle(species === 'all')}>全部</button>
-            {PET_FILTERS.filter((item) => item.id !== 'all').map((item) => (
+            {PET_CONTENT_FILTERS.filter((item) => item.id !== 'all').map((item) => (
               <button key={item.id} onClick={() => setSpecies(item.id)} style={speciesFilterStyle(species === item.id)}>
                 <Emoji text={item.emoji} size={14} /> {item.label}
               </button>
@@ -93,12 +94,13 @@ function articlePublicationTime(article) {
 }
 
 function articleMatchesSpecies(article, speciesName) {
-  const filter = PET_FILTERS.find((item) => item.id === speciesName);
+  const filter = PET_CONTENT_FILTERS.find((item) => item.id === speciesName);
   if (!filter || filter.id === 'all') return true;
   if (Array.isArray(article.species) && article.species.length) {
     return filter.speciesIds.some((id) => article.species.includes(id));
   }
   const text = `${article.title} ${article.excerpt}`.toLowerCase();
+  if (filter.id === 'rodent') return RODENT_ALIASES.some((alias) => text.includes(alias.toLowerCase()));
   return filter.speciesIds.some((id) => {
     const species = PET_SPECIES.find((item) => item.id === id);
     return species?.aliases.some((alias) => text.includes(alias.toLowerCase())) || text.includes(species?.name.toLowerCase() || '');
@@ -458,6 +460,7 @@ export function MemberPage({ navigate, initialTab }) {
   const [orders, setOrders] = useState([]);
   const [me, setMe] = useState(null); // null=加载中；{guest:true} 或 {phoneMasked,...}
   const [loginOpen, setLoginOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const loadPets = useCallback(async () => {
     try { const r = await fetch('/api/pets'); if (r.ok) setPets(await r.json()); } catch {}
@@ -482,6 +485,7 @@ export function MemberPage({ navigate, initialTab }) {
 
   const orderStatusText = (s) => ({ pending_payment: '待支付', paid: '已支付', shipped: '已发货', done: '已完成' }[s] || s);
   const fmtDate = (iso) => new Date(iso).toLocaleDateString('zh-CN');
+  const displayAvatar = me?.avatar || '👤';
 
   return (
     <>
@@ -489,12 +493,13 @@ export function MemberPage({ navigate, initialTab }) {
         <div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 22, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={260} /></div>
-            <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={44} /></div>
+            <button onClick={() => setProfileOpen(true)} aria-label="编辑头像和网名" title="编辑头像和网名" style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', display: 'grid', placeItems: 'center', border: '2px solid rgba(255,255,255,.22)', padding: 0, cursor: 'pointer', position: 'relative', overflow: 'visible' }}><Avatar value={displayAvatar} size={78} /><span style={{ position: 'absolute', right: -2, bottom: -2, width: 26, height: 26, borderRadius: 999, background: '#F5F9F2', color: 'var(--ink)', display: 'grid', placeItems: 'center', fontSize: 13 }}>✎</span></button>
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, margin: 0 }}>
-                  {me && !me.guest ? (me.nickname || me.phoneMasked) : '铲屎官（游客）'}
+                  {me?.nickname || (me && !me.guest ? me.phoneMasked : '铲屎官（游客）')}
                 </h2>
+                <button onClick={() => setProfileOpen(true)} className="member-pill" style={{ background: 'rgba(244,248,242,.16)', color: '#F5F9F2', border: '1px solid rgba(244,248,242,.24)', cursor: 'pointer' }}>编辑资料</button>
                 {/* 会员徽章与登录/退出按钮统一高度+字号，读起来是同一排"胶囊"而非大小不一 */}
                 <span className="member-pill" style={{ background: 'var(--accent)', color: '#2a1a0a' }}><Emoji text="⭐" size={12} /> Pawly Club 会员</span>
                 {me && (me.guest
@@ -632,6 +637,7 @@ export function MemberPage({ navigate, initialTab }) {
           {tab === 'pets' && <PetsTab pets={pets} onChanged={loadPets} />}
 
           {loginOpen && <LoginDialog onClose={() => setLoginOpen(false)} onLoggedIn={() => { setLoginOpen(false); loadMe(); loadPets(); }} />}
+          {profileOpen && <ProfileEditor me={me} onClose={() => setProfileOpen(false)} onSaved={(next) => { setMe((prev) => ({ ...(prev || {}), ...next })); setProfileOpen(false); }} />}
 
           {tab === 'addr' && <AddressTab />}
 
@@ -639,6 +645,67 @@ export function MemberPage({ navigate, initialTab }) {
         </div>
       </section>
     </>
+  );
+}
+
+function ProfileEditor({ me, onClose, onSaved }) {
+  const [nickname, setNickname] = useState(me?.nickname || '');
+  const [avatar, setAvatar] = useState(me?.avatar || PROFILE_AVATARS[0]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  function resizeImage(file) {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) { reject(new Error('请选择图片文件')); return; }
+      if (file.size > 8 * 1024 * 1024) { reject(new Error('图片不能超过 8MB')); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const image = new Image();
+        image.onload = () => {
+          const edge = 256;
+          const scale = Math.min(1, edge / Math.max(image.width, image.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale));
+          canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', .82));
+        };
+        image.onerror = () => reject(new Error('图片读取失败'));
+        image.src = reader.result;
+      };
+      reader.onerror = () => reject(new Error('图片读取失败'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function submit(e) {
+    e.preventDefault();
+    const value = nickname.trim();
+    if (value.length > 20) { setError('网名最多 20 个字'); return; }
+    setSaving(true); setError('');
+    try {
+      const r = await fetch('/api/auth/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nickname: value, avatar }) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || '保存失败');
+      onSaved(data);
+    } catch (e) { setError(e.message || '保存失败，请重试'); } finally { setSaving(false); }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.35)', animation: 'fadeBg .2s ease' }} />
+      <form role="dialog" aria-label="编辑个人资料" onSubmit={submit} style={{ position: 'relative', width: 'min(440px, 100%)', background: 'var(--surface)', borderRadius: 20, padding: 28, boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)', animation: 'dialogIn .28s cubic-bezier(.22,.61,.36,1) both' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><div><div className="eyebrow">Pawly profile</div><h3 className="h-3" style={{ margin: '6px 0 0' }}>编辑个人资料</h3></div><button type="button" onClick={onClose} className="btn btn-ghost btn-sm" aria-label="关闭">×</button></div>
+        <label className="caption" style={{ display: 'block', marginTop: 24 }}>选择头像</label>
+        <label className="btn btn-line btn-sm" style={{ marginTop: 10, cursor: 'pointer' }}>上传本地图片<input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { setAvatar(await resizeImage(file)); setError(''); } catch (err) { setError(err.message || '图片处理失败'); } e.target.value = ''; }} /></label>
+        <p className="caption" style={{ margin: '8px 0 0' }}>自动压缩为 256px，建议使用正方形图片</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginTop: 10 }}>{PROFILE_AVATARS.map((item) => <button type="button" key={item} onClick={() => setAvatar(item)} aria-label={`选择${item}头像`} style={{ width: 48, height: 48, borderRadius: 14, border: avatar === item ? '2px solid var(--ink)' : '1px solid var(--line-2)', background: avatar === item ? 'var(--accent)' : 'var(--surface-2)', display: 'grid', placeItems: 'center', padding: 0, cursor: 'pointer' }}><Emoji text={item} size={27} /></button>)}</div>
+        {avatar.startsWith('data:image/') && <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}><Avatar value={avatar} size={48} /><span className="caption">已选择本地头像</span></div>}
+        <label className="caption" htmlFor="profile-nickname" style={{ display: 'block', marginTop: 22 }}>网名</label>
+        <input id="profile-nickname" className="input" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} placeholder="给自己起个好听的名字" style={{ marginTop: 8 }} autoFocus />
+        {error && <p style={{ color: '#B3412F', fontSize: 13, margin: '10px 0 0' }}>{error}</p>}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}><button type="button" onClick={onClose} className="btn btn-ghost">取消</button><button type="submit" className="btn btn-primary" disabled={saving}>{saving ? '保存中…' : '保存资料'}</button></div>
+      </form>
+    </div>
   );
 }
 
