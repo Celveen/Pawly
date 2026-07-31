@@ -58,6 +58,21 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   const inputRef = useRef(null);
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, loading]);
+
+  // 恢复历史对话：有历史则替换默认问候语（AI"记得"这个用户）
+  useEffect(() => {
+    fetch('/api/chat/history')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((his) => {
+        if (Array.isArray(his) && his.length > 0) {
+          setMessages([
+            { role: 'assistant', text: `欢迎回来铲屎官~ 我们上次聊到这里 👇` },
+            ...his.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', text: m.text })),
+          ]);
+        }
+      })
+      .catch(() => {});
+  }, []);
   useEffect(() => { if (open) { setUnread(0); setTimeout(() => inputRef.current?.focus(), 200); } }, [open]);
 
   // 每次打开网页都延迟弹出"试试我"冒泡提示，约 11 秒后自动消失
