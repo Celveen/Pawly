@@ -12,15 +12,23 @@ datasource db {
 
 // 匿名用户：访客打开链接即自动创建（cookie 标识），无需注册，最适合扫码演示
 model User {
-  id        String     @id @default(cuid())
-  phone     String?    @unique // 手机号登录后绑定；游客为 null
-  nickname  String?
-  createdAt DateTime   @default(now())
-  pets      Pet[]
-  orders    Order[]
-  posts     Post[]
-  postLikes PostLike[]
-  addresses Address[]
+  id            String         @id @default(cuid())
+  phone         String?        @unique // 手机号登录后绑定；游客为 null
+  nickname      String?
+  avatarEmoji   String? // 头像（emoji，走 Fluent 图集渲染）
+  bio           String? // 个人简介（对外主页展示）
+  points        Int            @default(0) // 签到/互动积分
+  createdAt     DateTime       @default(now())
+  pets          Pet[]
+  orders        Order[]
+  posts         Post[]
+  postLikes     PostLike[]
+  addresses     Address[]
+  comments      Comment[]
+  reviews       Review[]
+  following     Follow[]       @relation("follower")
+  followers     Follow[]       @relation("followee")
+  notifications Notification[] @relation("receiver")
 }
 
 // 收货地址：一个用户可有多个，isDefault 标记默认地址（结算页优先勾选）
@@ -87,22 +95,112 @@ model Product {
   stock  Int
 }
 
-// 社区帖子：铲屎官分享（小红书式图文卡片）。暂无图片上传，封面用 emoji + 背景色，
-// 与全站现有视觉语言一致；接入对象存储后可平滑加 imageUrl 字段。
+// 社区帖子：小红书式图文笔记。图片以压缩后的 dataURL 存 JSON 数组（MVP 方案，
+// 后续接对象存储只需把数组内容换成 URL，前端无需改动）。
 model Post {
   id        String     @id @default(cuid())
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   content   String
-  topic     String // 话题：晒宠 | 好物 | 求助 | 日常
-  emoji     String // 封面 emoji
-  bg        String // 封面背景色
+  topic     String // 分区：晒宠 | 好物 | 求助 | 日常
+  topics    String? // JSON 数组：话题标签（#幼猫喂养 等，不含 # 号）
+  images    String? // JSON 数组：图片（dataURL 或 URL），最多 9 张
+  emoji     String // 无图时的封面 emoji
+  bg        String // 无图时的封面背景色
   petName   String? // 关联的自家宠物名（可选）
+  status    String     @default("visible") // visible | hidden（预留人工/机审下架）
   createdAt DateTime   @default(now())
   likes     PostLike[]
+  comments  Comment[]
 
   @@index([createdAt])
+}
+
+// 评论：支持一层回复（parentId 指向被回复的顶层评论）
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  parentId  String? // 顶层评论为 null
+  replyTo   String? // 被回复人的昵称快照（展示"回复 @xx"）
+  createdAt DateTime @default(now())
+
+  @@index([postId, createdAt])
+}
+
+// 关注关系：follower 关注了 followee
+model Follow {
+  followerId String
+  followeeId String
+  follower   User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee   User     @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([followerId, followeeId])
+  @@index([followeeId])
+}
+
+// 站内通知：赞/评论/关注/系统
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String // 接收者
+  user      User     @relation("receiver", fields: [userId], references: [id], onDelete: Cascade)
+  type      String // like | comment | follow | system
+  actorId   String? // 触发者（系统通知为 null）
+  actorName String? // 触发者昵称快照
+  postId    String? // 关联帖子
+  content   String? // 摘要文案
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+// 商品评价/晒单：rating 1-5；images 同帖子方案；postId 记录同步生成的社区帖
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  content   String
+  images    String? // JSON 数组
+  postId    String? // 勾选"同步到社区"时生成的帖子 id
+  createdAt DateTime @default(now())
+
+  @@index([productId, createdAt])
+}
+
+// 每日签到（连续天数由查询计算）
+model CheckIn {
+  userId String
+  date   String // YYYY-MM-DD
+
+  @@id([userId, date])
+}
+
+// AI 对话历史：单线程按时间排列，打开客服时恢复最近若干条
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String // user | assistant
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// 健康提醒完成标记：key = petId:提醒类型:期次（如 cuid123:vaccine:2026）
+model ReminderDone {
+  userId String
+  key    String
+  doneAt DateTime @default(now())
+
+  @@id([userId, key])
 }
 
 // 点赞：一人一帖只能赞一次

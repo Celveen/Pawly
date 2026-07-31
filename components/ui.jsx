@@ -80,6 +80,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
             </svg>
           </button>
+          <NotifyBell navigate={navigate} />
           <button onClick={onCartOpen} className="btn btn-line btn-sm" style={{ position: 'relative', paddingLeft: 14, paddingRight: 14 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 4h2l2.4 12.3a2 2 0 0 0 2 1.7h8.2a2 2 0 0 0 2-1.6L21 8H6" />
@@ -100,6 +101,90 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
       </div>
       {searchOpen && <SearchOverlay navigate={navigate} onClose={() => setSearchOpen(false)} />}
     </header>
+  );
+}
+
+// 通知铃铛：未读角标 + 下拉面板（打开即标记已读）
+function NotifyBell({ navigate }) {
+  const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [items, setItems] = useState(null);
+  const wrapRef = useRef(null);
+
+  // 未读数：进站拉一次，之后每 60s 轮询
+  useEffect(() => {
+    let alive = true;
+    const poll = () => fetch('/api/notifications?unread=1').then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive && d) setUnread(d.count || 0); }).catch(() => {});
+    poll();
+    const t = setInterval(poll, 60000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  // 点击面板外关闭
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    window.addEventListener('pointerdown', onDown);
+    return () => window.removeEventListener('pointerdown', onDown);
+  }, [open]);
+
+  async function toggle() {
+    const next = !open;
+    setOpen(next);
+    if (next) {
+      try {
+        const r = await fetch('/api/notifications');
+        setItems(r.ok ? await r.json() : []);
+        await fetch('/api/notifications', { method: 'POST' });
+        setUnread(0);
+      } catch { setItems([]); }
+    }
+  }
+
+  const typeEmoji = { like: '💚', comment: '💬', follow: '🐾', system: '💡' };
+  const ago = (iso) => {
+    const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 3600) return `${Math.max(1, Math.floor(s / 60))} 分钟前`;
+    if (s < 86400) return `${Math.floor(s / 3600)} 小时前`;
+    return `${Math.floor(s / 86400)} 天前`;
+  };
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative' }}>
+      <button onClick={toggle} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center', borderRadius: 999, position: 'relative' }} aria-label="通知">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </svg>
+        {unread > 0 && (
+          <span style={{ position: 'absolute', top: 2, right: 2, minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999, background: 'var(--accent)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            {unread > 99 ? '99+' : unread}
+          </span>
+        )}
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: 44, width: 320, maxHeight: 420, overflowY: 'auto', zIndex: 60,
+          background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--line-2)',
+          boxShadow: 'var(--shadow-lg)', animation: 'dialogIn .2s ease both',
+        }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line-2)', fontSize: 14, fontWeight: 700 }}>通知</div>
+          {items === null && <p className="caption" style={{ padding: 18 }}>加载中…</p>}
+          {items && items.length === 0 && <p className="caption" style={{ padding: '28px 18px', textAlign: 'center' }}>还没有通知</p>}
+          {items && items.map((n) => (
+            <button key={n.id} onClick={() => { setOpen(false); if (n.actorId) navigate({ page: 'profile', userId: n.actorId }); }}
+              style={{ display: 'flex', gap: 10, padding: '12px 18px', width: '100%', textAlign: 'left', border: 0, borderBottom: '1px solid var(--line-2)', background: n.read ? 'transparent' : 'rgba(222,116,41,.05)', cursor: 'pointer' }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}><Emoji text={typeEmoji[n.type] || '💡'} size={18} /></span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 13, lineHeight: 1.5, display: 'block' }}>
+                  <b>{n.actorName || 'Pawly'}</b> {n.content || ''}
+                </span>
+                <span className="caption" style={{ fontSize: 11.5 }}>{ago(n.createdAt)}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -173,6 +258,18 @@ function SearchOverlay({ navigate, onClose }) {
   }, [onClose]);
 
   const kw = q.trim();
+  // 社区帖子：走后端检索（数据在数据库里），300ms 防抖
+  const [postHits, setPostHits] = useState([]);
+  useEffect(() => {
+    if (!kw) { setPostHits([]); return; }
+    const t = setTimeout(() => {
+      fetch(`/api/posts/search?q=${encodeURIComponent(kw)}`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then((d) => setPostHits(Array.isArray(d) ? d : []))
+        .catch(() => setPostHits([]));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [kw]);
   const { prods, arts } = useMemo(() => {
     if (!kw) return { prods: [], arts: [] };
     // 整词命中优先；否则拆成单字全部命中即可（"狗粮"→"狗"匹配宠物类型+"粮"匹配名称）
@@ -198,7 +295,7 @@ function SearchOverlay({ navigate, onClose }) {
       }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <input ref={inputRef} className="input" placeholder="搜索商品、科普文章…"
+            <input ref={inputRef} className="input" placeholder="搜索商品、科普文章、社区帖子…"
               value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
             <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
           </div>
@@ -208,7 +305,7 @@ function SearchOverlay({ navigate, onClose }) {
         </div>
 
         <div style={{ overflowY: 'auto', marginTop: 8 }}>
-          {kw && prods.length === 0 && arts.length === 0 && (
+          {kw && prods.length === 0 && arts.length === 0 && postHits.length === 0 && (
             <p className="caption" style={{ textAlign: 'center', padding: '32px 0' }}>没有找到「{kw}」相关的内容，换个词试试？</p>
           )}
           {prods.length > 0 && (
@@ -241,6 +338,27 @@ function SearchOverlay({ navigate, onClose }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
                     <div className="caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.excerpt}</div>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+          {postHits.length > 0 && (
+            <>
+              <div className="eyebrow" style={{ margin: '14px 4px 8px' }}>社区帖子</div>
+              {postHits.map((ph) => (
+                <button key={ph.id} onClick={() => go({ page: 'community', postId: ph.id })}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 8px', borderRadius: 12, border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'var(--ink)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                  {ph.images?.[0] ? (
+                    <img src={ph.images[0]} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: ph.bg, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={ph.emoji} size={22} /></div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ph.title}</div>
+                    <div className="caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ph.author} · {ph.content}</div>
                   </div>
                 </button>
               ))}
@@ -279,11 +397,17 @@ export function Footer({ navigate }) {
     <footer style={{ background: 'var(--ink)', color: 'rgba(244,248,242,.72)', padding: '88px 0 32px' }}>
       <div className="container">
         {/* 编辑风品牌陈述：大衬线句子压场 */}
-        <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(244,248,242,.12)' }}>
+        <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(244,248,242,.12)', position: 'relative', overflow: 'hidden' }}>
           <div className="eyebrow" style={{ color: 'rgba(244,248,242,.45)', marginBottom: 20 }}>PAWLY · 宝莉</div>
           <p className="serif m-h1" style={{ fontSize: 'clamp(28px, 3.6vw, 48px)', lineHeight: 1.22, margin: 0, color: '#F5F9F2', maxWidth: 760 }}>
             把宠物照顾明白这件事<br />没人天生就会 <span style={{ color: 'var(--green-soft)' }}>但可以问</span>
           </p>
+          {/* 右侧低透明度贴纸群：打破深绿大面积纯色 */}
+          <div aria-hidden className="m-none" style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-55%)', opacity: .16, display: 'flex', gap: 36, alignItems: 'flex-end' }}>
+            <span style={{ transform: 'rotate(-10deg)' }}><Emoji text="🦴" size={90} /></span>
+            <span style={{ transform: 'translateY(-28px) rotate(8deg)' }}><Emoji text="🐾" size={130} /></span>
+            <span style={{ transform: 'rotate(-6deg)' }}><Emoji text="🧶" size={80} /></span>
+          </div>
         </div>
         <div className="m-2col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 48, marginBottom: 64 }}>
           <div className="footer-brand">
@@ -316,7 +440,7 @@ export function Footer({ navigate }) {
           fontSize: 12, color: 'rgba(255,255,255,.4)',
         }}>
           <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗 · Emoji graphics by Microsoft Fluent Emoji (MIT)</span>
-          <span className="mono">v 3.0 · 上海 → 你家门口</span>
+          <span className="mono" style={{ whiteSpace: 'nowrap' }}>v 3.0 · 上海 → 你家门口</span>
         </div>
       </div>
     </footer>
@@ -326,8 +450,8 @@ export function Footer({ navigate }) {
 export function ProductCard({ p, onOpen, onAdd }) {
   return (
     <div className="card card-hot fade-up" style={{ padding: 12 }} onClick={() => onOpen(p)}>
-      <div className="prod-img" style={{ background: p.bg }}>
-        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(48px, 7vw, 88px)', height: 'clamp(48px, 7vw, 88px)' }} />
+      <div className="prod-img" style={{ background: `radial-gradient(closest-side at 42% 38%, rgba(255,255,255,.42), transparent), ${p.bg}` }}>
+        <Emoji text={p.emoji} size={64} className="emoji" style={{ width: 'clamp(56px, 8vw, 104px)', height: 'clamp(56px, 8vw, 104px)', filter: 'drop-shadow(0 10px 18px rgba(31,42,29,.14))' }} />
         <SmartImage src={`/images/products/${p.id}.jpg`} alt={p.name} />
         <span className="pet-pill"><Emoji text={getPetSpecies(p.pet).emoji} size={14} /> {getPetSpecies(p.pet).label}</span>
         {p.tag && <span className="tag-pill">{p.tag}</span>}

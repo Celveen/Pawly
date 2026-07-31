@@ -28,3 +28,4 @@ npm-debug.log*
 
 # ===== 文档（不提交）=====
 *.docx
+tsconfig.tsbuildinfo
