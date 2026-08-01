@@ -111,9 +111,9 @@ export function CommunityPage({ navigate, initialPostId }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
               <div aria-hidden style={{ position: 'relative', width: 150, height: 96, flexShrink: 0 }} className="m-none">
                 <span style={{ position: 'absolute', left: 0, bottom: 0, width: 96, height: 96, borderRadius: 999, background: 'rgba(222,116,41,.12)' }} />
-                <span style={{ position: 'absolute', left: 14, bottom: 12, transform: 'rotate(-8deg)' }}><Emoji text="🐱" size={64} /></span>
-                <span style={{ position: 'absolute', right: 22, top: 0, transform: 'rotate(10deg)' }}><Emoji text="🧶" size={40} /></span>
-                <span style={{ position: 'absolute', right: 0, bottom: 6, transform: 'rotate(-14deg)' }}><Emoji text="🦴" size={34} /></span>
+                <span className="float-deco" style={{ position: 'absolute', left: 14, bottom: 12, '--r': '-8deg', '--fd': '7s' }}><Emoji text="🐱" size={64} /></span>
+                <span className="float-deco" style={{ position: 'absolute', right: 22, top: 0, '--r': '10deg', '--fd': '8.5s', '--fdel': '1s' }}><Emoji text="🧶" size={40} /></span>
+                <span className="float-deco" style={{ position: 'absolute', right: 0, bottom: 6, '--r': '-14deg', '--fd': '6.2s', '--fdel': '.4s' }}><Emoji text="🦴" size={34} /></span>
               </div>
               <button className="btn btn-primary btn-lg" onClick={() => setComposing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Emoji text="✏️" size={16} /> 发布分享

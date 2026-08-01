@@ -6,6 +6,15 @@ import { ARTICLE_CATS, PRODUCTS, ARTICLES } from './data';
 import { Emoji } from './Emoji';
 import { getPetSpecies } from '@/lib/pet-species';
 
+// 漂浮装饰贴纸：绝对定位的 emoji，轻柔浮动（reduced-motion 自动静止；默认小屏隐藏）
+// 用法：父容器 position:relative，<FloatEmoji e="🎾" size={40} style={{ right: 20, top: 8 }} r={-10} dur={7.5} delay={.6} />
+export const FloatEmoji = ({ e, size = 40, style, r = 0, rd = 3, dur = 7, delay = 0, mobile = false }) => (
+  <span aria-hidden className={`float-deco${mobile ? '' : ' m-none'}`}
+    style={{ position: 'absolute', pointerEvents: 'none', zIndex: 1, '--r': `${r}deg`, '--rd': `${rd}deg`, '--fd': `${dur}s`, '--fdel': `${delay}s`, ...style }}>
+    <Emoji text={e} size={size} />
+  </span>
+);
+
 export const Logo = ({ size = 28 }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -60,11 +69,14 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
       WebkitBackdropFilter: overVideo ? undefined : 'blur(14px) saturate(140%)',
       borderBottom: overVideo ? 'none' : '1px solid var(--line-2)',
     }}>
+      {/* 左右两侧 flex:1 等宽占位，保证中间的 pill 导航始终真居中（不受两侧内容宽度影响） */}
       <div className="container site-header-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 76, pointerEvents: 'auto' }}>
-        <button onClick={() => navigate({ page: 'home' })} style={{ border: 0, background: 'transparent', color: 'var(--ink)', padding: 0 }}>
-          <Logo />
-        </button>
-        <nav className="site-nav" style={{ display: 'flex' }}>
+        <div className="site-header-side" style={{ flex: '1 1 0', display: 'flex', justifyContent: 'flex-start', minWidth: 0 }}>
+          <button onClick={() => navigate({ page: 'home' })} style={{ border: 0, background: 'transparent', color: 'var(--ink)', padding: 0 }}>
+            <Logo />
+          </button>
+        </div>
+        <nav className="site-nav" style={{ display: 'flex', flexShrink: 0 }}>
           <div ref={navRef} className="pill-nav glass">
             {ind && <span className="indicator" style={{ left: ind.left, width: ind.width }} />}
             {navItems.map((it) => (
@@ -74,7 +86,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
             ))}
           </div>
         </nav>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="site-header-side" style={{ flex: '1 1 0', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, minWidth: 0 }}>
           <button onClick={() => setSearchOpen(true)} className="btn btn-ghost btn-sm" style={{ width: 36, padding: 0, justifyContent: 'center', borderRadius: 999 }} aria-label="搜索">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
@@ -404,9 +416,9 @@ export function Footer({ navigate }) {
           </p>
           {/* 右侧低透明度贴纸群：打破深绿大面积纯色 */}
           <div aria-hidden className="m-none" style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-55%)', opacity: .16, display: 'flex', gap: 36, alignItems: 'flex-end' }}>
-            <span style={{ transform: 'rotate(-10deg)' }}><Emoji text="🦴" size={90} /></span>
-            <span style={{ transform: 'translateY(-28px) rotate(8deg)' }}><Emoji text="🐾" size={130} /></span>
-            <span style={{ transform: 'rotate(-6deg)' }}><Emoji text="🧶" size={80} /></span>
+            <span className="float-deco" style={{ '--r': '-10deg', '--fd': '8s' }}><Emoji text="🦴" size={90} /></span>
+            <span className="float-deco" style={{ '--r': '8deg', '--fd': '9.5s', '--fdel': '1.2s', marginBottom: 28 }}><Emoji text="🐾" size={130} /></span>
+            <span className="float-deco" style={{ '--r': '-6deg', '--fd': '7s', '--fdel': '.6s' }}><Emoji text="🧶" size={80} /></span>
           </div>
         </div>
         <div className="m-2col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 48, marginBottom: 64 }}>

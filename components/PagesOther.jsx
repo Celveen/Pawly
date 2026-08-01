@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { fmt } from './util';
 import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
-import { ArticleCard, ProductCard } from './ui';
+import { ArticleCard, ProductCard, FloatEmoji } from './ui';
 import { Emoji } from './Emoji';
 import { VideoSlot } from './VideoSlot';
 import { PET_FILTERS, PET_SPECIES, getPetSpecies } from '@/lib/pet-species';
@@ -35,10 +35,14 @@ export function ArticlesPage({ navigate }) {
               <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             </div>
           </div>
-          {/* 栏目氛围视频（public/videos/journal.mp4，与首页共用素材） */}
-          <div className="m-full" style={{ position: 'relative', width: 340, height: 200, borderRadius: 20, overflow: 'hidden', flexShrink: 0, boxShadow: 'var(--shadow-lg)' }}>
-            <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
-            <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
+          {/* 栏目氛围视频（public/videos/journal.mp4，与首页共用素材）+ 漂浮贴纸 */}
+          <div className="m-full" style={{ position: 'relative', flexShrink: 0 }}>
+            <FloatEmoji e="🌿" size={42} style={{ left: -26, top: -20 }} r={-10} dur={8.2} />
+            <FloatEmoji e="🐾" size={34} style={{ right: -18, bottom: -12 }} r={14} rd={-4} dur={6.8} delay={1} />
+            <div className="m-full" style={{ position: 'relative', width: 340, height: 200, borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+              <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+              <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
+            </div>
           </div>
         </div>
       </section>
@@ -489,7 +493,7 @@ export function MemberPage({ navigate, initialTab }) {
       <section style={{ paddingTop: 56, paddingBottom: 32 }}>
         <div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 22, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={260} /></div>
+            <div className="float-deco" style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08, '--fd': '11s', '--rd': '2deg' }}><Emoji text="🐾" size={260} /></div>
             <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', border: '3px solid rgba(247,242,229,.6)', display: 'grid', placeItems: 'center' }}><Emoji text={me?.avatarEmoji || '🐱'} size={44} /></div>
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
