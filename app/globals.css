@@ -210,6 +210,13 @@ a { color: inherit; text-decoration: none; }
 .float-card{ animation: floatCard 6s ease-in-out infinite; }
 @keyframes floatCard{ 0%,100%{ transform: translateY(0) rotate(var(--r, 0deg)); } 50%{ transform: translateY(-9px) rotate(var(--r, 0deg)); } }
 
+/* 漂浮装饰贴纸：慢速上下浮动 + 极轻微摆动，参数用 CSS 变量错开节奏 */
+.float-deco{ animation: floatDeco var(--fd, 7s) ease-in-out var(--fdel, 0s) infinite; will-change: transform; }
+@keyframes floatDeco{
+  0%, 100%{ transform: translateY(0) rotate(var(--r, 0deg)); }
+  50%{ transform: translateY(-9px) rotate(calc(var(--r, 0deg) + var(--rd, 3deg))); }
+}
+
 /* 滚动进场（IntersectionObserver 加 .in） */
 .reveal{ opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1); }
 .reveal.in{ opacity: 1; transform: none; }
@@ -233,7 +240,7 @@ a { color: inherit; text-decoration: none; }
 @keyframes typingDot { 0%, 60%, 100%{ transform: translateY(0); opacity:.4; } 30%{ transform: translateY(-4px); opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce){
-  .hero-blobs .blob, .float-card, .marquee-track, .word-pop, .photo-reveal{ animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+  .hero-blobs .blob, .float-card, .float-deco, .marquee-track, .word-pop, .photo-reveal{ animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
   .reveal{ opacity: 1; transform: none; transition: none; }
 }
 
@@ -339,8 +346,20 @@ section { padding: 96px 0; }
    ============================================================ */
 .tint-band{
   background-color: #EDF1EA; /* sage 8% 混奶油 */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='%232C563A' fill-opacity='0.045'%3E%3Cpath d='M52 46c-6 0-10-6-10-12s4-10 10-10 10 4 10 10-4 12-10 12zm-22-16c-4 0-8-4-8-9s4-8 8-8 8 3 8 8-4 9-8 9zm44 0c-4 0-8-4-8-9s4-8 8-8 8 3 8 8-4 9-8 9zm-33-18c-4 0-7-4-7-8s3-7 7-7 7 3 7 7-3 8-7 8zm22 0c-4 0-7-4-7-8s3-7 7-7 7 3 7 7-3 8-7 8z'/%3E%3Cpath d='M162 176c-6 0-10-6-10-12s4-10 10-10 10 4 10 10-4 12-10 12zm-22-16c-4 0-8-4-8-9s4-8 8-8 8 3 8 8-4 9-8 9zm44 0c-4 0-8-4-8-9s4-8 8-8 8 3 8 8-4 9-8 9zm-33-18c-4 0-7-4-7-8s3-7 7-7 7 3 7 7-3 8-7 8zm22 0c-4 0-7-4-7-8s3-7 7-7 7 3 7 7-3 8-7 8z'/%3E%3C/g%3E%3C/svg%3E");
+  /* 爪印纹理与 Logo 同一形状（三趾+侧趾+掌垫），两只错位微旋转平铺 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cdefs%3E%3Cg id='p' fill='%232C563A' fill-opacity='0.05'%3E%3Ccircle cx='9' cy='11' r='3'/%3E%3Ccircle cx='16' cy='8' r='3'/%3E%3Ccircle cx='23' cy='11' r='3'/%3E%3Ccircle cx='6' cy='18' r='2.4'/%3E%3Cpath d='M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23p' transform='translate(30,26) scale(2) rotate(-12 16 16)'/%3E%3Cuse href='%23p' transform='translate(156,150) scale(2) rotate(10 16 16)'/%3E%3C/svg%3E");
+  /* 顶部渐隐进页面底色：染色带从"无"柔和过渡到"有"，不再是一条硬边 */
+  position: relative;
 }
+.tint-band::before{
+  content: '';
+  position: absolute; left: 0; right: 0; top: 0; height: 140px;
+  background: linear-gradient(180deg, var(--bg) 0%, rgba(247,242,229,0) 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+/* 带内内容需要压在渐变层之上 */
+.tint-band > *{ position: relative; }
 .tint-band-warm{
   background-color: #F4E8D6; /* 暖橙 6% 混奶油 */
 }

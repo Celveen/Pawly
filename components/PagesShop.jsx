@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { fmt } from './util';
 import { PRODUCTS, CATEGORIES, ARTICLES } from './data';
-import { ProductCard, ArticleCard, Reveal, SmartImage } from './ui';
+import { ProductCard, ArticleCard, Reveal, SmartImage, FloatEmoji } from './ui';
 import { Emoji } from './Emoji';
 import { ChatDemo } from './ChatDemo';
 import { VideoSlot } from './VideoSlot';
@@ -84,10 +84,13 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
                 <SectionHead no="01" en="Pawly Journal" title={<>养宠物这件事<br />没人天生就会</>}
                   actionLabel="所有文章" onAction={() => navigate({ page: 'articles' })} />
               </div>
-              {/* 科普氛围视频位：public/videos/journal.mp4 */}
-              <div className="m-full" style={{ position: 'relative', width: 300, height: 150, borderRadius: 18, overflow: 'hidden', flexShrink: 0, marginBottom: 40 }}>
-                <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
-                <span style={{ position: 'absolute', left: 14, bottom: 12, fontSize: 12, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
+              {/* 科普氛围视频位：public/videos/journal.mp4 + 漂浮贴纸 */}
+              <div className="m-full" style={{ position: 'relative', flexShrink: 0, marginBottom: 40 }}>
+                <FloatEmoji e="🪶" size={36} style={{ left: -24, top: -18 }} r={-14} dur={8} />
+                <div className="m-full" style={{ position: 'relative', width: 300, height: 150, borderRadius: 18, overflow: 'hidden' }}>
+                  <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+                  <span style={{ position: 'absolute', left: 14, bottom: 12, fontSize: 12, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
+                </div>
               </div>
             </div>
           </div>
@@ -228,10 +231,14 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
               ))}
             </div>
           </div>
-          {/* 栏目氛围视频（public/videos/products.mp4） */}
-          <div className="m-full" style={{ position: 'relative', width: 340, height: 190, borderRadius: 20, overflow: 'hidden', flexShrink: 0, boxShadow: 'var(--shadow-lg)' }}>
-            <VideoSlot name="products" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
-            <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>被毛孩子亲测过的好东西</span>
+          {/* 栏目氛围视频（public/videos/products.mp4）+ 周边漂浮贴纸 */}
+          <div className="m-full" style={{ position: 'relative', flexShrink: 0 }}>
+            <FloatEmoji e="🎾" size={46} style={{ left: -30, top: -24 }} r={-12} dur={7.5} />
+            <FloatEmoji e="🦴" size={38} style={{ right: -20, bottom: -14 }} r={12} rd={-4} dur={6.4} delay={0.8} />
+            <div className="m-full" style={{ position: 'relative', width: 340, height: 190, borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+              <VideoSlot name="products" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+              <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>被毛孩子亲测过的好东西</span>
+            </div>
           </div>
         </div>
       </section>

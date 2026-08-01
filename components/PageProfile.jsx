@@ -73,7 +73,7 @@ export function ProfilePage({ userId, navigate }) {
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             {/* 顶部 sage 封面带：填补个人卡右侧的大片空白，头像叠压其上 */}
             <div style={{ height: 96, background: 'linear-gradient(120deg, rgba(79,122,87,.22), rgba(222,116,41,.14))', position: 'relative' }}>
-              <span aria-hidden style={{ position: 'absolute', right: 28, bottom: -10, opacity: .4, transform: 'rotate(-10deg)' }}><Emoji text="🐾" size={72} /></span>
+              <span aria-hidden className="float-deco" style={{ position: 'absolute', right: 28, bottom: -10, opacity: .4, '--r': '-10deg', '--fd': '9s' }}><Emoji text="🐾" size={72} /></span>
             </div>
             <div className="m-col" style={{ padding: '0 32px 28px', display: 'flex', alignItems: 'flex-end', gap: 28 }}>
               <div style={{ width: 96, height: 96, borderRadius: 999, background: 'var(--surface-2)', border: '4px solid var(--surface)', display: 'grid', placeItems: 'center', flexShrink: 0, marginTop: -36 }}>
