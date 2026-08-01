@@ -84,13 +84,10 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
                 <SectionHead no="01" en="Pawly Journal" title={<>养宠物这件事<br />没人天生就会</>}
                   actionLabel="所有文章" onAction={() => navigate({ page: 'articles' })} />
               </div>
-              {/* 科普氛围视频位：public/videos/journal.mp4 + 漂浮贴纸 */}
-              <div className="m-full" style={{ position: 'relative', flexShrink: 0, marginBottom: 40 }}>
-                <FloatEmoji e="🪶" size={36} style={{ left: -24, top: -18 }} r={-14} dur={8} />
-                <div className="m-full" style={{ position: 'relative', width: 300, height: 150, borderRadius: 18, overflow: 'hidden' }}>
-                  <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
-                  <span style={{ position: 'absolute', left: 14, bottom: 12, fontSize: 12, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
-                </div>
+              {/* 科普氛围视频位：public/videos/journal.mp4 */}
+              <div className="m-full" style={{ position: 'relative', width: 300, height: 150, borderRadius: 18, overflow: 'hidden', flexShrink: 0, marginBottom: 40 }}>
+                <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+                <span style={{ position: 'absolute', left: 14, bottom: 12, fontSize: 12, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
               </div>
             </div>
           </div>
@@ -144,7 +141,8 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
       <section style={{ paddingTop: 24, paddingBottom: 24 }}>
         <Reveal><div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 22, padding: '60px 60px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-            <VideoSlot name="member" overlay="linear-gradient(90deg, rgba(31,42,29,.94) 22%, rgba(31,42,29,.62))" />
+            {/* 0.75 倍速：节奏更缓、单次循环更长，衬托会员区的沉稳调性 */}
+            <VideoSlot name="member" rate={0.75} overlay="linear-gradient(90deg, rgba(31,42,29,.94) 22%, rgba(31,42,29,.62))" />
             <div style={{ position: 'absolute', right: -40, bottom: -60, opacity: .07 }}><Emoji text="🐾" size={280} /></div>
             <div style={{ position: 'relative' }}>
               <div className="eyebrow" style={{ color: 'rgba(244,248,242,.5)', marginBottom: 16 }}>Pawly Club · 会员计划</div>
