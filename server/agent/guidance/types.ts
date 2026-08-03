@@ -2,6 +2,7 @@
 export interface GuidanceProductCandidate {
   id: string;
   name: string;
+  cat?: string;
   pet?: string;
   price?: number;
   rating?: number;

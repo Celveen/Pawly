@@ -5,7 +5,7 @@ import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
 import { ArticleCard, ProductCard, FloatEmoji } from './ui';
 import { Emoji } from './Emoji';
 import { VideoSlot } from './VideoSlot';
-import { PET_FILTERS, PET_SPECIES, getPetSpecies } from '@/lib/pet-species';
+import { PET_CONTENT_FILTERS, PET_SPECIES, RODENT_ALIASES, getPetSpecies } from '@/lib/pet-species';
 
 const petEmoji = (sp) => getPetSpecies(sp).emoji;
 const petBg = (sp) => ({ dog: '#F4D7B0', cat: '#D3DEE2', rabbit: '#E8DCCF', bird: '#DCE5D4', hamster: '#F2DDC1', guinea_pig: '#EAD9DE', aquatic: '#C8DDE2', reptile: '#D5E0CC', mini_pig: '#F4D7B0' }[getPetSpecies(sp).id] || '#D3DEE2');
@@ -56,7 +56,7 @@ export function ArticlesPage({ navigate }) {
           <div className="h-scroll" style={{ display: 'flex', gap: 4, padding: '0 0 10px' }}>
             <span className="caption" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px 0 2px', whiteSpace: 'nowrap' }}>按宠物</span>
             <button onClick={() => { setCat('all'); setSpecies('all'); }} style={speciesFilterStyle(species === 'all')}>全部</button>
-            {PET_FILTERS.filter((item) => item.id !== 'all').map((item) => (
+            {PET_CONTENT_FILTERS.filter((item) => item.id !== 'all').map((item) => (
               <button key={item.id} onClick={() => setSpecies(item.id)} style={speciesFilterStyle(species === item.id)}>
                 <Emoji text={item.emoji} size={14} /> {item.label}
               </button>
@@ -97,12 +97,13 @@ function articlePublicationTime(article) {
 }
 
 function articleMatchesSpecies(article, speciesName) {
-  const filter = PET_FILTERS.find((item) => item.id === speciesName);
+  const filter = PET_CONTENT_FILTERS.find((item) => item.id === speciesName);
   if (!filter || filter.id === 'all') return true;
   if (Array.isArray(article.species) && article.species.length) {
     return filter.speciesIds.some((id) => article.species.includes(id));
   }
   const text = `${article.title} ${article.excerpt}`.toLowerCase();
+  if (filter.id === 'rodent') return RODENT_ALIASES.some((alias) => text.includes(alias.toLowerCase()));
   return filter.speciesIds.some((id) => {
     const species = PET_SPECIES.find((item) => item.id === id);
     return species?.aliases.some((alias) => text.includes(alias.toLowerCase())) || text.includes(species?.name.toLowerCase() || '');

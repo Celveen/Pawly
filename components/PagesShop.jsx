@@ -6,7 +6,7 @@ import { ProductCard, ArticleCard, Reveal, SmartImage, FloatEmoji } from './ui';
 import { Emoji } from './Emoji';
 import { ChatDemo } from './ChatDemo';
 import { VideoSlot } from './VideoSlot';
-import { PET_FILTERS, getPetSpecies } from '@/lib/pet-species';
+import { PET_CONTENT_FILTERS, RODENT_ALIASES, getPetSpecies } from '@/lib/pet-species';
 
 // 首页：编辑风编排 —— 开场（衬线大标题 + AI 对话演示）→ 信任三则 → 编号章节
 export function HomePage({ navigate, onAdd, onAskAI }) {
@@ -200,6 +200,14 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
   const [q, setQ] = useState('');
 
   const filtered = useMemo(() => {
+    const petFilter = PET_CONTENT_FILTERS.find((item) => item.id === pet);
+    let list = PRODUCTS.filter((p) => {
+      if (cat !== 'all' && p.cat !== cat) return false;
+      if (!petFilter || petFilter.id === 'all') return true;
+      const normalizedPet = String(p.pet || '').toLowerCase();
+      const isRodent = petFilter.id === 'rodent' && RODENT_ALIASES.some((alias) => normalizedPet.includes(alias.toLowerCase()));
+      return isRodent || petFilter.speciesIds.some((id) => id === getPetSpecies(p.pet).id);
+    });
     const petFilter = PET_FILTERS.find((item) => item.id === pet);
     const kw = q.trim();
     const hit = (p) => kw === '' || p.name.includes(kw) || (p.sub || '').includes(kw) || (p.desc || '').includes(kw) || (p.tag || '').includes(kw) || (p.badges || []).some((b) => b.includes(kw));
@@ -251,9 +259,9 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
               </button>
             ))}
           </div>
-          <div className="m-full" style={{ display: 'flex', gap: 12, alignItems: 'center', maxWidth: '100%', minWidth: 0 }}>
-            <div className="h-scroll" style={{ display: 'inline-flex', borderRadius: 8, padding: 3, background: 'var(--surface-2)', border: '1px solid var(--line-2)', maxWidth: '100%', flexShrink: 1 }}>
-              {PET_FILTERS.map((filter) => (
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ display: 'inline-flex', borderRadius: 8, padding: 3, background: 'var(--surface-2)', border: '1px solid var(--line-2)' }}>
+              {PET_CONTENT_FILTERS.map((filter) => (
                 <button key={filter.id} onClick={() => setPet(filter.id)}
                   style={{ height: 28, padding: '0 14px', borderRadius: 6, border: 0, background: pet === filter.id ? 'var(--surface)' : 'transparent', boxShadow: pet === filter.id ? 'var(--shadow-sm)' : 'none', color: 'var(--ink)', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   <Emoji text={filter.emoji} size={13} /> {filter.label}
