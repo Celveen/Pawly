@@ -67,7 +67,7 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
     let currentDecision: OrchestrationDecision = decideOrchestrationPolicy(routed, evidencePackets);
     let productToolsUsed = false;
     let productSearchExecuted = false;
-    const searchedProducts = new Map<string, { id: string; name?: string; sub?: string; badges?: string[]; pet?: string }>();
+    const searchedProducts = new Map<string, { id: string; name?: string; sub?: string; badges?: string[]; pet?: string; cat?: string }>();
     logAgentDebug({
       scope: 'main-agent',
       event: 'route_intent',
@@ -536,7 +536,7 @@ function extractPetSpecies(value: unknown): string | undefined {
 // #已检索商品记录
 function collectSearchedProducts(
   value: unknown,
-  target: Map<string, { id: string; name?: string; sub?: string; badges?: string[]; pet?: string }>,
+  target: Map<string, { id: string; name?: string; sub?: string; badges?: string[]; pet?: string; cat?: string }>,
 ) {
   if (!Array.isArray(value)) return;
   for (const item of value) {
@@ -546,6 +546,7 @@ function collectSearchedProducts(
     target.set(candidate.id, {
       id: candidate.id,
       name: typeof candidate.name === 'string' ? candidate.name : undefined,
+      cat: typeof candidate.cat === 'string' ? candidate.cat : undefined,
       sub: typeof candidate.sub === 'string' ? candidate.sub : undefined,
       badges: Array.isArray(candidate.badges) ? candidate.badges.map(String) : [],
       pet: typeof candidate.pet === 'string' ? candidate.pet : undefined,
@@ -557,7 +558,7 @@ function collectSearchedProducts(
 function isExplicitProductRequestUnavailable(
   terms: string[],
   productSearchExecuted: boolean,
-  products: Map<string, { id: string; name?: string; sub?: string; badges?: string[]; pet?: string }>,
+  products: Map<string, { id: string; name?: string; sub?: string; badges?: string[]; pet?: string; cat?: string }>,
   targetSpecies?: string,
 ): boolean {
   if (!terms.length || !productSearchExecuted) return false;

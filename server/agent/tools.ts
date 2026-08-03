@@ -6,7 +6,7 @@ import { searchCommunityPosts } from './community/search';
 import { summarizeCommunityPosts } from './community/summarize';
 import type { CommunityPostRecord, CommunitySearchResultItem } from './community/types';
 import { rankGuidanceCandidates } from './guidance/rank';
-import { inferExplicitProductRequestTerms, matchesExplicitProductTerms } from './guidance/request';
+import { getBroadProductCategory, inferExplicitProductRequestTerms, matchesExplicitProductTerms } from './guidance/request';
 import { buildKnowledgeToolPayload } from './knowledge/presentation';
 import { runKnowledgeAgent } from './knowledge/runKnowledgeAgent';
 import { inferPrimarySpeciesScope, normalizeSpeciesScope } from './knowledge/taxonomy';
@@ -117,16 +117,21 @@ const registeredTools: RegisteredTool[] = [
       const explicitTerms = ctx.explicitProductTerms?.length
         ? ctx.explicitProductTerms
         : inferExplicitProductRequestTerms(ctx.currentUserQuestion || '');
+      const explicitCategory = getBroadProductCategory(explicitTerms[0]);
+      const inferredSpecies = productSpeciesFromQuestion(ctx.currentUserQuestion);
       const list = await store.searchProducts({
-        keyword: explicitTerms[0] || args?.keyword,
-        species: ctx.currentPetSpecies || args?.species,
-        category: args?.category,
+        // “主粮/鲜粮”等是大类词，不再当作商品名精确搜索。
+        keyword: explicitCategory ? undefined : explicitTerms[0] || args?.keyword,
+        // 问题中已出现物种时优先锁定，避免模型参数误把柴犬搜成仓鼠。
+        species: ctx.currentPetSpecies || inferredSpecies || args?.species,
+        category: explicitCategory || args?.category,
         maxPrice: args?.maxPrice,
         inStockOnly: args?.inStockOnly,
       });
       return list.map((p: any) => ({
         id: p.id,
         name: p.name,
+        cat: p.cat,
         pet: p.pet,
         price: p.price,
         was: p.was,
@@ -528,6 +533,7 @@ function normalizeGuidanceProducts(products: any[]) {
     .map((item) => ({
       id: typeof item.id === 'string' ? item.id : '',
       name: typeof item.name === 'string' ? item.name : '',
+      cat: typeof item.cat === 'string' ? item.cat : undefined,
       pet: typeof item.pet === 'string' ? item.pet : undefined,
       price: typeof item.price === 'number' ? item.price : undefined,
       rating: typeof item.rating === 'number' ? item.rating : undefined,
@@ -537,6 +543,16 @@ function normalizeGuidanceProducts(products: any[]) {
       inStock: typeof item.inStock === 'boolean' ? item.inStock : undefined,
     }))
     .filter((item) => item.id && item.name);
+}
+
+// 将问题中的注册物种转换成商品库使用的中文标签。
+function productSpeciesFromQuestion(text?: string): string | undefined {
+  const scope = normalizeSpeciesScope(inferPrimarySpeciesScope(text || ''));
+  const labels: Record<string, string> = {
+    dog: '狗', cat: '猫', rabbit: '兔子', hamster: '仓鼠', bird: '宠物鸟',
+    guinea_pig: '豚鼠', aquatic: '水族', reptile: '爬宠', mini_pig: '小香猪',
+  };
+  return scope ? labels[scope] : undefined;
 }
 
 // #订单条目解析
