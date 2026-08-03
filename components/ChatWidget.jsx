@@ -58,6 +58,21 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   const inputRef = useRef(null);
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, loading]);
+
+  // 恢复历史对话：有历史则替换默认问候语（AI"记得"这个用户）
+  useEffect(() => {
+    fetch('/api/chat/history')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((his) => {
+        if (Array.isArray(his) && his.length > 0) {
+          setMessages([
+            { role: 'assistant', text: `欢迎回来铲屎官~ 我们上次聊到这里 👇` },
+            ...his.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', text: m.text })),
+          ]);
+        }
+      })
+      .catch(() => {});
+  }, []);
   useEffect(() => { if (open) { setUnread(0); setTimeout(() => inputRef.current?.focus(), 200); } }, [open]);
 
   // 每次打开网页都延迟弹出"试试我"冒泡提示，约 11 秒后自动消失
@@ -74,7 +89,11 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
     if (!hadSavedPos.current) setPos({ x: Math.max(8, window.innerWidth - 100), y: 24 });
   }, []);
   useEffect(() => {
-    const clamp = () => setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 92, p.x)), y: Math.max(8, Math.min(window.innerHeight - 92, p.y)) }));
+    const clamp = () => {
+      // 忽略截图工具/极端情况触发的超小视口 resize，避免把保存的位置挤到角落
+      if (window.innerWidth < 320 || window.innerHeight < 320) return;
+      setPos((p) => ({ x: Math.max(8, Math.min(window.innerWidth - 92, p.x)), y: Math.max(8, Math.min(window.innerHeight - 92, p.y)) }));
+    };
     window.addEventListener('resize', clamp);
     return () => window.removeEventListener('resize', clamp);
   }, []);

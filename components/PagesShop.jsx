@@ -1,8 +1,8 @@
 // 首页 + 商品列表 + 商品详情
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { fmt } from './util';
 import { PRODUCTS, CATEGORIES, ARTICLES } from './data';
-import { ProductCard, ArticleCard, Reveal, SmartImage } from './ui';
+import { ProductCard, ArticleCard, Reveal, SmartImage, FloatEmoji } from './ui';
 import { Emoji } from './Emoji';
 import { ChatDemo } from './ChatDemo';
 import { VideoSlot } from './VideoSlot';
@@ -141,7 +141,8 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
       <section style={{ paddingTop: 24, paddingBottom: 24 }}>
         <Reveal><div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: 'var(--bg)', borderRadius: 22, padding: '60px 60px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-            <VideoSlot name="member" overlay="linear-gradient(90deg, rgba(31,42,29,.94) 22%, rgba(31,42,29,.62))" />
+            {/* 0.75 倍速：节奏更缓、单次循环更长，衬托会员区的沉稳调性 */}
+            <VideoSlot name="member" rate={0.75} overlay="linear-gradient(90deg, rgba(31,42,29,.94) 22%, rgba(31,42,29,.62))" />
             <div style={{ position: 'absolute', right: -40, bottom: -60, opacity: .07 }}><Emoji text="🐾" size={280} /></div>
             <div style={{ position: 'relative' }}>
               <div className="eyebrow" style={{ color: 'rgba(244,248,242,.5)', marginBottom: 16 }}>Pawly Club · 会员计划</div>
@@ -196,6 +197,7 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
   const [cat, setCat] = useState(initialCat || 'all');
   const [pet, setPet] = useState('all');
   const [sort, setSort] = useState('热度');
+  const [q, setQ] = useState('');
 
   const filtered = useMemo(() => {
     const petFilter = PET_CONTENT_FILTERS.find((item) => item.id === pet);
@@ -206,19 +208,44 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
       const isRodent = petFilter.id === 'rodent' && RODENT_ALIASES.some((alias) => normalizedPet.includes(alias.toLowerCase()));
       return isRodent || petFilter.speciesIds.some((id) => id === getPetSpecies(p.pet).id);
     });
+    const petFilter = PET_FILTERS.find((item) => item.id === pet);
+    const kw = q.trim();
+    const hit = (p) => kw === '' || p.name.includes(kw) || (p.sub || '').includes(kw) || (p.desc || '').includes(kw) || (p.tag || '').includes(kw) || (p.badges || []).some((b) => b.includes(kw));
+    let list = PRODUCTS.filter((p) => (cat === 'all' || p.cat === cat) && (!petFilter || petFilter.speciesIds.some((id) => id === getPetSpecies(p.pet).id)) && hit(p));
     if (sort === '价格升序') list = [...list].sort((a, b) => a.price - b.price);
     else if (sort === '价格降序') list = [...list].sort((a, b) => b.price - a.price);
     else if (sort === '评分') list = [...list].sort((a, b) => b.rating - a.rating);
     else list = [...list].sort((a, b) => b.sold - a.sold);
     return list;
-  }, [cat, pet, sort]);
+  }, [cat, pet, sort, q]);
 
   return (
     <>
       <section style={{ paddingTop: 56, paddingBottom: 32 }}>
-        <div className="container">
-          <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>商品 / Shop all</div>
-          <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>给毛孩子挑点好的<br /><span style={{ color: 'var(--green-soft)' }}>每一件都实测把关</span></h1>
+        <div className="container m-col m-gap" style={{ display: 'flex', alignItems: 'flex-end', gap: 48 }}>
+          <div style={{ flex: 1 }}>
+            <div className="eyebrow eyebrow-rule" style={{ marginBottom: 16 }}>商品 / Shop all</div>
+            <h1 className="h-1" style={{ margin: 0, maxWidth: 720 }}>给毛孩子挑点好的<br /><span style={{ color: 'var(--green-soft)' }}>每一件都实测把关</span></h1>
+            <div style={{ marginTop: 28, position: 'relative', maxWidth: 480 }}>
+              <input className="input" placeholder="搜索：冻干、猫砂、磨牙棒、主粮..." value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 44 }} />
+              <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span className="caption">大家在搜</span>
+              {['冻干', '猫砂', '磨牙', '主食粮'].map((k) => (
+                <button key={k} onClick={() => setQ(k)} style={{ height: 28, padding: '0 12px', borderRadius: 999, border: '1px solid rgba(31,42,29,.14)', background: 'rgba(255,253,246,.7)', color: 'var(--ink-2)', fontSize: 12, cursor: 'pointer' }}>{k}</button>
+              ))}
+            </div>
+          </div>
+          {/* 栏目氛围视频（public/videos/products.mp4）+ 周边漂浮贴纸 */}
+          <div className="m-full" style={{ position: 'relative', flexShrink: 0 }}>
+            <FloatEmoji e="🎾" size={46} style={{ left: -30, top: -24 }} r={-12} dur={7.5} />
+            <FloatEmoji e="🦴" size={38} style={{ right: -20, bottom: -14 }} r={12} rd={-4} dur={6.4} delay={0.8} />
+            <div className="m-full" style={{ position: 'relative', width: 340, height: 190, borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+              <VideoSlot name="products" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+              <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>被毛孩子亲测过的好东西</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -242,27 +269,53 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
               ))}
             </div>
             <select value={sort} onChange={(e) => setSort(e.target.value)}
-              style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1px solid var(--line-2)', background: 'var(--surface)', fontSize: 12, color: 'var(--ink)', fontFamily: 'inherit' }}>
+              style={{ height: 34, padding: '0 12px', borderRadius: 999, border: '1px solid var(--line-2)', background: 'var(--surface)', fontSize: 12, color: 'var(--ink)', fontFamily: 'inherit', flexShrink: 0 }}>
               <option>热度</option><option>评分</option><option>价格升序</option><option>价格降序</option>
             </select>
           </div>
         </div>
       </div>
 
-      <section style={{ paddingTop: 32, paddingBottom: 96 }}>
-        <div className="container">
-          <div className="caption" style={{ marginBottom: 24 }}>共 {filtered.length} 件商品</div>
-          <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-            {filtered.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
-          </div>
-          {filtered.length === 0 && (
-            <div style={{ padding: '96px 0', textAlign: 'center' }}>
-              <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Emoji text="🥹" size={64} /></div>
-              <p className="body">没有找到合适的商品，试试别的分类？</p>
-            </div>
-          )}
+      {/* 浏览全部时按类目分组：分区标题 + 交替底色，打破一铺到底的均一长网格 */}
+      {cat === 'all' && q.trim() === '' && filtered.length > 0 ? (
+        <div style={{ paddingTop: 8, paddingBottom: 64 }}>
+          {CATEGORIES.filter((c) => c.id !== 'all')
+            .map((c) => ({ ...c, items: filtered.filter((p) => p.cat === c.id) }))
+            .filter((g) => g.items.length > 0)
+            .map((g, gi) => (
+              <section key={g.id} className={gi % 2 === 1 ? 'tint-band' : undefined}
+                style={{ padding: '40px 0 48px', borderRadius: gi % 2 === 1 ? 36 : 0 }}>
+                <div className="container">
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
+                    <Emoji text={g.icon} size={24} style={{ alignSelf: 'center' }} />
+                    <h2 className="h-3" style={{ margin: 0 }}>{g.name}</h2>
+                    <span className="caption">{g.items.length} 件</span>
+                    <span style={{ flex: 1 }} />
+                    <button className="btn btn-ghost btn-sm" onClick={() => setCat(g.id)}>只看{g.name} →</button>
+                  </div>
+                  <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+                    {g.items.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
+                  </div>
+                </div>
+              </section>
+            ))}
         </div>
-      </section>
+      ) : (
+        <section style={{ paddingTop: 32, paddingBottom: 96 }}>
+          <div className="container">
+            <div className="caption" style={{ marginBottom: 24 }}>共 {filtered.length} 件商品{q.trim() && ` · 关键词「${q.trim()}」`}</div>
+            <div className="m-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+              {filtered.map((p) => <ProductCard key={p.id} p={p} onOpen={(p) => navigate({ page: 'product', id: p.id })} onAdd={onAdd} />)}
+            </div>
+            {filtered.length === 0 && (
+              <div style={{ padding: '96px 0', textAlign: 'center' }}>
+                <div style={{ display: 'grid', placeItems: 'center', marginBottom: 16 }}><Emoji text="🥹" size={64} /></div>
+                <p className="body">没有找到合适的商品，换个关键词或分类试试？</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </>
   );
 }
@@ -293,9 +346,10 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
                 {p.tag && <span className="tag-pill">{p.tag}</span>}
                 <Emoji text={p.emoji} size={220} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 12 }}>
-                {[p.emoji, '📷', '📐', '🎬'].map((e, i) => (
-                  <div key={i} style={{ aspectRatio: '1/1', borderRadius: 12, background: i === 0 ? p.bg : 'var(--surface-2)', display: 'grid', placeItems: 'center', border: i === 0 ? '2px solid var(--ink)' : '1px solid var(--line-2)', cursor: 'pointer' }}><Emoji text={e} size={28} /></div>
+              {/* 卖点小贴条：替代原先的假缩略图占位 */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                {(p.badges || []).map((b) => (
+                  <span key={b} style={{ fontSize: 12, fontWeight: 600, color: 'var(--green)', background: 'rgba(79,122,87,.10)', padding: '6px 12px', borderRadius: 999 }}>✓ {b}</span>
                 ))}
               </div>
             </div>
@@ -340,10 +394,9 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
         </div>
       </section>
 
-      {/* 商品介绍 + 规格参数 */}
-      <section style={{ paddingTop: 8, paddingBottom: 64 }}>
+      {/* 商品介绍 + 规格参数：sage 染色带分区，替代发丝线分隔 */}
+      <section className="tint-band" style={{ padding: '56px 0', borderRadius: 36 }}>
         <div className="container">
-          <hr className="hairline" style={{ marginBottom: 48 }} />
           <div className="m-1col m-gap" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 48 }}>
             <div>
               <div className="eyebrow eyebrow-rule" style={{ marginBottom: 12 }}>商品介绍</div>
@@ -375,6 +428,8 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
         </div>
       </section>
 
+      <ReviewsSection product={p} navigate={navigate} />
+
       <section style={{ paddingTop: 32, paddingBottom: 96 }}>
         <div className="container">
           <hr className="hairline" style={{ marginBottom: 40 }} />
@@ -386,5 +441,177 @@ export function ProductPage({ id, navigate, onAdd, onCartOpen }) {
         </div>
       </section>
     </>
+  );
+}
+
+// —— 商品评价/晒单：星级 + 文字 + 图片，可勾选同步为社区 #晒单 帖 ——
+function Stars({ n, size = 14, onPick }) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 2 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg key={i} onClick={onPick ? () => onPick(i) : undefined} width={size} height={size} viewBox="0 0 24 24"
+          fill={i <= n ? 'var(--accent)' : 'none'} stroke={i <= n ? 'var(--accent)' : 'var(--ink-3)'} strokeWidth="2"
+          style={onPick ? { cursor: 'pointer' } : undefined}>
+          <path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21l1.2-6.9-5-4.9 6.9-1z" strokeLinejoin="round" />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+function ReviewsSection({ product, navigate }) {
+  const [list, setList] = useState(null);
+  const [writing, setWriting] = useState(false);
+  const [lightImg, setLightImg] = useState(null);
+
+  const load = useCallback(async () => {
+    try {
+      const r = await fetch(`/api/reviews?productId=${encodeURIComponent(product.id)}`);
+      setList(r.ok ? await r.json() : []);
+    } catch { setList([]); }
+  }, [product.id]);
+  useEffect(() => { load(); }, [load]);
+
+  const avg = list?.length ? (list.reduce((s, r) => s + r.rating, 0) / list.length).toFixed(1) : null;
+
+  return (
+    <section style={{ paddingTop: 0, paddingBottom: 32 }}>
+      <div className="container">
+        <hr className="hairline" style={{ marginBottom: 40 }} />
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div className="eyebrow eyebrow-rule" style={{ marginBottom: 14 }}>Reviews · 买家评价</div>
+            <h2 className="h-2" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+              评价 {list ? `· ${list.length}` : ''}
+              {avg && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 15 }}><Stars n={Math.round(avg)} /> <span className="mono">{avg}</span></span>}
+            </h2>
+          </div>
+          <button className="btn btn-primary" onClick={() => setWriting(true)}>写评价 · 晒一单</button>
+        </div>
+
+        {list === null && <p className="caption">加载中…</p>}
+        {list && list.length === 0 && (
+          <div className="card" style={{ padding: '40px 32px', textAlign: 'center', background: 'rgba(79,122,87,.05)' }}>
+            <div style={{ display: 'grid', placeItems: 'center', marginBottom: 12 }}><Emoji text="📷" size={56} /></div>
+            <p className="body" style={{ margin: '0 0 16px' }}>还没有评价 买过的铲屎官快来晒一单~</p>
+            <button className="btn btn-line btn-sm" onClick={() => setWriting(true)}>写下第一条评价</button>
+          </div>
+        )}
+        <div style={{ display: 'grid', gap: 14 }}>
+          {(list || []).map((r) => (
+            <div key={r.id} className="card" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text={r.authorAvatar || '🐾'} size={16} /></span>
+                <span style={{ fontSize: 13.5, fontWeight: 600 }}>{r.author}</span>
+                <Stars n={r.rating} />
+                <span className="caption" style={{ marginLeft: 'auto' }}>{new Date(r.createdAt).toLocaleDateString('zh-CN')}</span>
+              </div>
+              <p style={{ fontSize: 14, lineHeight: 1.7, margin: '10px 0 0', whiteSpace: 'pre-wrap' }}>{r.content}</p>
+              {r.images?.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                  {r.images.map((src, i) => (
+                    <img key={i} src={src} alt={`评价图 ${i + 1}`} onClick={() => setLightImg(src)}
+                      style={{ width: 88, height: 88, objectFit: 'cover', borderRadius: 10, cursor: 'zoom-in' }} />
+                  ))}
+                </div>
+              )}
+              {r.postId && (
+                <button onClick={() => navigate({ page: 'community' })} style={{ border: 0, background: 'transparent', color: 'var(--sage)', fontSize: 12.5, fontWeight: 600, padding: 0, marginTop: 10, cursor: 'pointer' }}>
+                  已同步到社区 #晒单 →
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      {writing && <ReviewComposer product={product} onClose={() => setWriting(false)} onPosted={() => { setWriting(false); load(); }} />}
+      {lightImg && (
+        <div onClick={() => setLightImg(null)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(10,14,10,.9)', display: 'grid', placeItems: 'center', cursor: 'zoom-out' }}>
+          <img src={lightImg} alt="评价大图" style={{ maxWidth: '92vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 8 }} />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ReviewComposer({ product, onClose, onPosted }) {
+  const [rating, setRating] = useState(5);
+  const [content, setContent] = useState('');
+  const [images, setImages] = useState([]);
+  const [sync, setSync] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const fileRef = useRef(null);
+
+  async function pick(e) {
+    const files = Array.from(e.target.files || []).slice(0, 9 - images.length);
+    e.target.value = '';
+    if (!files.length) return;
+    try {
+      const { compressImage } = await import('./PagesCommunity');
+      const out = await Promise.all(files.map(compressImage));
+      setImages((prev) => [...prev, ...out.filter((d) => d.length <= 600_000)].slice(0, 9));
+    } catch { setError('图片读取失败'); }
+  }
+
+  async function submit() {
+    if (!content.trim()) { setError('写两句使用感受吧'); return; }
+    setSaving(true); setError('');
+    try {
+      const r = await fetch('/api/reviews', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, rating, content: content.trim(), images, syncPost: sync }),
+      });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || '发布失败'); }
+      onPosted();
+    } catch (e) { setError(e.message); setSaving(false); }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.4)', animation: 'fadeBg .2s ease' }} />
+      <div role="dialog" aria-label="写评价" style={{
+        position: 'relative', width: 'min(520px, 100%)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',
+        background: 'var(--bg)', borderRadius: 20, padding: 28, boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)',
+        animation: 'dialogIn .25s ease both',
+      }}>
+        <h2 className="serif" style={{ fontSize: 22, fontWeight: 600, margin: '0 0 6px' }}>评价 · {product.name}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '12px 0 14px' }}>
+          <span className="caption">打分</span>
+          <Stars n={rating} size={22} onPick={setRating} />
+        </div>
+        <textarea className="input" placeholder="它家毛孩子吃/用得怎么样？真实感受帮助其他铲屎官～（最多 500 字）" maxLength={500} rows={4}
+          value={content} onChange={(e) => setContent(e.target.value)}
+          style={{ resize: 'vertical', minHeight: 100, height: 'auto', lineHeight: 1.6, paddingTop: 10, borderRadius: 12 }} />
+        <div style={{ marginTop: 12 }}>
+          <div className="caption" style={{ marginBottom: 8 }}>晒图（{images.length}/9 · 选填）</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {images.map((src, i) => (
+              <div key={i} style={{ position: 'relative', width: 72, height: 72, borderRadius: 10, overflow: 'hidden' }}>
+                <img src={src} alt={`图 ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button onClick={() => setImages(images.filter((_, j) => j !== i))} aria-label="移除"
+                  style={{ position: 'absolute', top: 2, right: 2, width: 20, height: 20, borderRadius: 999, border: 0, background: 'rgba(31,42,29,.65)', color: '#fff', fontSize: 12, cursor: 'pointer' }}>×</button>
+              </div>
+            ))}
+            {images.length < 9 && (
+              <button onClick={() => fileRef.current?.click()} aria-label="添加图片"
+                style={{ width: 72, height: 72, borderRadius: 10, border: '1.5px dashed var(--line)', background: 'var(--surface)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-3)' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+              </button>
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={pick} />
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 13.5, cursor: 'pointer' }}>
+          <input type="checkbox" checked={sync} onChange={(e) => setSync(e.target.checked)} />
+          同步发布到社区（生成一条 #晒单 帖子）
+        </label>
+        {error && <div style={{ color: 'var(--accent)', fontSize: 13, marginTop: 10 }}>{error}</div>}
+        <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+          <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={submit} disabled={saving || !content.trim()}>{saving ? '发布中…' : '发布评价'}</button>
+          <button className="btn btn-line" onClick={onClose}>取消</button>
+        </div>
+      </div>
+    </div>
   );
 }

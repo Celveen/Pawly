@@ -5,6 +5,7 @@ import { Header, Footer, CartDrawer } from './ui';
 import { HomePage, ShopPage, ProductPage } from './PagesShop';
 import { ArticlesPage, ArticlePage, CheckoutPage, MemberPage } from './PagesOther';
 import { CommunityPage } from './PagesCommunity';
+import { ProfilePage } from './PageProfile';
 import ChatWidget from './ChatWidget';
 
 export default function App() {
@@ -43,7 +44,8 @@ export default function App() {
     case 'shop': page = <ShopPage initialCat={route.cat} navigate={navigate} onAdd={addToCart} />; break;
     case 'product': page = <ProductPage id={route.id} navigate={navigate} onAdd={addToCart} onCartOpen={() => setCartOpen(true)} />; break;
     case 'articles': page = <ArticlesPage navigate={navigate} />; break;
-    case 'community': page = <CommunityPage />; break;
+    case 'community': page = <CommunityPage navigate={navigate} initialPostId={route.postId} key={route.postId || 'list'} />; break;
+    case 'profile': page = <ProfilePage userId={route.userId} navigate={navigate} key={route.userId || 'me'} />; break;
     case 'article': page = <ArticlePage id={route.id} navigate={navigate} />; break;
     case 'checkout': page = <CheckoutPage items={cartItems} navigate={navigate} clearCart={clearCart} />; break;
     case 'member': page = <MemberPage navigate={navigate} initialTab={route.tab} key={route.tab || 'overview'} />; break;

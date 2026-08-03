@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { fmt } from './util';
 import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
-import { ArticleCard, ProductCard } from './ui';
+import { ArticleCard, ProductCard, FloatEmoji } from './ui';
 import { Emoji } from './Emoji';
 import { VideoSlot } from './VideoSlot';
 import { PET_CONTENT_FILTERS, PET_SPECIES, RODENT_ALIASES, getPetSpecies } from '@/lib/pet-species';
@@ -35,10 +35,14 @@ export function ArticlesPage({ navigate }) {
               <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             </div>
           </div>
-          {/* 栏目氛围视频（public/videos/journal.mp4，与首页共用素材） */}
-          <div className="m-full" style={{ position: 'relative', width: 340, height: 200, borderRadius: 20, overflow: 'hidden', flexShrink: 0, boxShadow: 'var(--shadow-lg)' }}>
-            <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
-            <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
+          {/* 栏目氛围视频（public/videos/journal.mp4，与首页共用素材）+ 漂浮贴纸 */}
+          <div className="m-full" style={{ position: 'relative', flexShrink: 0 }}>
+            <FloatEmoji e="🌿" size={42} style={{ left: -26, top: -20 }} r={-10} dur={8.2} />
+            <FloatEmoji e="🐾" size={34} style={{ right: -18, bottom: -12 }} r={14} rd={-4} dur={6.8} delay={1} />
+            <div className="m-full" style={{ position: 'relative', width: 340, height: 200, borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+              <VideoSlot name="journal" overlay="linear-gradient(180deg, transparent 55%, rgba(31,42,29,.35))" />
+              <span style={{ position: 'absolute', left: 16, bottom: 12, fontSize: 12.5, fontWeight: 600, color: '#fff', textShadow: '0 1px 4px rgba(31,42,29,.5)' }}>和它一起慢慢学</span>
+            </div>
           </div>
         </div>
       </section>
@@ -453,12 +457,13 @@ export function CheckoutPage({ items, navigate, clearCart }) {
 }
 
 export function MemberPage({ navigate, initialTab }) {
-  const TABS = ['overview', 'orders', 'pets', 'addr', 'benefits'];
+  const TABS = ['overview', 'orders', 'pets', 'health', 'addr', 'benefits'];
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : 'overview');
   const [pets, setPets] = useState([]);
   const [orders, setOrders] = useState([]);
   const [me, setMe] = useState(null); // null=加载中；{guest:true} 或 {phoneMasked,...}
   const [loginOpen, setLoginOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const loadPets = useCallback(async () => {
     try { const r = await fetch('/api/pets'); if (r.ok) setPets(await r.json()); } catch {}
@@ -489,8 +494,8 @@ export function MemberPage({ navigate, initialTab }) {
       <section style={{ paddingTop: 56, paddingBottom: 32 }}>
         <div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 22, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08 }}><Emoji text="🐾" size={260} /></div>
-            <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', display: 'grid', placeItems: 'center' }}><Emoji text="👤" size={44} /></div>
+            <div className="float-deco" style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08, '--fd': '11s', '--rd': '2deg' }}><Emoji text="🐾" size={260} /></div>
+            <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', border: '3px solid rgba(247,242,229,.6)', display: 'grid', placeItems: 'center' }}><Emoji text={me?.avatarEmoji || '🐱'} size={44} /></div>
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, margin: 0 }}>
@@ -498,6 +503,7 @@ export function MemberPage({ navigate, initialTab }) {
                 </h2>
                 {/* 会员徽章与登录/退出按钮统一高度+字号，读起来是同一排"胶囊"而非大小不一 */}
                 <span className="member-pill" style={{ background: 'var(--accent)', color: '#2a1a0a' }}><Emoji text="⭐" size={12} /> Pawly Club 会员</span>
+                <button className="member-pill" style={{ background: 'rgba(244,248,242,.16)', color: '#F5F9F2', border: 0, cursor: 'pointer' }} onClick={() => setEditOpen(true)}>编辑资料</button>
                 {me && (me.guest
                   ? <button className="member-pill" style={{ background: 'rgba(244,248,242,.92)', color: 'var(--ink)', border: 0, cursor: 'pointer' }} onClick={() => setLoginOpen(true)}>手机号登录</button>
                   : <button className="member-pill" style={{ background: 'rgba(244,248,242,.16)', color: '#F5F9F2', border: 0, cursor: 'pointer' }} onClick={logout}>退出登录</button>
@@ -528,7 +534,7 @@ export function MemberPage({ navigate, initialTab }) {
       <div style={{ borderBottom: '1px solid var(--line-2)' }}>
         <div className="container">
           <div className="m-tabs" style={{ display: 'flex', gap: 4 }}>
-            {[{ id: 'overview', l: '概览' }, { id: 'orders', l: '我的订单' }, { id: 'pets', l: '宠物档案' }, { id: 'addr', l: '地址管理' }, { id: 'benefits', l: '会员权益' }].map((t) => (
+            {[{ id: 'overview', l: '概览' }, { id: 'orders', l: '我的订单' }, { id: 'pets', l: '宠物档案' }, { id: 'health', l: '健康提醒' }, { id: 'addr', l: '地址管理' }, { id: 'benefits', l: '会员权益' }].map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{ height: 52, padding: '0 16px', border: 0, background: 'transparent', color: 'var(--ink)', fontSize: 14, fontWeight: 500, borderBottom: tab === t.id ? '2px solid var(--ink)' : '2px solid transparent', marginBottom: -1 }}>{t.l}</button>
             ))}
           </div>
@@ -538,6 +544,7 @@ export function MemberPage({ navigate, initialTab }) {
       <section style={{ paddingTop: 48, paddingBottom: 96 }}>
         <div className="container">
           {tab === 'overview' && (
+            <>
             <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
               <div className="card" style={{ padding: 28 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -545,7 +552,13 @@ export function MemberPage({ navigate, initialTab }) {
                   <button onClick={() => setTab('pets')} className="btn btn-ghost btn-sm">查看全部 →</button>
                 </div>
                 {pets.length === 0 ? (
-                  <p className="caption">还没有档案，去"宠物档案"添加，或直接问右下角的宝莉助手。</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '8px 0' }}>
+                    <Emoji text="🐶" size={52} />
+                    <div>
+                      <p className="caption" style={{ margin: '0 0 10px' }}>还没有档案，建好档案后宝莉能给出更贴合的建议。</p>
+                      <button className="btn btn-sm" onClick={() => setTab('pets')} style={{ background: 'var(--green)', color: '#FFF9F2', borderRadius: 999 }}>去建立档案</button>
+                    </div>
+                  </div>
                 ) : (
                   <div style={{ display: 'flex', gap: 16 }}>
                     {pets.map((p) => (
@@ -563,7 +576,15 @@ export function MemberPage({ navigate, initialTab }) {
                   <h3 className="h-3" style={{ margin: 0 }}>最近订单</h3>
                   <button onClick={() => setTab('orders')} className="btn btn-ghost btn-sm">全部订单 →</button>
                 </div>
-                {orders.length === 0 && <p className="caption" style={{ margin: 0 }}>还没有订单，去商品页逛逛吧~</p>}
+                {orders.length === 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '8px 0' }}>
+                    <Emoji text="📦" size={52} />
+                    <div>
+                      <p className="caption" style={{ margin: '0 0 10px' }}>还没有订单，毛孩子的好东西都在商品页等着~</p>
+                      <button className="btn btn-sm" onClick={() => navigate({ page: 'shop' })} style={{ background: 'var(--green)', color: '#FFF9F2', borderRadius: 999 }}>去逛逛</button>
+                    </div>
+                  </div>
+                )}
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                   {orders.slice(0, 3).map((o) => (
                     <li key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--line-2)' }}>
@@ -596,6 +617,8 @@ export function MemberPage({ navigate, initialTab }) {
                 </div>
               </div>
             </div>
+            <CheckinBar />
+            </>
           )}
 
           {tab === 'orders' && (
@@ -631,6 +654,10 @@ export function MemberPage({ navigate, initialTab }) {
           )}
 
           {tab === 'pets' && <PetsTab pets={pets} onChanged={loadPets} />}
+
+          {tab === 'health' && <HealthTab />}
+
+          {editOpen && <ProfileEditDialog me={me} onClose={() => setEditOpen(false)} onSaved={() => { setEditOpen(false); loadMe(); }} />}
 
           {loginOpen && <LoginDialog onClose={() => setLoginOpen(false)} onLoggedIn={() => { setLoginOpen(false); loadMe(); loadPets(); }} />}
 
@@ -997,6 +1024,180 @@ function PetsTab({ pets, onChanged }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// —— 每日签到条：积分 + 连续天数 + 一键签到 ——
+function CheckinBar() {
+  const [st, setSt] = useState(null); // {done, streak, points}
+  const [busy, setBusy] = useState(false);
+  const [justDone, setJustDone] = useState(false);
+
+  const load = useCallback(async () => {
+    try { const r = await fetch('/api/checkin'); if (r.ok) setSt(await r.json()); } catch {}
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function doCheckin() {
+    if (busy || st?.done) return;
+    setBusy(true);
+    try {
+      const r = await fetch('/api/checkin', { method: 'POST' });
+      if (r.ok) {
+        const d = await r.json();
+        setSt({ done: true, streak: d.streak, points: d.points });
+        if (d.ok) setJustDone(true);
+      }
+    } catch {} finally { setBusy(false); }
+  }
+
+  // 低调的签到条：放在概览底部，不抢核心功能的注意力
+  return (
+    <div className="m-col" style={{ marginTop: 24, padding: '12px 20px', borderRadius: 14, background: 'rgba(79,122,87,.07)', border: '1px dashed rgba(79,122,87,.35)', display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+        <Emoji text="🎯" size={18} />
+        <span className="caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          每日签到 · 当前 {st ? st.points : '…'} 积分{st && st.streak > 1 ? ` · 已连续 ${st.streak} 天` : ''} · 积分未来可换优惠券
+        </span>
+      </div>
+      <button className="btn btn-sm" disabled={busy || !st || st.done} onClick={doCheckin}
+        style={{ borderRadius: 999, minWidth: 88, justifyContent: 'center', border: st?.done ? '1px solid var(--line-2)' : '1px solid var(--accent)', background: 'transparent', color: st?.done ? 'var(--ink-3)' : 'var(--accent)', fontWeight: 600 }}>
+        {st?.done ? (justDone ? '签到成功 ✓' : '今日已签') : '签到 +5'}
+      </button>
+    </div>
+  );
+}
+
+// —— 健康提醒：按宠物档案生日推算疫苗/驱虫/体检节奏，可勾选完成 ——
+function HealthTab() {
+  const [items, setItems] = useState(null);
+
+  const load = useCallback(async () => {
+    try { const r = await fetch('/api/reminders'); setItems(r.ok ? await r.json() : []); } catch { setItems([]); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function toggle(it) {
+    setItems((prev) => prev.map((x) => (x.key === it.key ? { ...x, done: !x.done } : x)));
+    try {
+      await fetch('/api/reminders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: it.key }),
+      });
+    } catch { load(); }
+  }
+
+  const typeEmoji = { vaccine: '💉', checkup: '🩺', 'deworm-in': '💊', 'deworm-out': '🧴' };
+  const fmtDue = (iso) => {
+    const d = new Date(iso);
+    const days = Math.ceil((d - new Date()) / 86400000);
+    const dateStr = d.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+    if (days < 0) return `${dateStr} · 已过期`;
+    if (days === 0) return `今天`;
+    return `${dateStr} · 还有 ${days} 天`;
+  };
+
+  if (items === null) return <p className="caption">加载中…</p>;
+  if (items.length === 0) {
+    return (
+      <div className="card" style={{ padding: 40, textAlign: 'center' }}>
+        <div style={{ display: 'grid', placeItems: 'center' }}><Emoji text="🩺" size={56} /></div>
+        <p className="body" style={{ marginTop: 12 }}>先去「宠物档案」添加毛孩子（最好填上生日），这里就会自动生成疫苗、驱虫、体检的提醒日历。</p>
+      </div>
+    );
+  }
+
+  const byPet = items.reduce((m, it) => { (m[it.petName] = m[it.petName] || []).push(it); return m; }, {});
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h3 className="h-3" style={{ margin: 0 }}>健康提醒</h3>
+        <span className="caption">节奏参考 WSAVA / ESCCAP 指南 · 具体以兽医意见为准</span>
+      </div>
+      <div style={{ display: 'grid', gap: 20 }}>
+        {Object.entries(byPet).map(([petName, list]) => (
+          <div key={petName} className="card" style={{ padding: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <Emoji text="🐾" size={16} />
+              <span style={{ fontSize: 15, fontWeight: 700 }}>{petName}</span>
+            </div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {list.map((it) => (
+                <button key={it.key} onClick={() => toggle(it)} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12,
+                  border: '1px solid var(--line-2)', background: it.done ? 'var(--surface-2)' : 'var(--surface)',
+                  cursor: 'pointer', textAlign: 'left', width: '100%',
+                }}>
+                  <span style={{
+                    width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center',
+                    border: it.done ? 0 : '1.5px solid var(--line)', background: it.done ? 'var(--sage)' : 'transparent', color: '#fff',
+                  }}>
+                    {it.done && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>}
+                  </span>
+                  <Emoji text={typeEmoji[it.type] || '🩺'} size={18} />
+                  <span style={{ flex: 1, fontSize: 14, fontWeight: 500, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--ink-3)' : 'var(--ink)' }}>{it.label}</span>
+                  <span className="caption" style={{ color: !it.done && new Date(it.due) < new Date() ? 'var(--accent)' : undefined }}>{fmtDue(it.due)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// —— 资料编辑：头像 emoji / 昵称 / 简介 ——
+function ProfileEditDialog({ me, onClose, onSaved }) {
+  const AVATARS = ['👤', '🐶', '🐱', '🐾', '🦴', '🎾', '🧶', '😺', '🐕', '🍼', '🌿', '⭐'];
+  const [form, setForm] = useState({
+    nickname: me?.nickname || '', avatarEmoji: me?.avatarEmoji || '👤', bio: me?.bio || '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function save() {
+    setSaving(true); setError('');
+    try {
+      const r = await fetch('/api/profile', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || '保存失败'); }
+      onSaved();
+    } catch (e) { setError(e.message); setSaving(false); }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.4)', animation: 'fadeBg .2s ease' }} />
+      <div role="dialog" aria-label="编辑资料" style={{
+        position: 'relative', width: 'min(440px, 100%)', background: 'var(--bg)', borderRadius: 20, padding: 28,
+        boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)', animation: 'dialogIn .25s ease both',
+      }}>
+        <h2 className="serif" style={{ fontSize: 22, fontWeight: 600, margin: '0 0 18px' }}>编辑资料</h2>
+        <div className="caption" style={{ marginBottom: 8 }}>头像</div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+          {AVATARS.map((a) => (
+            <button key={a} onClick={() => setForm({ ...form, avatarEmoji: a })} aria-label={`头像 ${a}`}
+              style={{ width: 40, height: 40, borderRadius: 999, border: form.avatarEmoji === a ? '2px solid var(--ink)' : '1px solid var(--line-2)', background: 'var(--surface)', display: 'grid', placeItems: 'center', padding: 0 }}>
+              <Emoji text={a} size={22} />
+            </button>
+          ))}
+        </div>
+        <input className="input" placeholder="昵称（对外显示）" maxLength={20} value={form.nickname}
+          onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+        <textarea className="input" placeholder="一句话介绍自己（最多 60 字）" maxLength={60} rows={2} value={form.bio}
+          onChange={(e) => setForm({ ...form, bio: e.target.value })}
+          style={{ marginTop: 10, resize: 'none', height: 'auto', lineHeight: 1.5, paddingTop: 10, borderRadius: 12 }} />
+        {error && <div style={{ color: 'var(--accent)', fontSize: 13, marginTop: 10 }}>{error}</div>}
+        <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+          <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={save} disabled={saving}>{saving ? '保存中…' : '保存'}</button>
+          <button className="btn btn-line" onClick={onClose}>取消</button>
+        </div>
       </div>
     </div>
   );

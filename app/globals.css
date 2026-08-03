@@ -31,11 +31,17 @@
 
 html, body {
   margin: 0; padding: 0;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--ink);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01", "cv11";
+}
+/* 全站爪印底纹：与 Logo 同一爪形（三趾+侧趾+掌垫），260px 平铺，两只错位微旋转。
+   贯穿整页不间断，各分区只在"颜色"上做区分（见 .tint-band）。 */
+body{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cdefs%3E%3Cg id='p' fill='%232C563A' fill-opacity='0.055'%3E%3Ccircle cx='9' cy='11' r='3'/%3E%3Ccircle cx='16' cy='8' r='3'/%3E%3Ccircle cx='23' cy='11' r='3'/%3E%3Ccircle cx='6' cy='18' r='2.4'/%3E%3Cpath d='M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23p' transform='translate(30,26) scale(2) rotate(-12 16 16)'/%3E%3Cuse href='%23p' transform='translate(156,150) scale(2) rotate(10 16 16)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
 }
 
 button { font-family: inherit; cursor: pointer; }
@@ -210,6 +216,13 @@ a { color: inherit; text-decoration: none; }
 .float-card{ animation: floatCard 6s ease-in-out infinite; }
 @keyframes floatCard{ 0%,100%{ transform: translateY(0) rotate(var(--r, 0deg)); } 50%{ transform: translateY(-9px) rotate(var(--r, 0deg)); } }
 
+/* 漂浮装饰贴纸：慢速上下浮动 + 极轻微摆动，参数用 CSS 变量错开节奏 */
+.float-deco{ animation: floatDeco var(--fd, 7s) ease-in-out var(--fdel, 0s) infinite; will-change: transform; }
+@keyframes floatDeco{
+  0%, 100%{ transform: translateY(0) rotate(var(--r, 0deg)); }
+  50%{ transform: translateY(-9px) rotate(calc(var(--r, 0deg) + var(--rd, 3deg))); }
+}
+
 /* 滚动进场（IntersectionObserver 加 .in） */
 .reveal{ opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1); }
 .reveal.in{ opacity: 1; transform: none; }
@@ -233,7 +246,7 @@ a { color: inherit; text-decoration: none; }
 @keyframes typingDot { 0%, 60%, 100%{ transform: translateY(0); opacity:.4; } 30%{ transform: translateY(-4px); opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce){
-  .hero-blobs .blob, .float-card, .marquee-track, .word-pop, .photo-reveal{ animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+  .hero-blobs .blob, .float-card, .float-deco, .marquee-track, .word-pop, .photo-reveal{ animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
   .reveal{ opacity: 1; transform: none; transition: none; }
 }
 
@@ -335,6 +348,37 @@ section { padding: 96px 0; }
 @media (max-width: 720px) { section { padding: 64px 0; } }
 
 /* ============================================================
+   分区底色节奏：sage 微染色带 + 低透明度爪印纹理，打破大面积纯色
+   ============================================================ */
+/* 染色带只叠一层"半透明色"，爪印底纹由 body 提供并透上来，因此分区之间只有颜色差异、
+   纹理是连续的。色层上下各 140px 用 mask 渐隐，进出都不再是硬边。 */
+.tint-band{
+  background-color: transparent;
+  position: relative;
+  isolation: isolate;
+}
+.tint-band::before{
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  background: rgba(227,240,239,.5); /* 叠在奶油底上≈#EDF1EA（冷 sage 调） */
+  border-radius: inherit;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 140px, #000 calc(100% - 140px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 140px, #000 calc(100% - 140px), transparent 100%);
+}
+/* 带内内容压在色层之上 */
+.tint-band > *{ position: relative; }
+.tint-band-warm::before{
+  background: rgba(241,222,199,.5); /* 叠在奶油底上≈#F4E8D6（暖橙调） */
+}
+/* 染色带上的卡片：米白底 + 柔和投影，与底色拉开一层 */
+.tint-band .card{ background: #FFFDF6; box-shadow: 0 8px 24px -12px rgba(31,42,29,.10); }
+
+/* 社区瀑布流：桌面多列自适应，移动端固定两列（小红书式） */
+.masonry{ columns: 5 210px; column-gap: 16px; }
+@media (max-width: 640px){ .masonry{ columns: 2 !important; column-gap: 10px; } }
+
+/* ============================================================
    移动端适配：仅 ≤720px 生效，桌面端不受影响。
    组件里大量布局是内联样式，这里用工具类 + !important 在小屏覆盖。
    ============================================================ */
@@ -366,4 +410,7 @@ section { padding: 96px 0; }
 
   /* 页脚品牌块占满一行 */
   .footer-brand{ grid-column: 1 / -1; }
+
+  /* 小屏隐藏纯装饰元素 */
+  .m-none{ display: none !important; }
 }
