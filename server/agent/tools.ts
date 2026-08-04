@@ -117,7 +117,8 @@ const registeredTools: RegisteredTool[] = [
       const explicitTerms = ctx.explicitProductTerms?.length
         ? ctx.explicitProductTerms
         : inferExplicitProductRequestTerms(ctx.currentUserQuestion || '');
-      const explicitCategory = getBroadProductCategory(explicitTerms[0]);
+      // 抽词失败时（"推荐狗粮"这类短问法很常见）直接从原问题里找大类词兜底
+      const explicitCategory = getBroadProductCategory(explicitTerms[0]) || getBroadProductCategory(ctx.currentUserQuestion);
       const inferredSpecies = productSpeciesFromQuestion(ctx.currentUserQuestion);
       const list = await store.searchProducts({
         // “主粮/鲜粮”等是大类词，不再当作商品名精确搜索。
