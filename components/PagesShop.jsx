@@ -201,17 +201,19 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
 
   const filtered = useMemo(() => {
     const petFilter = PET_CONTENT_FILTERS.find((item) => item.id === pet);
-    let list = PRODUCTS.filter((p) => {
-      if (cat !== 'all' && p.cat !== cat) return false;
+    const kw = q.trim();
+    // 关键词命中：名称/规格/简介/标签/卖点任一包含即可
+    const hitKeyword = (p) => kw === ''
+      || p.name.includes(kw) || (p.sub || '').includes(kw) || (p.desc || '').includes(kw)
+      || (p.tag || '').includes(kw) || (p.badges || []).some((b) => b.includes(kw));
+    // 宠物类目命中：'鼠'为聚合分类，按别名匹配商品适用宠物
+    const hitPet = (p) => {
       if (!petFilter || petFilter.id === 'all') return true;
       const normalizedPet = String(p.pet || '').toLowerCase();
       const isRodent = petFilter.id === 'rodent' && RODENT_ALIASES.some((alias) => normalizedPet.includes(alias.toLowerCase()));
       return isRodent || petFilter.speciesIds.some((id) => id === getPetSpecies(p.pet).id);
-    });
-    const petFilter = PET_FILTERS.find((item) => item.id === pet);
-    const kw = q.trim();
-    const hit = (p) => kw === '' || p.name.includes(kw) || (p.sub || '').includes(kw) || (p.desc || '').includes(kw) || (p.tag || '').includes(kw) || (p.badges || []).some((b) => b.includes(kw));
-    let list = PRODUCTS.filter((p) => (cat === 'all' || p.cat === cat) && (!petFilter || petFilter.speciesIds.some((id) => id === getPetSpecies(p.pet).id)) && hit(p));
+    };
+    let list = PRODUCTS.filter((p) => (cat === 'all' || p.cat === cat) && hitPet(p) && hitKeyword(p));
     if (sort === '价格升序') list = [...list].sort((a, b) => a.price - b.price);
     else if (sort === '价格降序') list = [...list].sort((a, b) => b.price - a.price);
     else if (sort === '评分') list = [...list].sort((a, b) => b.rating - a.rating);
@@ -259,8 +261,8 @@ export function ShopPage({ initialCat, navigate, onAdd }) {
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div style={{ display: 'inline-flex', borderRadius: 8, padding: 3, background: 'var(--surface-2)', border: '1px solid var(--line-2)' }}>
+          <div className="m-full" style={{ display: 'flex', gap: 12, alignItems: 'center', maxWidth: '100%', minWidth: 0 }}>
+            <div className="h-scroll" style={{ display: 'inline-flex', borderRadius: 8, padding: 3, background: 'var(--surface-2)', border: '1px solid var(--line-2)', maxWidth: '100%', flexShrink: 1 }}>
               {PET_CONTENT_FILTERS.map((filter) => (
                 <button key={filter.id} onClick={() => setPet(filter.id)}
                   style={{ height: 28, padding: '0 14px', borderRadius: 6, border: 0, background: pet === filter.id ? 'var(--surface)' : 'transparent', boxShadow: pet === filter.id ? 'var(--shadow-sm)' : 'none', color: 'var(--ink)', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
