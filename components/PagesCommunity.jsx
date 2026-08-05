@@ -3,6 +3,7 @@
 // 数据接口：/api/posts /api/posts/like /api/comments /api/follow，身份沿用匿名 cookie 会话。
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Emoji } from './Emoji';
+import { Avatar } from './ui';
 
 const TOPICS = [
   { id: 'all', name: '全部', emoji: null },
@@ -26,20 +27,29 @@ export function timeAgo(iso) {
 }
 
 // 客户端压缩图片：最长边 1080、JPEG 质量 0.78，控制单张体积（后端兜底 600KB）
-export function compressImage(file) {
+// square=true 时按中心正方形裁切（头像用），否则等比缩放到 max 以内（帖子图用）
+export function compressImage(file, { max = 1080, quality = 0.78, square = false } = {}) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        const max = 1080;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (square) {
+          const side = Math.min(img.width, img.height);
+          const size = Math.min(max, side);
+          canvas.width = size; canvas.height = size;
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+          return;
+        }
         const scale = Math.min(1, max / Math.max(img.width, img.height));
         const w = Math.round(img.width * scale);
         const h = Math.round(img.height * scale);
-        const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.78));
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.onerror = reject;
       img.src = reader.result;
@@ -81,6 +91,19 @@ export function CommunityPage({ navigate, initialPostId }) {
       : x));
     try {
       const r = await fetch('/api/posts/like', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: p.id }),
+      });
+      if (!r.ok) throw new Error();
+    } catch { load(); }
+  }
+
+  async function toggleFavorite(p) {
+    setPosts((prev) => prev.map((x) => x.id === p.id
+      ? { ...x, favoritedByMe: !x.favoritedByMe, favoriteCount: (x.favoriteCount || 0) + (x.favoritedByMe ? -1 : 1) }
+      : x));
+    try {
+      const r = await fetch('/api/posts/favorite', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId: p.id }),
       });
@@ -174,7 +197,7 @@ export function CommunityPage({ navigate, initialPostId }) {
 
       {detailPost && (
         <PostDetail p={detailPost} onClose={() => setDetailId(null)} navigate={navigate}
-          onLike={() => toggleLike(detailPost)} onDelete={() => removePost(detailPost)}
+          onLike={() => toggleLike(detailPost)} onFavorite={() => toggleFavorite(detailPost)} onDelete={() => removePost(detailPost)}
           onTag={(t) => { setDetailId(null); setTopic('all'); setTag(t); }} />
       )}
       {composing && <Composer onClose={() => setComposing(false)} onPosted={() => { setComposing(false); setTopic('all'); setTag(null); load('all'); }} />}
@@ -220,7 +243,7 @@ export function PostCard({ p, onOpen, onLike, onAuthor }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line-2)' }}>
           <button onClick={(e) => { e.stopPropagation(); onAuthor(); }} aria-label={`查看 ${p.author} 的主页`}
             style={{ border: 0, background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1, minWidth: 0 }}>
-            <span style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Emoji text={p.authorAvatar || '🐾'} size={13} /></span>
+            <Avatar url={p.authorAvatarUrl} emoji={p.authorAvatar} size={24} />
             <span className="caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.author}</span>
           </button>
           <span className="caption" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -241,7 +264,7 @@ export function PostCard({ p, onOpen, onLike, onAuthor }) {
 }
 
 // —— 帖子详情：图片轮播/大图 + 关注作者 + 评论区 + 分享海报 ——
-export function PostDetail({ p: pIn, onClose, onLike, onDelete, onTag, navigate }) {
+export function PostDetail({ p: pIn, onClose, onLike, onFavorite, onDelete, onTag, navigate }) {
   const [imgIdx, setImgIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const [following, setFollowing] = useState(null); // null=未知（游客也可点，后端建档）
@@ -317,7 +340,7 @@ export function PostDetail({ p: pIn, onClose, onLike, onDelete, onTag, navigate 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 14px' }}>
             <button onClick={() => navigate && navigate({ page: 'profile', userId: p.authorId })}
               style={{ border: 0, background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <span style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text={p.authorAvatar || '🐾'} size={15} /></span>
+              <Avatar url={p.authorAvatarUrl} emoji={p.authorAvatar} size={28} />
               <span style={{ fontSize: 13, fontWeight: 600 }}>{p.author}</span>
             </button>
             <span className="caption">· {timeAgo(p.createdAt)}</span>
@@ -352,6 +375,13 @@ export function PostDetail({ p: pIn, onClose, onLike, onDelete, onTag, navigate 
               <path d="M19 14c1.5-1.5 2-3.2 2-5a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 1.8.5 3.5 2 5l7 7 7-7Z" />
             </svg>
             {p.likedByMe ? '已赞' : '点赞'}{p.likeCount > 0 && <span className="mono">{p.likeCount}</span>}
+          </button>
+          <button onClick={onFavorite} className="btn btn-line btn-sm"
+            style={{ gap: 6, background: p.favoritedByMe ? 'rgba(79,122,87,.10)' : 'transparent', color: p.favoritedByMe ? 'var(--sage)' : 'var(--ink-2)', fontWeight: 600 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={p.favoritedByMe ? 'var(--sage)' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3l2.6 5.6 6.4.8-4.7 4.3 1.2 6.3L12 17l-5.5 3 1.2-6.3L3 9.4l6.4-.8L12 3Z" />
+            </svg>
+            {p.favoritedByMe ? '已收藏' : '收藏'}{p.favoriteCount > 0 && <span className="mono">{p.favoriteCount}</span>}
           </button>
           <button onClick={() => sharePoster(p)} className="btn btn-line btn-sm" style={{ gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" /></svg>
@@ -503,9 +533,7 @@ function Comments({ postId }) {
 function CommentRow({ c, reply, onReply, onDelete }) {
   return (
     <div style={{ display: 'flex', gap: 10 }}>
-      <span style={{ width: reply ? 22 : 26, height: reply ? 22 : 26, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-        <Emoji text={c.authorAvatar || '🐾'} size={reply ? 12 : 14} />
-      </span>
+      <Avatar url={c.authorAvatarUrl} emoji={c.authorAvatar} size={reply ? 22 : 26} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12.5, color: 'var(--ink-3)', fontWeight: 600 }}>
           {c.author}

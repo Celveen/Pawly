@@ -166,8 +166,9 @@ export const store = {
       orderBy: { createdAt: 'desc' },
       take: 100,
       include: {
-        user: { select: { id: true, nickname: true, avatarEmoji: true } },
+        user: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true } },
         likes: { select: { userId: true } },
+        favorites: { select: { userId: true } },
         _count: { select: { comments: true } },
       },
     });
@@ -179,8 +180,9 @@ export const store = {
     const p = await prisma.post.findUnique({
       where: { id: postId },
       include: {
-        user: { select: { id: true, nickname: true, avatarEmoji: true } },
+        user: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true } },
         likes: { select: { userId: true } },
+        favorites: { select: { userId: true } },
         _count: { select: { comments: true } },
       },
     });
@@ -202,8 +204,9 @@ export const store = {
       orderBy: { createdAt: 'desc' },
       take: 8,
       include: {
-        user: { select: { id: true, nickname: true, avatarEmoji: true } },
+        user: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true } },
         likes: { select: { userId: true } },
+        favorites: { select: { userId: true } },
         _count: { select: { comments: true } },
       },
     });
@@ -217,8 +220,9 @@ export const store = {
       orderBy: { createdAt: 'desc' },
       take: 60,
       include: {
-        user: { select: { id: true, nickname: true, avatarEmoji: true } },
+        user: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true } },
         likes: { select: { userId: true } },
+        favorites: { select: { userId: true } },
         _count: { select: { comments: true } },
       },
     });
@@ -371,7 +375,7 @@ export const store = {
     const rows = await prisma.comment.findMany({
       where: { postId },
       orderBy: { createdAt: 'asc' },
-      include: { user: { select: { id: true, nickname: true, avatarEmoji: true } } },
+      include: { user: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true } } },
     });
     return rows.map((c) => ({
       id: c.id,
@@ -382,6 +386,7 @@ export const store = {
       authorId: c.user.id,
       author: c.user.nickname || '铲屎官' + c.user.id.slice(-4),
       authorAvatar: c.user.avatarEmoji || '👤',
+      authorAvatarUrl: avatarUrlOf(c.user),
       mine: c.user.id === viewerId,
     }));
   },
@@ -414,39 +419,145 @@ export const store = {
   async getProfile(targetUserId: string, viewerId: string) {
     const user = await prisma.user.findUnique({
       where: { id: targetUserId },
-      select: { id: true, nickname: true, avatarEmoji: true, bio: true, createdAt: true },
+      select: {
+        id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true,
+        bio: true, gender: true, birthday: true, location: true, createdAt: true,
+      },
     });
     if (!user) return null;
-    const [followers, following, postCount, isFollowing] = await Promise.all([
+    const [followers, following, postCount, isFollowing, likesReceived, favoritesReceived] = await Promise.all([
       prisma.follow.count({ where: { followeeId: targetUserId } }),
       prisma.follow.count({ where: { followerId: targetUserId } }),
       prisma.post.count({ where: { userId: targetUserId, status: 'visible' } }),
       prisma.follow.findUnique({ where: { followerId_followeeId: { followerId: viewerId, followeeId: targetUserId } } }),
+      // 获赞/被收藏：统计 TA 的帖子收到的总数（不含自赞自收，与展示口径一致）
+      prisma.postLike.count({ where: { post: { userId: targetUserId, status: 'visible' }, NOT: { userId: targetUserId } } }),
+      prisma.postFavorite.count({ where: { post: { userId: targetUserId, status: 'visible' }, NOT: { userId: targetUserId } } }),
     ]);
     return {
       id: user.id,
       nickname: user.nickname || '铲屎官' + user.id.slice(-4),
       avatarEmoji: user.avatarEmoji || '👤',
+      avatarUrl: avatarUrlOf(user),
       bio: user.bio || '',
+      gender: user.gender || null,
+      birthday: user.birthday || null,
+      location: user.location || '',
       joinedAt: user.createdAt,
       followers,
       following,
       postCount,
+      likesReceived,
+      favoritesReceived,
       isFollowing: !!isFollowing,
       isSelf: targetUserId === viewerId,
     };
   },
 
-  async updateProfile(userId: string, data: { nickname?: string; avatarEmoji?: string; bio?: string }) {
+  async updateProfile(userId: string, data: {
+    nickname?: string; avatarEmoji?: string; bio?: string;
+    avatarUrl?: string | null; gender?: string | null; birthday?: Date | null; location?: string;
+  }) {
     return prisma.user.update({
       where: { id: userId },
       data: {
         ...(data.nickname !== undefined ? { nickname: data.nickname || null } : {}),
         ...(data.avatarEmoji !== undefined ? { avatarEmoji: data.avatarEmoji || null } : {}),
         ...(data.bio !== undefined ? { bio: data.bio || null } : {}),
+        ...(data.gender !== undefined ? { gender: data.gender || null } : {}),
+        ...(data.birthday !== undefined ? { birthday: data.birthday } : {}),
+        ...(data.location !== undefined ? { location: data.location || null } : {}),
+        // 换头像时同时刷新时间戳，作为图片 URL 的缓存版本号
+        ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl, avatarUpdatedAt: data.avatarUrl ? new Date() : null } : {}),
       },
-      select: { nickname: true, avatarEmoji: true, bio: true },
+      select: { nickname: true, avatarEmoji: true, bio: true, gender: true, birthday: true, location: true },
     });
+  },
+
+  // 头像图片本体（供 /api/avatar 解码返回）
+  async getAvatar(userId: string) {
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { avatarUrl: true } });
+    return u?.avatarUrl || null;
+  },
+
+  // —— 粉丝 / 关注 名单 ——
+  async listFollowUsers(targetUserId: string, viewerId: string, kind: 'followers' | 'following') {
+    const rows = await prisma.follow.findMany({
+      where: kind === 'followers' ? { followeeId: targetUserId } : { followerId: targetUserId },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: {
+        follower: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true, bio: true } },
+        followee: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true, bio: true } },
+      },
+    });
+    const users = rows.map((r) => (kind === 'followers' ? r.follower : r.followee));
+    // 标记浏览者是否已关注名单里的每个人（自己除外）
+    const ids = users.map((u) => u.id);
+    const mine = ids.length
+      ? await prisma.follow.findMany({ where: { followerId: viewerId, followeeId: { in: ids } }, select: { followeeId: true } })
+      : [];
+    const followedSet = new Set(mine.map((m) => m.followeeId));
+    return users.map((u) => ({
+      id: u.id,
+      nickname: u.nickname || '铲屎官' + u.id.slice(-4),
+      avatarEmoji: u.avatarEmoji || '👤',
+      avatarUrl: avatarUrlOf(u),
+      bio: u.bio || '',
+      isFollowing: followedSet.has(u.id),
+      isSelf: u.id === viewerId,
+    }));
+  },
+
+  // —— 收藏 ——
+  async toggleFavorite(userId: string, postId: string) {
+    const key = { userId_postId: { userId, postId } };
+    const existing = await prisma.postFavorite.findUnique({ where: key });
+    if (existing) {
+      await prisma.postFavorite.delete({ where: key });
+      return { favorited: false };
+    }
+    await prisma.postFavorite.create({ data: { userId, postId } });
+    return { favorited: true };
+  },
+
+  // 个人主页「收藏」「赞过」两个页签的数据源（都只对本人开放，见 services 校验）
+  async listFavoritePosts(userId: string, viewerId: string) {
+    const rows = await prisma.postFavorite.findMany({
+      where: { userId, post: { status: 'visible' } },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: {
+        post: {
+          include: {
+            user: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true } },
+            likes: { select: { userId: true } },
+            favorites: { select: { userId: true } },
+            _count: { select: { comments: true } },
+          },
+        },
+      },
+    });
+    return rows.map((r) => serializePost(r.post, viewerId, true));
+  },
+
+  async listLikedPosts(userId: string, viewerId: string) {
+    const rows = await prisma.postLike.findMany({
+      where: { userId, post: { status: 'visible' } },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: {
+        post: {
+          include: {
+            user: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true } },
+            likes: { select: { userId: true } },
+            favorites: { select: { userId: true } },
+            _count: { select: { comments: true } },
+          },
+        },
+      },
+    });
+    return rows.map((r) => serializePost(r.post, viewerId, true));
   },
 
   // —— 通知 ——
@@ -475,7 +586,7 @@ export const store = {
       where: { productId },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: { user: { select: { id: true, nickname: true, avatarEmoji: true } } },
+      include: { user: { select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true } } },
     });
     return rows.map((r) => ({
       id: r.id,
@@ -486,6 +597,7 @@ export const store = {
       authorId: r.user.id,
       author: r.user.nickname || '铲屎官' + r.user.id.slice(-4),
       authorAvatar: r.user.avatarEmoji || '👤',
+      authorAvatarUrl: avatarUrlOf(r.user),
       mine: r.user.id === viewerId,
     }));
   },
@@ -577,9 +689,20 @@ function serializePost(p: any, viewerId: string, light = false) {
     authorId: p.user.id,
     author: p.user.nickname || '铲屎官' + p.user.id.slice(-4),
     authorAvatar: p.user.avatarEmoji || '👤',
+    // 只下发短 URL，头像本体由 /api/avatar 单独返回（带缓存），不进列表载荷
+    authorAvatarUrl: avatarUrlOf(p.user),
     mine: p.user.id === viewerId,
     likeCount: p.likes.length,
     likedByMe: p.likes.some((l: any) => l.userId === viewerId),
+    favoriteCount: p.favorites?.length ?? p._count?.favorites ?? 0,
+    favoritedByMe: p.favorites ? p.favorites.some((f: any) => f.userId === viewerId) : false,
     commentCount: p._count?.comments ?? 0,
   };
+}
+
+// 头像图片地址：带更新时间戳做缓存版本号；没设置过照片则返回 null（前端回退 emoji）
+export function avatarUrlOf(user: { id: string; avatarUrl?: string | null; avatarUpdatedAt?: Date | null }) {
+  if (!user?.avatarUrl) return null;
+  const v = user.avatarUpdatedAt ? new Date(user.avatarUpdatedAt).getTime() : 0;
+  return `/api/avatar/${user.id}?v=${v}`;
 }

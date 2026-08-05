@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { fmt } from './util';
 import { PRODUCTS, CATEGORIES, ARTICLES } from './data';
-import { ProductCard, ArticleCard, Reveal, SmartImage, FloatEmoji } from './ui';
+import { ProductCard, ArticleCard, Reveal, SmartImage, FloatEmoji, Avatar } from './ui';
 import { Emoji } from './Emoji';
 import { ChatDemo } from './ChatDemo';
 import { VideoSlot } from './VideoSlot';
@@ -503,7 +503,7 @@ function ReviewsSection({ product, navigate }) {
           {(list || []).map((r) => (
             <div key={r.id} className="card" style={{ padding: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}><Emoji text={r.authorAvatar || '🐾'} size={16} /></span>
+                <Avatar url={r.authorAvatarUrl} emoji={r.authorAvatar} size={30} />
                 <span style={{ fontSize: 13.5, fontWeight: 600 }}>{r.author}</span>
                 <Stars n={r.rating} />
                 <span className="caption" style={{ marginLeft: 'auto' }}>{new Date(r.createdAt).toLocaleDateString('zh-CN')}</span>
