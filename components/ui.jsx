@@ -105,6 +105,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
             </svg>
           </button>
+          <MessageEntry navigate={navigate} />
           <NotifyBell navigate={navigate} />
           <button onClick={onCartOpen} className="btn btn-line btn-sm" style={{ position: 'relative', paddingLeft: 14, paddingRight: 14 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -126,6 +127,38 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
       </div>
       {searchOpen && <SearchOverlay navigate={navigate} onClose={() => setSearchOpen(false)} />}
     </header>
+  );
+}
+
+// 私信入口：未读角标 + 点击进入消息中心（游客接口返回 0，不展示角标）
+function MessageEntry({ navigate }) {
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const poll = () => fetch('/api/dm/unread')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d) setUnread(d.count || 0); })
+      .catch(() => {});
+    poll();
+    const t = setInterval(poll, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  return (
+    <button onClick={() => navigate({ page: 'messages' })} className="btn btn-ghost btn-sm" aria-label="私信"
+      style={{ width: 36, padding: 0, justifyContent: 'center', borderRadius: 999, position: 'relative' }}>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 5h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+        <path d="m3.5 6.5 8.5 6 8.5-6" />
+      </svg>
+      {unread > 0 && (
+        <span style={{
+          position: 'absolute', top: 2, right: 2, minWidth: 15, height: 15, padding: '0 4px', borderRadius: 999,
+          background: 'var(--accent)', color: '#FFF9F2', fontSize: 10, fontWeight: 700,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        }}>{unread > 99 ? '99+' : unread}</span>
+      )}
+    </button>
   );
 }
 

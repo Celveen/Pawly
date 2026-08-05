@@ -163,12 +163,18 @@ export function ProfilePage({ userId, navigate }) {
                   {data.isSelf ? (
                     <button className="btn btn-line btn-sm" onClick={() => navigate({ page: 'member' })}>编辑资料</button>
                   ) : (
-                    <button onClick={toggleFollow} className="btn btn-sm" style={{
-                      background: data.isFollowing ? 'var(--surface-2)' : 'var(--ink)',
-                      color: data.isFollowing ? 'var(--ink-2)' : 'var(--bg)', borderRadius: 999, minWidth: 84, justifyContent: 'center',
-                    }}>
-                      {data.isFollowing ? '已关注' : '+ 关注'}
-                    </button>
+                    <>
+                      <button onClick={toggleFollow} className="btn btn-sm" style={{
+                        background: data.isFollowing ? 'var(--surface-2)' : 'var(--ink)',
+                        color: data.isFollowing ? 'var(--ink-2)' : 'var(--bg)', borderRadius: 999, minWidth: 84, justifyContent: 'center',
+                      }}>
+                        {data.isFollowing ? '已关注' : '+ 关注'}
+                      </button>
+                      <button onClick={() => navigate({ page: 'messages', peerId: data.id })} className="btn btn-line btn-sm"
+                        style={{ borderRadius: 999, gap: 6 }}>
+                        <Emoji text="💌" size={13} /> 发消息
+                      </button>
+                    </>
                   )}
                 </div>
 

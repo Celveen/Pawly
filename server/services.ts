@@ -5,7 +5,8 @@
 import { prisma } from './db/prisma';
 import { store, avatarUrlOf } from './db/store';
 import { runAgent } from './agent/runAgent';
-import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured } from './auth';
+import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured, registerAccount, loginWithPassword, changePassword } from './auth';
+import { hashPassword, verifyPassword, parseAccount, checkPasswordStrength } from './password';
 import { petSnapshot, birthdayFromAgeMonths } from './pets';
 import { tokenMeter } from './tokenMeter';
 import { findViolationIn } from './moderation';
@@ -50,6 +51,13 @@ async function chatQuota(userId: string) {
 }
 
 type Handler = (userId: string, payload: any) => Promise<any>;
+
+// 私信等功能要求已注册账号（游客不可用）
+async function requireAccount(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, email: true } });
+  if (!user?.phone && !user?.email) throw new RpcError(401, '请先登录后再使用私信');
+  return user;
+}
 
 export const services: Record<string, Handler> = {
   // —— 商品 ——
@@ -513,6 +521,79 @@ export const services: Record<string, Handler> = {
     return r;
   },
 
+  // 注册：账号为手机号或邮箱 + 密码
+  'auth.register': async (userId, b) => {
+    const account = parseAccount(String(b?.account || ''));
+    if (!account) throw new RpcError(400, '请输入正确的手机号或邮箱');
+    const weak = checkPasswordStrength(String(b?.password || ''));
+    if (weak) throw new RpcError(400, weak);
+    await ensureUser(userId);
+    const hash = await hashPassword(String(b.password));
+    const r = await registerAccount(account, hash, userId);
+    if (!r.ok) throw new RpcError(400, r.error);
+    return { ok: true, userId: r.userId, account: account.value, kind: account.kind };
+  },
+
+  // 密码登录
+  'auth.loginPassword': async (userId, b) => {
+    const account = parseAccount(String(b?.account || ''));
+    const password = String(b?.password || '');
+    if (!account || !password) throw new RpcError(400, '账号或密码不正确');
+    await ensureUser(userId);
+    const r = await loginWithPassword(account, (hash) => verifyPassword(password, hash), userId);
+    if (!r.ok) throw new RpcError(400, r.error);
+    return { ok: true, userId: r.userId, account: account.value, kind: account.kind };
+  },
+
+  // 修改密码（需原密码）
+  'auth.changePassword': async (userId, b) => {
+    const oldPassword = String(b?.oldPassword || '');
+    const weak = checkPasswordStrength(String(b?.newPassword || ''));
+    if (weak) throw new RpcError(400, weak);
+    const newHash = await hashPassword(String(b.newPassword));
+    const r = await changePassword(userId, (hash) => verifyPassword(oldPassword, hash), newHash);
+    if (!r.ok) throw new RpcError(400, r.error);
+    return { ok: true };
+  },
+
+  // —— 私信 ——
+  // 私信需要正式账号：游客不能收发，避免匿名骚扰
+  'dm.conversations': async (userId) => {
+    await requireAccount(userId);
+    return { conversations: await store.listConversations(userId) };
+  },
+
+  'dm.thread': async (userId, b) => {
+    await requireAccount(userId);
+    const peerId = String(b?.peerId || '');
+    if (!peerId) throw new RpcError(400, '缺少 peerId');
+    if (peerId === userId) throw new RpcError(400, '不能给自己发消息');
+    const peer = await prisma.user.findUnique({ where: { id: peerId }, select: { id: true } });
+    if (!peer) throw new RpcError(404, '用户不存在');
+    return store.listMessages(userId, peerId);
+  },
+
+  'dm.send': async (userId, b) => {
+    await requireAccount(userId);
+    const peerId = String(b?.peerId || '');
+    const content = String(b?.content || '').trim();
+    if (!peerId) throw new RpcError(400, '缺少 peerId');
+    if (peerId === userId) throw new RpcError(400, '不能给自己发消息');
+    if (!content) throw new RpcError(400, '消息不能为空');
+    if (content.length > 500) throw new RpcError(400, '单条消息最多 500 字');
+    const hit = findViolationIn(content);
+    if (hit) throw new RpcError(400, `包含违规词「${hit}」，请修改`);
+    const peer = await prisma.user.findUnique({ where: { id: peerId }, select: { id: true } });
+    if (!peer) throw new RpcError(404, '用户不存在');
+    return store.sendMessage(userId, peerId, content);
+  },
+
+  'dm.unread': async (userId) => {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, email: true } });
+    if (!user?.phone && !user?.email) return { count: 0 }; // 游客无私信
+    return { count: await store.unreadMessageCount(userId) };
+  },
+
   'auth.login': async (userId, b) => {
     const phone = String(b?.phone || '');
     if (!/^1\d{10}$/.test(phone)) throw new RpcError(400, '手机号格式不正确');
@@ -539,11 +620,14 @@ export const services: Record<string, Handler> = {
       location: user?.location || null,
       points: user?.points || 0,
     };
-    if (!user?.phone) return { guest: true, ...pub };
+    const hasAccount = !!(user?.phone || user?.email);
+    if (!hasAccount) return { guest: true, ...pub };
     return {
       guest: false,
       ...pub,
-      phoneMasked: user.phone.slice(0, 3) + '****' + user.phone.slice(7),
+      phoneMasked: user!.phone ? user!.phone.slice(0, 3) + '****' + user!.phone.slice(7) : null,
+      // 邮箱同样打码：前两位 + *** + @域名
+      emailMasked: user!.email ? user!.email.replace(/^(.{1,2}).*(@.*)$/, '$1***$2') : null,
     };
   },
 

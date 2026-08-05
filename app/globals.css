@@ -384,6 +384,9 @@ section { padding: 96px 0; }
    组件里大量布局是内联样式，这里用工具类 + !important 在小屏覆盖。
    ============================================================ */
 @media (max-width: 720px){
+  /* 私信：窄屏改为上下堆叠，会话列表限高，避免把对话窗挤到屏幕外 */
+  .dm-layout{ grid-template-columns: 1fr !important; }
+  .dm-layout > :first-child{ max-height: 260px; }
   .m-1col{ grid-template-columns: 1fr !important; }
   /* 子项的 span 2 会在单列模板下撑出隐式第二列，一并还原 */
   .m-1col > *{ grid-column: auto !important; }
@@ -399,6 +402,9 @@ section { padding: 96px 0; }
 
   /* 顶栏：logo+操作按钮一行，导航整行横向滚动 */
   .site-header-inner{ flex-wrap: wrap; height: auto !important; padding-top: 10px; padding-bottom: 8px; row-gap: 4px; }
+  /* 桌面用两侧等宽占位让导航真居中；窄屏换行后必须放开，
+     否则右侧按钮组被压成 0 宽、图标溢出到屏幕外点不到 */
+  .site-header-side{ flex: 0 0 auto !important; }
   .site-nav{ order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; }
   .site-nav::-webkit-scrollbar{ display: none; }
   .site-nav button{ flex-shrink: 0; white-space: nowrap; }

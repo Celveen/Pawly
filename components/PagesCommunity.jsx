@@ -347,11 +347,18 @@ export function PostDetail({ p: pIn, onClose, onLike, onFavorite, onDelete, onTa
             {p.petName && <span className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Emoji text="🐾" size={11} /> {p.petName}</span>}
             <span style={{ flex: 1 }} />
             {!p.mine && (
-              <button onClick={toggleFollow} className="btn btn-sm" style={{
-                background: following ? 'var(--surface-2)' : 'var(--ink)', color: following ? 'var(--ink-2)' : 'var(--bg)', borderRadius: 999, height: 30, padding: '0 14px', fontSize: 12,
-              }}>
-                {following ? '已关注' : '+ 关注'}
-              </button>
+              <>
+                <button onClick={toggleFollow} className="btn btn-sm" style={{
+                  background: following ? 'var(--surface-2)' : 'var(--ink)', color: following ? 'var(--ink-2)' : 'var(--bg)', borderRadius: 999, height: 30, padding: '0 14px', fontSize: 12,
+                }}>
+                  {following ? '已关注' : '+ 关注'}
+                </button>
+                {/* 私信作者：关掉详情后跳到消息中心并直接打开这个会话 */}
+                <button onClick={() => { onClose?.(); navigate?.({ page: 'messages', peerId: p.authorId }); }}
+                  className="btn btn-line btn-sm" style={{ borderRadius: 999, height: 30, padding: '0 12px', fontSize: 12, gap: 5 }}>
+                  <Emoji text="💌" size={12} /> 发消息
+                </button>
+              </>
             )}
           </div>
           {p.topics?.length > 0 && (

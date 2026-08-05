@@ -6,6 +6,7 @@ import { HomePage, ShopPage, ProductPage } from './PagesShop';
 import { ArticlesPage, ArticlePage, CheckoutPage, MemberPage } from './PagesOther';
 import { CommunityPage } from './PagesCommunity';
 import { ProfilePage } from './PageProfile';
+import { MessagesPage } from './PageMessages';
 import ChatWidget from './ChatWidget';
 
 export default function App() {
@@ -46,6 +47,7 @@ export default function App() {
     case 'articles': page = <ArticlesPage navigate={navigate} />; break;
     case 'community': page = <CommunityPage navigate={navigate} initialPostId={route.postId} key={route.postId || 'list'} />; break;
     case 'profile': page = <ProfilePage userId={route.userId} navigate={navigate} key={route.userId || 'me'} />; break;
+    case 'messages': page = <MessagesPage navigate={navigate} initialPeerId={route.peerId} key={route.peerId || 'all'} />; break;
     case 'article': page = <ArticlePage id={route.id} navigate={navigate} />; break;
     case 'checkout': page = <CheckoutPage items={cartItems} navigate={navigate} clearCart={clearCart} />; break;
     case 'member': page = <MemberPage navigate={navigate} initialTab={route.tab} key={route.tab || 'overview'} />; break;
@@ -55,7 +57,7 @@ export default function App() {
   return (
     <>
       <Header route={route} navigate={navigate} cartCount={cartCount} onCartOpen={() => setCartOpen(true)} />
-      <main key={route.page + (route.id || '') + (route.cat || '') + (route.tab || '')}>{page}</main>
+      <main key={route.page + (route.id || '') + (route.cat || '') + (route.tab || '') + (route.peerId || '')}>{page}</main>
       <Footer navigate={navigate} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setQty={setQty} removeItem={removeItem} onCheckout={goCheckout} />
       <ChatWidget onAdd={addToCart} navigate={navigate} onCartOpen={() => setCartOpen(true)} openSignal={chatSignal} />

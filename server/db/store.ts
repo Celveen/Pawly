@@ -509,6 +509,110 @@ export const store = {
     }));
   },
 
+  // —— 私信 ——
+  // 会话按 (userAId < userBId) 归一化，保证同一对人只有一条记录
+  async getOrCreateConversation(u1: string, u2: string) {
+    const [userAId, userBId] = u1 < u2 ? [u1, u2] : [u2, u1];
+    const existing = await prisma.conversation.findUnique({ where: { userAId_userBId: { userAId, userBId } } });
+    if (existing) return existing;
+    return prisma.conversation.create({ data: { userAId, userBId } });
+  },
+
+  async listConversations(userId: string) {
+    const rows = await prisma.conversation.findMany({
+      where: { OR: [{ userAId: userId }, { userBId: userId }] },
+      orderBy: { lastMessageAt: 'desc' },
+      take: 100,
+    });
+    // 批量取对方资料，避免 N+1
+    const peerIds = rows.map((c) => (c.userAId === userId ? c.userBId : c.userAId));
+    const peers = peerIds.length
+      ? await prisma.user.findMany({
+          where: { id: { in: peerIds } },
+          select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true },
+        })
+      : [];
+    const peerMap = new Map(peers.map((u) => [u.id, u]));
+    return rows
+      .map((c) => {
+        const peerId = c.userAId === userId ? c.userBId : c.userAId;
+        const peer = peerMap.get(peerId);
+        return {
+          id: c.id,
+          peerId,
+          peerName: peer?.nickname || '铲屎官' + peerId.slice(-4),
+          peerAvatar: peer?.avatarEmoji || '👤',
+          peerAvatarUrl: peer ? avatarUrlOf(peer) : null,
+          lastMessage: c.lastMessage || '',
+          lastMessageAt: c.lastMessageAt,
+          unread: c.userAId === userId ? c.unreadA : c.unreadB,
+        };
+      })
+      // 对方账号被删时跳过，避免出现空会话
+      .filter((c) => peerMap.has(c.peerId));
+  },
+
+  // 打开会话即视为已读，把自己这一侧的未读清零
+  async listMessages(userId: string, peerId: string, markRead = true) {
+    const conv = await this.getOrCreateConversation(userId, peerId);
+    const messages = await prisma.directMessage.findMany({
+      where: { conversationId: conv.id },
+      orderBy: { createdAt: 'asc' },
+      take: 200,
+    });
+    if (markRead) {
+      const field = conv.userAId === userId ? 'unreadA' : 'unreadB';
+      if ((conv as any)[field] > 0) {
+        await prisma.conversation.update({ where: { id: conv.id }, data: { [field]: 0 } });
+      }
+    }
+    const peer = await prisma.user.findUnique({
+      where: { id: peerId },
+      select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true },
+    });
+    return {
+      conversationId: conv.id,
+      peer: peer && {
+        id: peer.id,
+        nickname: peer.nickname || '铲屎官' + peer.id.slice(-4),
+        avatarEmoji: peer.avatarEmoji || '👤',
+        avatarUrl: avatarUrlOf(peer),
+      },
+      messages: messages.map((m) => ({
+        id: m.id,
+        content: m.content,
+        createdAt: m.createdAt,
+        mine: m.senderId === userId,
+      })),
+    };
+  },
+
+  async sendMessage(userId: string, peerId: string, content: string) {
+    const conv = await this.getOrCreateConversation(userId, peerId);
+    const isA = conv.userAId === userId;
+    const [message] = await prisma.$transaction([
+      prisma.directMessage.create({ data: { conversationId: conv.id, senderId: userId, content } }),
+      prisma.conversation.update({
+        where: { id: conv.id },
+        data: {
+          lastMessage: content.slice(0, 60),
+          lastMessageAt: new Date(),
+          // 未读加在对方那一侧
+          ...(isA ? { unreadB: { increment: 1 } } : { unreadA: { increment: 1 } }),
+        },
+      }),
+    ]);
+    return { id: message.id, content: message.content, createdAt: message.createdAt, mine: true };
+  },
+
+  async unreadMessageCount(userId: string) {
+    const rows = await prisma.conversation.findMany({
+      where: { OR: [{ userAId: userId }, { userBId: userId }] },
+      select: { userAId: true, unreadA: true, unreadB: true },
+    });
+    return rows.reduce((sum, c) => sum + (c.userAId === userId ? c.unreadA : c.unreadB), 0);
+  },
+
   // —— 收藏 ——
   async toggleFavorite(userId: string, postId: string) {
     const key = { userId_postId: { userId, postId } };
