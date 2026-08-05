@@ -13,7 +13,9 @@ datasource db {
 // 匿名用户：访客打开链接即自动创建（cookie 标识），无需注册，最适合扫码演示
 model User {
   id            String         @id @default(cuid())
-  phone         String?        @unique // 手机号登录后绑定；游客为 null
+  phone         String?        @unique // 账号（手机号）；游客为 null
+  email         String?        @unique // 账号（邮箱）；与 phone 二选一即可注册
+  passwordHash  String? // scrypt 加盐哈希（格式见 server/password.ts）；游客为 null
   nickname      String?
   avatarEmoji   String? // 头像（emoji，走 Fluent 图集渲染）
   // 自定义头像照片：压缩后的 dataURL。不直接下发给列表接口，
@@ -31,6 +33,7 @@ model User {
   posts         Post[]
   postLikes     PostLike[]
   postFavorites PostFavorite[]
+  dmSent        DirectMessage[] @relation("dmSender")
   addresses     Address[]
   comments      Comment[]
   reviews       Review[]
@@ -246,6 +249,36 @@ model Order {
   address   String? // JSON 快照：{name,phone,province,city,district,detail}（下单时的收货信息，地址簿后续修改不影响历史订单）
   delivery  String? // standard | express
   createdAt DateTime @default(now())
+}
+
+// 私信会话：两人一条，userAId < userBId 归一化排序，保证同一对人只有一条会话
+model Conversation {
+  id            String          @id @default(cuid())
+  userAId       String
+  userBId       String
+  lastMessage   String? // 最后一条消息摘要（会话列表直接展示，避免额外查询）
+  lastMessageAt DateTime        @default(now())
+  // 各自未读数：发消息时给对方 +1，对方读完清零
+  unreadA       Int             @default(0)
+  unreadB       Int             @default(0)
+  messages      DirectMessage[]
+
+  @@unique([userAId, userBId])
+  @@index([userAId, lastMessageAt])
+  @@index([userBId, lastMessageAt])
+}
+
+// 私信消息
+model DirectMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("dmSender", fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
 }
 
 // AI 助手每日用量：按用户+日期计数，用于会员额度（游客/会员每日对话次数不同）
