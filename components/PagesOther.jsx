@@ -1,8 +1,8 @@
 // 科普列表 + 文章详情 + 结算 + 会员中心（宠物档案接真实 /api/pets）
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { fmt } from './util';
 import { ARTICLES, ARTICLE_CATS, PRODUCTS } from './data';
-import { ArticleCard, ProductCard, FloatEmoji } from './ui';
+import { ArticleCard, ProductCard, FloatEmoji, Avatar } from './ui';
 import { Emoji } from './Emoji';
 import { VideoSlot } from './VideoSlot';
 import { PET_CONTENT_FILTERS, PET_SPECIES, RODENT_ALIASES, getPetSpecies } from '@/lib/pet-species';
@@ -495,7 +495,9 @@ export function MemberPage({ navigate, initialTab }) {
         <div className="container">
           <div className="m-1col m-pad" style={{ background: 'var(--ink)', color: '#F5F9F2', borderRadius: 22, padding: '40px 48px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             <div className="float-deco" style={{ position: 'absolute', right: -20, bottom: -60, opacity: .08, '--fd': '11s', '--rd': '2deg' }}><Emoji text="🐾" size={260} /></div>
-            <div style={{ width: 88, height: 88, borderRadius: 999, background: 'var(--accent)', border: '3px solid rgba(247,242,229,.6)', display: 'grid', placeItems: 'center' }}><Emoji text={me?.avatarEmoji || '🐱'} size={44} /></div>
+            <div style={{ borderRadius: 999, border: '3px solid rgba(247,242,229,.6)', background: 'var(--accent)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <Avatar url={me?.avatarUrl} emoji={me?.avatarEmoji || '🐱'} size={88} style={{ background: 'transparent' }} />
+            </div>
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, margin: 0 }}>
@@ -1153,48 +1155,119 @@ function HealthTab() {
 // —— 资料编辑：头像 emoji / 昵称 / 简介 ——
 function ProfileEditDialog({ me, onClose, onSaved }) {
   const AVATARS = ['👤', '🐶', '🐱', '🐾', '🦴', '🎾', '🧶', '😺', '🐕', '🍼', '🌿', '⭐'];
+  const GENDERS = [{ id: 'female', label: '女生', emoji: '👧' }, { id: 'male', label: '男生', emoji: '👦' }, { id: 'other', label: '不展示', emoji: '🐾' }];
   const [form, setForm] = useState({
-    nickname: me?.nickname || '', avatarEmoji: me?.avatarEmoji || '👤', bio: me?.bio || '',
+    nickname: me?.nickname || '',
+    avatarEmoji: me?.avatarEmoji || '👤',
+    bio: me?.bio || '',
+    gender: me?.gender || '',
+    birthday: me?.birthday ? String(me.birthday).slice(0, 10) : '',
+    location: me?.location || '',
   });
+  // 上传的头像照片：null=未改动，''=清除改回 emoji，dataURL=新照片
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const fileRef = useRef(null);
+  const preview = avatarUrl === null ? me?.avatarUrl : (avatarUrl || null);
+
+  async function pickAvatar(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { setError('请选择图片文件'); return; }
+    setError('');
+    try {
+      const { compressImage } = await import('./PagesCommunity');
+      // 头像裁成正方形小图，控制在几十 KB
+      setAvatarUrl(await compressImage(file, { max: 320, quality: 0.82, square: true }));
+    } catch { setError('图片处理失败，换一张试试'); }
+  }
 
   async function save() {
     setSaving(true); setError('');
     try {
+      const payload = { ...form };
+      if (avatarUrl !== null) payload.avatarUrl = avatarUrl;
       const r = await fetch('/api/profile', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || '保存失败'); }
       onSaved();
     } catch (e) { setError(e.message); setSaving(false); }
   }
 
+  const label = { fontSize: 12, color: 'var(--ink-3)', marginBottom: 6, marginTop: 14 };
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.4)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label="编辑资料" style={{
-        position: 'relative', width: 'min(440px, 100%)', background: 'var(--bg)', borderRadius: 20, padding: 28,
+        position: 'relative', width: 'min(460px, 100%)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',
+        background: 'var(--bg)', borderRadius: 20, padding: 28,
         boxShadow: '0 24px 64px -16px rgba(31,42,29,.35)', animation: 'dialogIn .25s ease both',
       }}>
         <h2 className="serif" style={{ fontSize: 22, fontWeight: 600, margin: '0 0 18px' }}>编辑资料</h2>
-        <div className="caption" style={{ marginBottom: 8 }}>头像</div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+
+        {/* 头像：上传照片优先，也可退回 emoji 头像 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Avatar url={preview} emoji={form.avatarEmoji} size={72} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+            <button className="btn btn-line btn-sm" onClick={() => fileRef.current?.click()}>上传照片</button>
+            {preview && <button className="btn btn-ghost btn-sm" onClick={() => setAvatarUrl('')} style={{ color: 'var(--ink-3)' }}>移除照片</button>}
+            <input ref={fileRef} type="file" accept="image/*" onChange={pickAvatar} style={{ display: 'none' }} />
+          </div>
+        </div>
+
+        <div style={label}>或选一个表情头像</div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {AVATARS.map((a) => (
-            <button key={a} onClick={() => setForm({ ...form, avatarEmoji: a })} aria-label={`头像 ${a}`}
-              style={{ width: 40, height: 40, borderRadius: 999, border: form.avatarEmoji === a ? '2px solid var(--ink)' : '1px solid var(--line-2)', background: 'var(--surface)', display: 'grid', placeItems: 'center', padding: 0 }}>
-              <Emoji text={a} size={22} />
+            <button key={a} onClick={() => { setForm({ ...form, avatarEmoji: a }); setAvatarUrl(''); }} aria-label={`头像 ${a}`}
+              style={{ width: 38, height: 38, borderRadius: 999, border: !preview && form.avatarEmoji === a ? '2px solid var(--ink)' : '1px solid var(--line-2)', background: 'var(--surface)', display: 'grid', placeItems: 'center', padding: 0 }}>
+              <Emoji text={a} size={20} />
             </button>
           ))}
         </div>
+
+        <div style={label}>昵称</div>
         <input className="input" placeholder="昵称（对外显示）" maxLength={20} value={form.nickname}
           onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+
+        <div style={label}>简介</div>
         <textarea className="input" placeholder="一句话介绍自己（最多 60 字）" maxLength={60} rows={2} value={form.bio}
           onChange={(e) => setForm({ ...form, bio: e.target.value })}
-          style={{ marginTop: 10, resize: 'none', height: 'auto', lineHeight: 1.5, paddingTop: 10, borderRadius: 12 }} />
-        {error && <div style={{ color: 'var(--accent)', fontSize: 13, marginTop: 10 }}>{error}</div>}
-        <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+          style={{ resize: 'none', height: 'auto', lineHeight: 1.5, paddingTop: 10, borderRadius: 12 }} />
+
+        <div style={label}>性别</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {GENDERS.map((g) => (
+            <button key={g.id} onClick={() => setForm({ ...form, gender: form.gender === g.id ? '' : g.id })}
+              style={{ height: 36, padding: '0 14px', borderRadius: 999, cursor: 'pointer',
+                border: form.gender === g.id ? '1px solid var(--ink)' : '1px solid var(--line-2)',
+                background: form.gender === g.id ? 'var(--ink)' : 'var(--surface)',
+                color: form.gender === g.id ? 'var(--bg)' : 'var(--ink)', fontSize: 13,
+                display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Emoji text={g.emoji} size={14} /> {g.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="m-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <div style={label}>生日（主页只显示月日与星座）</div>
+            <input className="input" type="date" value={form.birthday} max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setForm({ ...form, birthday: e.target.value })} />
+          </div>
+          <div>
+            <div style={label}>常居地</div>
+            <input className="input" placeholder="如 上海" maxLength={20} value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })} />
+          </div>
+        </div>
+
+        {error && <div style={{ color: 'var(--accent)', fontSize: 13, marginTop: 12 }}>{error}</div>}
+        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={save} disabled={saving}>{saving ? '保存中…' : '保存'}</button>
           <button className="btn btn-line" onClick={onClose}>取消</button>
         </div>

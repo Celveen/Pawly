@@ -3,7 +3,7 @@
 //  - 分离模式：server/index.ts 起独立进程，只监听内网，Next 侧经 HTTP 转发到这里
 //  - 单体模式（Vercel 演示）：Next 的 API 路由经 lib/gateway.ts 直接进程内调用
 import { prisma } from './db/prisma';
-import { store } from './db/store';
+import { store, avatarUrlOf } from './db/store';
 import { runAgent } from './agent/runAgent';
 import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured } from './auth';
 import { petSnapshot, birthdayFromAgeMonths } from './pets';
@@ -272,10 +272,72 @@ export const services: Record<string, Handler> = {
     const nickname = b?.nickname !== undefined ? String(b.nickname).trim().slice(0, 20) : undefined;
     const bio = b?.bio !== undefined ? String(b.bio).trim().slice(0, 60) : undefined;
     const avatarEmoji = b?.avatarEmoji !== undefined ? String(b.avatarEmoji).slice(0, 8) : undefined;
-    const hit = findViolationIn(nickname, bio);
+    const location = b?.location !== undefined ? String(b.location).trim().slice(0, 20) : undefined;
+
+    // 性别：仅接受三个枚举值，空串表示"不展示"
+    let gender: string | null | undefined;
+    if (b?.gender !== undefined) {
+      const g = String(b.gender || '');
+      if (g && !['female', 'male', 'other'].includes(g)) throw new RpcError(400, '性别取值不合法');
+      gender = g || null;
+    }
+
+    // 生日：YYYY-MM-DD，空串表示清空；限制在合理区间内
+    let birthday: Date | null | undefined;
+    if (b?.birthday !== undefined) {
+      const raw = String(b.birthday || '').trim();
+      if (!raw) birthday = null;
+      else {
+        const d = new Date(raw + 'T00:00:00Z');
+        if (Number.isNaN(d.getTime())) throw new RpcError(400, '生日格式不正确');
+        const year = d.getUTCFullYear();
+        if (year < 1900 || d.getTime() > Date.now()) throw new RpcError(400, '生日超出合理范围');
+        birthday = d;
+      }
+    }
+
+    // 头像照片：压缩后的 dataURL，空串表示改回 emoji 头像
+    let avatarUrl: string | null | undefined;
+    if (b?.avatarUrl !== undefined) {
+      const raw = String(b.avatarUrl || '');
+      if (!raw) avatarUrl = null;
+      else {
+        if (!/^data:image\/(jpeg|png|webp);base64,/.test(raw)) throw new RpcError(400, '头像格式不支持');
+        if (raw.length > 400_000) throw new RpcError(400, '头像文件过大，请换一张');
+        avatarUrl = raw;
+      }
+    }
+
+    const hit = findViolationIn(nickname, bio, location);
     if (hit) throw new RpcError(400, `包含违规词「${hit}」，请修改`);
     await ensureUser(userId);
-    return store.updateProfile(userId, { nickname, avatarEmoji, bio });
+    return store.updateProfile(userId, { nickname, avatarEmoji, bio, gender, birthday, location, avatarUrl });
+  },
+
+  // 头像图片本体（由 /api/avatar 解码返回；公开可读，无需登录）
+  'profile.avatar': async (_userId, b) => ({ dataUrl: await store.getAvatar(String(b?.userId || '')) }),
+
+  // 粉丝 / 关注 名单
+  'profile.follows': async (userId, b) => {
+    const target = String(b?.userId || userId);
+    const kind = b?.kind === 'following' ? 'following' : 'followers';
+    return { users: await store.listFollowUsers(target, userId, kind) };
+  },
+
+  // 收藏与赞过：只允许查看自己的（与小红书一致，他人主页不暴露）
+  'profile.collection': async (userId, b) => {
+    const kind = b?.kind === 'liked' ? 'liked' : 'favorites';
+    const posts = kind === 'liked'
+      ? await store.listLikedPosts(userId, userId)
+      : await store.listFavoritePosts(userId, userId);
+    return { posts };
+  },
+
+  'posts.favorite': async (userId, b) => {
+    const postId = String(b?.postId || '');
+    if (!postId) throw new RpcError(400, '缺少 postId');
+    await ensureUser(userId);
+    return store.toggleFavorite(userId, postId);
   },
 
   // —— 通知 ——
@@ -470,7 +532,11 @@ export const services: Record<string, Handler> = {
       id: userId,
       nickname: user?.nickname || null,
       avatarEmoji: user?.avatarEmoji || null,
+      avatarUrl: user ? avatarUrlOf(user) : null,
       bio: user?.bio || null,
+      gender: user?.gender || null,
+      birthday: user?.birthday || null,
+      location: user?.location || null,
       points: user?.points || 0,
     };
     if (!user?.phone) return { guest: true, ...pub };

@@ -16,6 +16,13 @@ model User {
   phone         String?        @unique // 手机号登录后绑定；游客为 null
   nickname      String?
   avatarEmoji   String? // 头像（emoji，走 Fluent 图集渲染）
+  // 自定义头像照片：压缩后的 dataURL。不直接下发给列表接口，
+  // 由 /api/avatar/<userId> 解码成图片返回（带缓存），避免帖子列表载荷膨胀。
+  avatarUrl       String?
+  avatarUpdatedAt DateTime? // 头像更新时间，用于图片 URL 上的缓存版本号
+  gender          String? // female | male | other（不填则不展示）
+  birthday        DateTime? // 生日（仅展示月日与星座，不展示年份）
+  location        String? // 常居地（城市，自由填写）
   bio           String? // 个人简介（对外主页展示）
   points        Int            @default(0) // 签到/互动积分
   createdAt     DateTime       @default(now())
@@ -23,6 +30,7 @@ model User {
   orders        Order[]
   posts         Post[]
   postLikes     PostLike[]
+  postFavorites PostFavorite[]
   addresses     Address[]
   comments      Comment[]
   reviews       Review[]
@@ -112,6 +120,7 @@ model Post {
   status    String     @default("visible") // visible | hidden（预留人工/机审下架）
   createdAt DateTime   @default(now())
   likes     PostLike[]
+  favorites PostFavorite[]
   comments  Comment[]
 
   @@index([createdAt])
@@ -212,6 +221,18 @@ model PostLike {
   createdAt DateTime @default(now())
 
   @@id([userId, postId])
+}
+
+// 收藏：与点赞平行的一层轻互动，个人主页「收藏」页按此列出
+model PostFavorite {
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
+  @@index([userId, createdAt])
 }
 
 // 订单：待支付（不扣款，付款由用户确认）

@@ -6,6 +6,19 @@ import { ARTICLE_CATS, PRODUCTS, ARTICLES } from './data';
 import { Emoji } from './Emoji';
 import { getPetSpecies } from '@/lib/pet-species';
 
+// 头像：优先显示用户上传的照片（走 /api/avatar 带缓存），没有则回退到 emoji 头像。
+// 全站统一用它渲染，保证换头像后各处一致。
+export function Avatar({ url, emoji = '🐾', size = 32, ring, style }) {
+  const box = {
+    width: size, height: size, borderRadius: 999, flexShrink: 0,
+    background: 'var(--surface-2)', display: 'grid', placeItems: 'center', overflow: 'hidden',
+    ...(ring ? { border: `${ring}px solid var(--surface)` } : {}),
+    ...style,
+  };
+  if (url) return <span style={box}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} /></span>;
+  return <span style={box}><Emoji text={emoji || '🐾'} size={Math.round(size * 0.56)} /></span>;
+}
+
 // 漂浮装饰贴纸：绝对定位的 emoji，轻柔浮动（reduced-motion 自动静止；默认小屏隐藏）
 // 用法：父容器 position:relative，<FloatEmoji e="🎾" size={40} style={{ right: 20, top: 8 }} r={-10} dur={7.5} delay={.6} />
 export const FloatEmoji = ({ e, size = 40, style, r = 0, rd = 3, dur = 7, delay = 0, mobile = false }) => (
