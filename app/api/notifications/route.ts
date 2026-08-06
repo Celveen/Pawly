@@ -7,9 +7,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const unread = new URL(req.url).searchParams.get('unread');
+  const sp = new URL(req.url).searchParams;
+  const unread = sp.get('unread');
   const op = unread ? 'notifications.unread' : 'notifications.list';
-  const r = await rpc(op, getOrCreateUserId(), {});
+  const r = await rpc(op, getOrCreateUserId(), { kind: sp.get('kind') });
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
   return NextResponse.json(r.data);
 }
