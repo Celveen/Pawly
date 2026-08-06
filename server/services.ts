@@ -345,11 +345,24 @@ export const services: Record<string, Handler> = {
     const postId = String(b?.postId || '');
     if (!postId) throw new RpcError(400, '缺少 postId');
     await ensureUser(userId);
-    return store.toggleFavorite(userId, postId);
+    const r = await store.toggleFavorite(userId, postId);
+    if (r.favorited) {
+      // 收藏通知（尽力而为，不影响主流程）
+      try {
+        const post = await prisma.post.findUnique({ where: { id: postId }, select: { userId: true, title: true } });
+        const actor = await prisma.user.findUnique({ where: { id: userId }, select: { nickname: true } });
+        if (post) await store.createNotification({
+          userId: post.userId, type: 'favorite', actorId: userId,
+          actorName: actor?.nickname || '铲屎官' + userId.slice(-4),
+          postId, content: `收藏了你的帖子「${post.title.slice(0, 20)}」`,
+        });
+      } catch {}
+    }
+    return r;
   },
 
   // —— 通知 ——
-  'notifications.list': async (userId) => store.listNotifications(userId),
+  'notifications.list': async (userId, b) => store.listNotifications(userId, b?.kind ? String(b.kind) : undefined),
   'notifications.unread': async (userId) => ({ count: await store.unreadNotificationCount(userId) }),
   'notifications.read': async (userId) => store.markNotificationsRead(userId),
 
@@ -577,15 +590,31 @@ export const services: Record<string, Handler> = {
     await requireAccount(userId);
     const peerId = String(b?.peerId || '');
     const content = String(b?.content || '').trim();
+    // 图片：客户端已压缩，这里做数量、格式与体积兜底
+    const images: string[] = Array.isArray(b?.images) ? b.images.map(String) : [];
     if (!peerId) throw new RpcError(400, '缺少 peerId');
     if (peerId === userId) throw new RpcError(400, '不能给自己发消息');
-    if (!content) throw new RpcError(400, '消息不能为空');
+    if (!content && images.length === 0) throw new RpcError(400, '消息不能为空');
     if (content.length > 500) throw new RpcError(400, '单条消息最多 500 字');
+    if (images.length > 3) throw new RpcError(400, '单条消息最多 3 张图片');
+    for (const img of images) {
+      if (!/^data:image\/(jpeg|png|webp);base64,/.test(img) && !/^https?:\/\//.test(img)) {
+        throw new RpcError(400, '图片格式不支持');
+      }
+      if (img.length > 600_000) throw new RpcError(400, '图片过大，请换一张');
+    }
     const hit = findViolationIn(content);
     if (hit) throw new RpcError(400, `包含违规词「${hit}」，请修改`);
     const peer = await prisma.user.findUnique({ where: { id: peerId }, select: { id: true } });
     if (!peer) throw new RpcError(404, '用户不存在');
-    return store.sendMessage(userId, peerId, content);
+    return store.sendMessage(userId, peerId, content, images);
+  },
+
+  'dm.delete': async (userId, b) => {
+    await requireAccount(userId);
+    const peerId = String(b?.peerId || '');
+    if (!peerId) throw new RpcError(400, '缺少 peerId');
+    return store.deleteConversation(userId, peerId);
   },
 
   'dm.unread': async (userId) => {

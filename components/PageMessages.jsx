@@ -4,7 +4,27 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Emoji } from './Emoji';
 import { Avatar } from './ui';
-import { timeAgo } from './PagesCommunity';
+import { timeAgo, compressImage } from './PagesCommunity';
+
+// 聊天常用表情：从站内 Fluent 图集里挑一组养宠场景用得上的
+const CHAT_EMOJIS = [
+  '😺', '😸', '🐱', '🐶', '🐕', '🐾', '🦴', '🎾', '🧶', '🥣',
+  '🍗', '🐟', '🩺', '💊', '💉', '🧴', '🛁', '🏠', '📦', '🌿',
+  '✨', '⭐', '🎁', '🎉', '💚', '👍', '🙏', '😂', '🥹', '👀',
+];
+
+// 两条消息间隔超过 5 分钟就插一条时间分隔，避免每条都挂时间戳显得碎
+const TIME_GAP_MS = 5 * 60 * 1000;
+function dayLabel(iso) {
+  const d = new Date(iso);
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  if (sameDay) return hhmm;
+  const yesterday = new Date(today.getTime() - 86400000);
+  if (d.toDateString() === yesterday.toDateString()) return `昨天 ${hhmm}`;
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${hhmm}`;
+}
 
 export function MessagesPage({ navigate, initialPeerId }) {
   const [conversations, setConversations] = useState(null);
@@ -94,7 +114,8 @@ export function MessagesPage({ navigate, initialPeerId }) {
             {/* 对话窗 */}
             <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 520 }}>
               {peerId ? (
-                <ChatThread peerId={peerId} navigate={navigate} onSent={loadConversations} onRead={loadConversations} />
+                <ChatThread peerId={peerId} navigate={navigate} onSent={loadConversations} onRead={loadConversations}
+                  onDeleted={() => { setPeerId(null); loadConversations(); }} />
               ) : (
                 <div style={{ flex: 1, display: 'grid', placeItems: 'center', padding: 40, textAlign: 'center' }}>
                   <div>
@@ -111,13 +132,19 @@ export function MessagesPage({ navigate, initialPeerId }) {
   );
 }
 
-// 单个对话：消息气泡 + 输入框，5 秒轮询增量
-export function ChatThread({ peerId, navigate, onSent, onRead, compact }) {
+// 单个对话：消息气泡（支持图片）+ 表情面板 + 已读回执，5 秒轮询增量
+export function ChatThread({ peerId, navigate, onSent, onRead, onDeleted }) {
   const [data, setData] = useState(null);
   const [text, setText] = useState('');
+  const [pending, setPending] = useState([]); // 待发送的图片（dataURL）
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
   const scrollRef = useRef(null);
+  const fileRef = useRef(null);
+  const emojiRef = useRef(null);
+  const inputRef = useRef(null);
   const atBottomRef = useRef(true);
 
   const load = useCallback(async (silent = false) => {
@@ -130,39 +157,78 @@ export function ChatThread({ peerId, navigate, onSent, onRead, compact }) {
     } catch (e) { if (!silent) setError(e.message); }
   }, [peerId, onRead]);
 
-  useEffect(() => { setData(null); setError(''); load(); }, [load]);
+  useEffect(() => { setData(null); setError(''); setPending([]); load(); }, [load]);
   useEffect(() => {
     const t = setInterval(() => load(true), 5000);
     return () => clearInterval(t);
   }, [load]);
 
+  // 点面板外关闭表情盘
+  useEffect(() => {
+    if (!emojiOpen) return;
+    const onDown = (e) => { if (emojiRef.current && !emojiRef.current.contains(e.target)) setEmojiOpen(false); };
+    window.addEventListener('pointerdown', onDown);
+    return () => window.removeEventListener('pointerdown', onDown);
+  }, [emojiOpen]);
+
   // 只有原本就贴着底部时才自动滚到底，避免打断正在往上翻看历史的用户
   useEffect(() => {
     const el = scrollRef.current;
     if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
-  }, [data?.messages?.length]);
+  }, [data?.messages?.length, pending.length]);
+
+  async function pickImages(e) {
+    const files = [...(e.target.files || [])];
+    e.target.value = '';
+    if (!files.length) return;
+    const room = 3 - pending.length;
+    if (room <= 0) { setError('单条消息最多 3 张图片'); return; }
+    setError('');
+    try {
+      const shots = await Promise.all(files.slice(0, room).map((f) => compressImage(f, { max: 1080, quality: 0.72 })));
+      setPending((p) => [...p, ...shots]);
+    } catch { setError('图片处理失败，换一张试试'); }
+  }
+
+  function insertEmoji(em) {
+    setText((t) => (t + em).slice(0, 500));
+    inputRef.current?.focus();
+  }
 
   async function send() {
     const content = text.trim();
-    if (!content || sending) return;
+    if ((!content && pending.length === 0) || sending) return;
     setSending(true); setError('');
     try {
       const r = await fetch('/api/dm', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ peerId, content }),
+        body: JSON.stringify({ peerId, content, images: pending }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || '发送失败');
-      setText('');
+      setText(''); setPending([]); setEmojiOpen(false);
       atBottomRef.current = true;
       setData((prev) => (prev ? { ...prev, messages: [...prev.messages, d] } : prev));
       onSent?.();
     } catch (e) { setError(e.message); } finally { setSending(false); }
   }
 
+  async function removeConversation() {
+    if (!window.confirm('删除后这段聊天记录双方都看不到了，确定删除吗？')) return;
+    try {
+      await fetch(`/api/dm?peerId=${encodeURIComponent(peerId)}`, { method: 'DELETE' });
+      onDeleted?.();
+    } catch {}
+  }
+
+  const messages = data?.messages || [];
+  const peerReadAt = data?.peerReadAt ? new Date(data.peerReadAt).getTime() : 0;
+  // 我发的最后一条：若对方已读到它之后，就在气泡下标"已读"
+  const lastMineIdx = (() => { for (let i = messages.length - 1; i >= 0; i--) if (messages[i].mine) return i; return -1; })();
+
   return (
     <>
-      {/* 对话头：点昵称进对方主页 */}
+      {/* 对话头：点昵称进对方主页；右侧删除会话 */}
       <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         {data?.peer ? (
           <button onClick={() => navigate?.({ page: 'profile', userId: data.peer.id })}
@@ -171,6 +237,15 @@ export function ChatThread({ peerId, navigate, onSent, onRead, compact }) {
             <span style={{ fontSize: 14, fontWeight: 600 }}>{data.peer.nickname}</span>
           </button>
         ) : <span className="caption">加载中…</span>}
+        <span style={{ flex: 1 }} />
+        {data?.peer && (
+          <button onClick={removeConversation} className="btn btn-ghost btn-sm" title="删除会话"
+            style={{ width: 32, padding: 0, justifyContent: 'center', color: 'var(--ink-3)' }} aria-label="删除会话">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* 消息列表 */}
@@ -179,40 +254,108 @@ export function ChatThread({ peerId, navigate, onSent, onRead, compact }) {
           const el = e.currentTarget;
           atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
         }}
-        style={{ flex: 1, overflowY: 'auto', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10, minHeight: compact ? 260 : 320 }}>
+        style={{ flex: 1, overflowY: 'auto', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 4, minHeight: 320 }}>
         {data === null && !error && <p className="caption" style={{ textAlign: 'center', margin: 'auto' }}>加载中…</p>}
-        {data?.messages?.length === 0 && (
+        {data && messages.length === 0 && (
           <p className="caption" style={{ textAlign: 'center', margin: 'auto' }}>还没有消息，打个招呼吧～</p>
         )}
-        {data?.messages?.map((m) => (
-          <div key={m.id} style={{ display: 'flex', justifyContent: m.mine ? 'flex-end' : 'flex-start' }}>
-            <div style={{ maxWidth: '72%' }}>
-              <div style={{
-                padding: '10px 14px', borderRadius: 16,
-                borderBottomRightRadius: m.mine ? 4 : 16, borderBottomLeftRadius: m.mine ? 16 : 4,
-                background: m.mine ? 'var(--ink)' : 'var(--surface-2)',
-                color: m.mine ? 'var(--bg)' : 'var(--ink)',
-                fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-              }}>{m.content}</div>
-              <div className="caption" style={{ fontSize: 11, marginTop: 4, textAlign: m.mine ? 'right' : 'left' }}>{timeAgo(m.createdAt)}</div>
+        {messages.map((m, i) => {
+          const prev = messages[i - 1];
+          const showTime = !prev || new Date(m.createdAt) - new Date(prev.createdAt) > TIME_GAP_MS;
+          const read = m.mine && i === lastMineIdx && peerReadAt >= new Date(m.createdAt).getTime();
+          return (
+            <div key={m.id}>
+              {showTime && (
+                <div className="caption" style={{ textAlign: 'center', fontSize: 11, margin: '10px 0 6px' }}>{dayLabel(m.createdAt)}</div>
+              )}
+              <div style={{ display: 'flex', justifyContent: m.mine ? 'flex-end' : 'flex-start', marginBottom: 6 }}>
+                <div style={{ maxWidth: '72%' }}>
+                  {m.content && (
+                    <div style={{
+                      padding: '10px 14px', borderRadius: 16,
+                      borderBottomRightRadius: m.mine ? 4 : 16, borderBottomLeftRadius: m.mine ? 16 : 4,
+                      background: m.mine ? 'var(--ink)' : 'var(--surface-2)',
+                      color: m.mine ? 'var(--bg)' : 'var(--ink)',
+                      fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                    }}>{m.content}</div>
+                  )}
+                  {m.images?.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: m.content ? 6 : 0, justifyContent: m.mine ? 'flex-end' : 'flex-start' }}>
+                      {m.images.map((src, k) => (
+                        <img key={k} src={src} alt="" onClick={() => setLightbox(src)}
+                          style={{ width: m.images.length === 1 ? 160 : 96, height: m.images.length === 1 ? 160 : 96,
+                            objectFit: 'cover', borderRadius: 12, cursor: 'zoom-in', border: '1px solid var(--line-2)' }} />
+                      ))}
+                    </div>
+                  )}
+                  {read && <div className="caption" style={{ fontSize: 10.5, marginTop: 3, textAlign: 'right' }}>已读</div>}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* 输入区：Enter 发送，Shift+Enter 换行 */}
-      <div style={{ borderTop: '1px solid var(--line-2)', padding: 14, flexShrink: 0 }}>
+      {/* 输入区：表情、图片、待发送预览 */}
+      <div style={{ borderTop: '1px solid var(--line-2)', padding: 14, flexShrink: 0, position: 'relative' }}>
         {error && <div className="caption" style={{ color: 'var(--accent)', marginBottom: 8 }}>{error}</div>}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-          <textarea className="input" rows={1} placeholder="说点什么…（Enter 发送）"
+
+        {pending.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            {pending.map((src, i) => (
+              <div key={i} style={{ position: 'relative' }}>
+                <img src={src} alt="" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line-2)' }} />
+                <button onClick={() => setPending((p) => p.filter((_, k) => k !== i))} aria-label="移除图片"
+                  style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: 999, border: 0,
+                    background: 'var(--ink)', color: 'var(--bg)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }}>×</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {emojiOpen && (
+          <div ref={emojiRef} style={{
+            position: 'absolute', left: 14, bottom: 70, width: 300, padding: 10, zIndex: 5,
+            background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 14,
+            boxShadow: 'var(--shadow-lg)', display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4,
+          }}>
+            {CHAT_EMOJIS.map((em) => (
+              <button key={em} onClick={() => insertEmoji(em)} aria-label={em}
+                style={{ border: 0, background: 'transparent', padding: 4, cursor: 'pointer', borderRadius: 6, lineHeight: 0 }}>
+                <Emoji text={em} size={20} />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+          <button onClick={() => setEmojiOpen((v) => !v)} className="btn btn-ghost btn-sm" aria-label="表情"
+            style={{ width: 38, padding: 0, justifyContent: 'center', flexShrink: 0 }}>
+            <Emoji text="😺" size={18} />
+          </button>
+          <button onClick={() => fileRef.current?.click()} className="btn btn-ghost btn-sm" aria-label="发送图片"
+            style={{ width: 38, padding: 0, justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m4 18 5-5 4 4 3-3 4 4" />
+            </svg>
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" multiple onChange={pickImages} style={{ display: 'none' }} />
+          <textarea ref={inputRef} className="input" rows={1} placeholder="说点什么…（Enter 发送）"
             maxLength={500} value={text} onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
             style={{ flex: 1, resize: 'none', height: 'auto', minHeight: 46, paddingTop: 12, lineHeight: 1.5, borderRadius: 12 }} />
-          <button className="btn btn-primary" onClick={send} disabled={sending || !text.trim()}>
+          <button className="btn btn-primary" onClick={send} disabled={sending || (!text.trim() && pending.length === 0)}>
             {sending ? '发送中' : '发送'}
           </button>
         </div>
       </div>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(31,42,29,.86)', display: 'grid', placeItems: 'center', padding: 24, cursor: 'zoom-out' }}>
+          <img src={lightbox} alt="" style={{ maxWidth: '92vw', maxHeight: '88vh', borderRadius: 12 }} />
+        </div>
+      )}
     </>
   );
 }

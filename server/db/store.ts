@@ -552,7 +552,7 @@ export const store = {
       .filter((c) => peerMap.has(c.peerId));
   },
 
-  // 打开会话即视为已读，把自己这一侧的未读清零
+  // 打开会话即视为已读：清零自己这一侧未读，并记录已读时间（供对方看到"已读"）
   async listMessages(userId: string, peerId: string, markRead = true) {
     const conv = await this.getOrCreateConversation(userId, peerId);
     const messages = await prisma.directMessage.findMany({
@@ -560,12 +560,15 @@ export const store = {
       orderBy: { createdAt: 'asc' },
       take: 200,
     });
+    const isA = conv.userAId === userId;
     if (markRead) {
-      const field = conv.userAId === userId ? 'unreadA' : 'unreadB';
-      if ((conv as any)[field] > 0) {
-        await prisma.conversation.update({ where: { id: conv.id }, data: { [field]: 0 } });
-      }
+      await prisma.conversation.update({
+        where: { id: conv.id },
+        data: isA ? { unreadA: 0, readAtA: new Date() } : { unreadB: 0, readAtB: new Date() },
+      });
     }
+    // 对方读到哪一刻：我发的消息早于这个时间就显示"已读"
+    const peerReadAt = isA ? conv.readAtB : conv.readAtA;
     const peer = await prisma.user.findUnique({
       where: { id: peerId },
       select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true },
@@ -578,31 +581,46 @@ export const store = {
         avatarEmoji: peer.avatarEmoji || '👤',
         avatarUrl: avatarUrlOf(peer),
       },
+      peerReadAt,
       messages: messages.map((m) => ({
         id: m.id,
         content: m.content,
+        images: m.images ? JSON.parse(m.images) : [],
         createdAt: m.createdAt,
         mine: m.senderId === userId,
       })),
     };
   },
 
-  async sendMessage(userId: string, peerId: string, content: string) {
+  async sendMessage(userId: string, peerId: string, content: string, images: string[] = []) {
     const conv = await this.getOrCreateConversation(userId, peerId);
     const isA = conv.userAId === userId;
+    // 会话列表的摘要：纯图片消息显示"[图片]"
+    const summary = content ? content.slice(0, 60) : `[图片]${images.length > 1 ? ` ×${images.length}` : ''}`;
     const [message] = await prisma.$transaction([
-      prisma.directMessage.create({ data: { conversationId: conv.id, senderId: userId, content } }),
+      prisma.directMessage.create({
+        data: { conversationId: conv.id, senderId: userId, content, images: images.length ? JSON.stringify(images) : null },
+      }),
       prisma.conversation.update({
         where: { id: conv.id },
         data: {
-          lastMessage: content.slice(0, 60),
+          lastMessage: summary,
           lastMessageAt: new Date(),
           // 未读加在对方那一侧
           ...(isA ? { unreadB: { increment: 1 } } : { unreadA: { increment: 1 } }),
         },
       }),
     ]);
-    return { id: message.id, content: message.content, createdAt: message.createdAt, mine: true };
+    return { id: message.id, content: message.content, images, createdAt: message.createdAt, mine: true };
+  },
+
+  // 删除会话：连同消息一起清掉（onDelete: Cascade），双方都不再看到
+  async deleteConversation(userId: string, peerId: string) {
+    const [userAId, userBId] = userId < peerId ? [userId, peerId] : [peerId, userId];
+    const conv = await prisma.conversation.findUnique({ where: { userAId_userBId: { userAId, userBId } } });
+    if (!conv) return { ok: true };
+    await prisma.conversation.delete({ where: { id: conv.id } });
+    return { ok: true };
   },
 
   async unreadMessageCount(userId: string) {
@@ -671,8 +689,30 @@ export const store = {
     return prisma.notification.create({ data: { ...data, actorId: data.actorId || null } });
   },
 
-  async listNotifications(userId: string) {
-    return prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 30 });
+  // kind: all | interact（赞与收藏）| comment | follow
+  async listNotifications(userId: string, kind?: string) {
+    const typeFilter = kind === 'interact' ? { type: { in: ['like', 'favorite'] } }
+      : kind === 'comment' ? { type: 'comment' }
+      : kind === 'follow' ? { type: 'follow' }
+      : {};
+    const rows = await prisma.notification.findMany({
+      where: { userId, ...typeFilter },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    // 带上触发者头像，通知列表直接显示人像而不是干巴巴的类型图标
+    const actorIds = [...new Set(rows.map((n) => n.actorId).filter(Boolean) as string[])];
+    const actors = actorIds.length
+      ? await prisma.user.findMany({
+          where: { id: { in: actorIds } },
+          select: { id: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true },
+        })
+      : [];
+    const map = new Map(actors.map((a) => [a.id, a]));
+    return rows.map((n) => {
+      const a = n.actorId ? map.get(n.actorId) : null;
+      return { ...n, actorAvatar: a?.avatarEmoji || '👤', actorAvatarUrl: a ? avatarUrlOf(a) : null };
+    });
   },
 
   async unreadNotificationCount(userId: string) {

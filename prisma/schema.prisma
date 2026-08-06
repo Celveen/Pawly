@@ -261,6 +261,9 @@ model Conversation {
   // 各自未读数：发消息时给对方 +1，对方读完清零
   unreadA       Int             @default(0)
   unreadB       Int             @default(0)
+  // 各自最后一次读到的时间，用于给对方展示"已读"回执
+  readAtA       DateTime?
+  readAtB       DateTime?
   messages      DirectMessage[]
 
   @@unique([userAId, userBId])
@@ -275,7 +278,8 @@ model DirectMessage {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
   sender         User         @relation("dmSender", fields: [senderId], references: [id], onDelete: Cascade)
-  content        String
+  content        String // 纯文字内容；只发图片时为空串
+  images         String? // JSON 数组：图片（压缩后的 dataURL），最多 3 张
   createdAt      DateTime     @default(now())
 
   @@index([conversationId, createdAt])

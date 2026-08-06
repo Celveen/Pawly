@@ -42,7 +42,7 @@ export function parseAccount(raw: string): AccountKind | null {
 export function checkPasswordStrength(pw: string): string | null {
   const v = String(pw || '');
   if (v.length < 8) return '密码至少 8 位';
-  if (v.length > 64) return '密码最长 64 位';
+  if (v.length > 20) return '密码最长 20 位';
   if (!/[A-Za-z]/.test(v) || !/\d/.test(v)) return '密码需同时包含字母和数字';
   if (/^(.)\1+$/.test(v)) return '密码过于简单';
   return null;
