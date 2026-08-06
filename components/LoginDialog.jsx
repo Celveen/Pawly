@@ -1,6 +1,11 @@
 // 登录 / 注册弹窗：账号为手机号或邮箱 + 密码。
 // 顶栏「登录」按钮与会员页共用同一个组件，登录成功后由调用方刷新自身数据。
-import { useState } from 'react';
+//
+// 必须用 Portal 挂到 body：顶栏有 backdrop-filter 毛玻璃，而带 filter/backdrop-filter
+// 的元素会成为固定定位子元素的包含块——直接渲染在顶栏里的话，position:fixed 会相对顶栏
+// 那 76px 的盒子定位，弹窗被顶到页面上方且遮罩只盖住顶栏，点空白处关不掉。
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Emoji } from './Emoji';
 
 export function LoginDialog({ onClose, onLoggedIn }) {
@@ -9,6 +14,13 @@ export function LoginDialog({ onClose, onLoggedIn }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [showPw, setShowPw] = useState(false);
+
+  // Esc 关闭，兜底一个键盘出口
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   // 账号既可以是手机号也可以是邮箱，输入时实时判断类型给出提示
   const accountKind = /^1\d{10}$/.test(form.account.trim()) ? 'phone'
@@ -44,8 +56,8 @@ export function LoginDialog({ onClose, onLoggedIn }) {
     boxShadow: active ? 'var(--shadow-sm)' : 'none',
   });
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center', padding: 16 }}>
+  const dialog = (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'grid', placeItems: 'center', padding: 16 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(31,42,29,.35)', animation: 'fadeBg .2s ease' }} />
       <div role="dialog" aria-label={mode === 'register' ? '注册' : '登录'} style={{
         position: 'relative', width: 'min(420px, 100%)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',
@@ -124,4 +136,5 @@ export function LoginDialog({ onClose, onLoggedIn }) {
       </div>
     </div>
   );
+  return typeof document === 'undefined' ? dialog : createPortal(dialog, document.body);
 }
