@@ -1,11 +1,11 @@
-// 浮窗 AI 客服「宝莉助手」—— 集成进完整网站，调用后端 /api/chat（单主 Agent + 工具）
+// 浮窗 AI 客服「宝狸助手」—— 集成进完整网站，调用后端 /api/chat（单主 Agent + 工具）
 import { useState, useRef, useEffect } from 'react';
 import { fmt } from './util';
 import { PRODUCTS } from './data';
 import { Emoji } from './Emoji';
 import { CatMascot } from './Mascot';
 
-const ASSISTANT_NAME = '宝莉助手';
+const ASSISTANT_NAME = '宝狸助手';
 
 const PawIcon = ({ size = 26, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -247,7 +247,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
             boxShadow: '0 16px 36px -10px rgba(31,42,29,.35)',
             animation: 'hintPop .3s cubic-bezier(.22,.61,.36,1) both',
           }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝莉助手</div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝狸助手</div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.5 }}>
               试试问我「帮我家狗挑款狗粮」，照着你家毛孩子一步帮你选好 →
             </div>
@@ -266,7 +266,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         </>
       )}
 
-      <button onPointerDown={onLauncherDown} className="chat-launcher" aria-label="打开宝莉助手 (可拖动)" title="点击打开 · 长按拖动"
+      <button onPointerDown={onLauncherDown} className="chat-launcher" aria-label="打开宝狸助手 (可拖动)" title="点击打开 · 长按拖动"
         style={{
           position: 'fixed', left: pos.x, bottom: pos.y, zIndex: 80, width: 76, height: 76, borderRadius: 999,
           background: 'var(--surface)', border: '1px solid var(--line)',

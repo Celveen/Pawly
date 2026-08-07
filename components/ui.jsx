@@ -39,7 +39,7 @@ export const Logo = ({ size = 28 }) => (
       <path d="M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z" fill="currentColor" />
     </svg>
     <span className="serif" style={{ fontSize: 20, fontWeight: 600, letterSpacing: '0.01em' }}>Pawly</span>
-    <span className="logo-sub" style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500, marginLeft: -2 }}>宝莉</span>
+    <span className="logo-sub" style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500, marginLeft: -2 }}>宝狸</span>
   </div>
 );
 
@@ -513,7 +513,7 @@ export function Footer({ navigate }) {
       <div className="container">
         {/* 编辑风品牌陈述：大衬线句子压场 */}
         <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(244,248,242,.12)', position: 'relative', overflow: 'hidden' }}>
-          <div className="eyebrow" style={{ color: 'rgba(244,248,242,.45)', marginBottom: 20 }}>PAWLY · 宝莉</div>
+          <div className="eyebrow" style={{ color: 'rgba(244,248,242,.45)', marginBottom: 20 }}>PAWLY · 宝狸</div>
           <p className="serif m-h1" style={{ fontSize: 'clamp(28px, 3.6vw, 48px)', lineHeight: 1.22, margin: 0, color: '#F5F9F2', maxWidth: 760 }}>
             把宠物照顾明白这件事<br />没人天生就会 <span style={{ color: 'var(--green-soft)' }}>但可以问</span>
           </p>
@@ -554,7 +554,7 @@ export function Footer({ navigate }) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           fontSize: 12, color: 'rgba(255,255,255,.4)',
         }}>
-          <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗 · Emoji graphics by Microsoft Fluent Emoji (MIT)</span>
+          <span>© 2026 Pawly 宝狸 · 所有狗狗都是好狗狗 · Emoji graphics by Microsoft Fluent Emoji (MIT)</span>
           <span className="mono" style={{ whiteSpace: 'nowrap' }}>v 3.0 · 上海 → 你家门口</span>
         </div>
       </div>

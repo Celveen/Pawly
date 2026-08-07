@@ -1,5 +1,5 @@
 // 主 Agent 编排循环：调模型 → 执行工具 → 把结果回灌 → 直到给出最终答复
-import { deepseekChat } from '../deepseek';
+import { deepseekChat, UpstreamError } from '../deepseek';
 import { logAgentDebug } from './debug';
 import { summarizeKnowledgePayload } from './knowledge/summarize';
 import { buildEvidencePacketFromToolResult } from './orchestration/normalize';
@@ -363,7 +363,7 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
     await emit(createAgentStreamEvent('run.error', {
       message: 'agent 内部异常已记录日志',
     }));
-    return buildSafeFallbackResult();
+    return buildSafeFallbackResult(error);
   }
 }
 
@@ -408,7 +408,17 @@ function buildKnowledgeEvidenceBoundaryResult(
 }
 
 // #主Agent安全兜底结果
-function buildSafeFallbackResult(): AgentResult {
+// 上游（模型服务）故障与"答案没组织好"是两回事：前者用户重发多少次都没用，
+// 必须给出不同措辞，否则会像在怪用户提问不清楚。
+function buildSafeFallbackResult(error?: unknown): AgentResult {
+  if (error instanceof UpstreamError) {
+    const hint = error.code === 'rate_limit'
+      ? 'AI 服务当前请求过多，休息一下再试～'
+      : error.code === 'no_key' || error.code === 'auth'
+        ? 'AI 服务未正确配置，我们已经收到告警，请稍后再来。'
+        : 'AI 服务暂时连不上，请稍后再试。';
+    return { reply: `抱歉，${hint}（这不是你的问题，不用改问法）`, proposals: [] };
+  }
   return {
     reply: '抱歉，我这次没组织好答案。你可以再发一次问题，或补充一下毛孩子的物种、年龄、症状持续时间或具体需求，我继续帮你判断。',
     proposals: [],

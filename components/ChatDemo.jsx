@@ -1,6 +1,6 @@
 // 首屏 AI 对话演示：自动打字循环播放一段真实风格的问答，
 // 让新用户 5 秒内看懂「这是一个会养宠、答案有出处、需要才推荐」的 AI。
-// 纯前端脚本演示，不消耗真实 AI 额度；点击任意处唤起真正的宝莉助手。
+// 纯前端脚本演示，不消耗真实 AI 额度；点击任意处唤起真正的宝狸助手。
 import { useState, useEffect, useRef } from 'react';
 import { CatMascot } from './Mascot';
 import { Emoji } from './Emoji';
@@ -77,7 +77,7 @@ export function ChatDemo({ onOpenChat, compact }) {
   const curTyping = cur && cur.role === 'ai' && !cur.proposal && typed > 0;
 
   return (
-    <div className={compact ? 'chat-demo demo-luxe' : 'chat-demo'} role="img" aria-label="宝莉助手对话演示" onClick={onOpenChat}
+    <div className={compact ? 'chat-demo demo-luxe' : 'chat-demo'} role="img" aria-label="宝狸助手对话演示" onClick={onOpenChat}
       style={{ cursor: 'pointer', height: compact ? 384 : 470, width: compact ? 344 : '100%', maxWidth: compact ? '100%' : 420, background: compact ? undefined : 'var(--surface)' }}>
       {/* 头部 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: '1px solid var(--line-2)', background: compact ? 'transparent' : 'var(--surface)' }}>
@@ -86,7 +86,7 @@ export function ChatDemo({ onOpenChat, compact }) {
           <span style={{ position: 'absolute', bottom: -2, right: -2, width: 10, height: 10, borderRadius: 999, background: '#5FA46B', border: '2px solid var(--surface)' }} />
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 600 }}>宝莉助手</div>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>宝狸助手</div>
           <div className="caption" style={{ fontSize: 11 }}>在线 · 回答有出处</div>
         </div>
         <span className="badge">演示</span>

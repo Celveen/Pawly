@@ -251,7 +251,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================================
-   宝莉助手吉祥物（奶油虎斑猫）
+   宝狸助手吉祥物（奶油虎斑猫）
    idle：点头/眨眼/抖耳/摇尾；thinking：歪头；悬停或问候：摇头+双耳摆动
    ============================================================ */
 .cat-mascot .cat-head{ transform-origin: 34px 22px; animation: catBob 3.6s ease-in-out infinite; }

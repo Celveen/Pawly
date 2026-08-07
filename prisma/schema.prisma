@@ -16,6 +16,8 @@ model User {
   phone         String?        @unique // 账号（手机号）；游客为 null
   email         String?        @unique // 账号（邮箱）；与 phone 二选一即可注册
   passwordHash  String? // scrypt 加盐哈希（格式见 server/password.ts）；游客为 null
+  // 宝狸号：注册时生成的唯一可读短码，用于对外展示与搜人（游客为 null）
+  pawlyId       String?        @unique
   nickname      String?
   avatarEmoji   String? // 头像（emoji，走 Fluent 图集渲染）
   // 自定义头像照片：压缩后的 dataURL。不直接下发给列表接口，

@@ -73,8 +73,14 @@ export function MessagesPage({ navigate, initialPeerId }) {
           <div className="m-1col dm-layout" style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 20, minHeight: 520 }}>
             {/* 会话列表 */}
             <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line-2)', fontSize: 14, fontWeight: 600 }}>
-                全部会话{conversations?.length ? ` · ${conversations.length}` : ''}
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line-2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>
+                    全部会话{conversations?.length ? ` · ${conversations.length}` : ''}
+                  </span>
+                </div>
+                {/* 找人：宝狸号 / 手机号 / 邮箱 / 昵称 */}
+                <UserSearch onPick={(u) => setPeerId(u.id)} />
               </div>
               <div style={{ flex: 1, overflowY: 'auto', maxHeight: 560 }}>
                 {conversations === null && <p className="caption" style={{ padding: '32px 20px', textAlign: 'center' }}>加载中…</p>}
@@ -357,5 +363,60 @@ export function ChatThread({ peerId, navigate, onSent, onRead, onDeleted }) {
         </div>
       )}
     </>
+  );
+}
+
+// 找人：输入宝狸号 / 手机号 / 邮箱可精确找到，输昵称做模糊匹配
+function UserSearch({ onPick }) {
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const kw = q.trim();
+    if (kw.length < 2) { setResults(null); return; }
+    setBusy(true);
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/users/search?q=${encodeURIComponent(kw)}`);
+        const d = r.ok ? await r.json() : { users: [] };
+        setResults(d.users || []);
+      } catch { setResults([]); } finally { setBusy(false); }
+    }, 300);
+    return () => { clearTimeout(t); setBusy(false); };
+  }, [q]);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input className="input" value={q} onChange={(e) => setQ(e.target.value)}
+        placeholder="搜宝狸号 / 手机号 / 邮箱 / 昵称"
+        style={{ height: 38, fontSize: 13, paddingLeft: 34 }} />
+      <svg style={{ position: 'absolute', left: 12, top: 11 }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round">
+        <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+      </svg>
+
+      {q.trim().length >= 2 && (
+        <div style={{
+          position: 'absolute', left: 0, right: 0, top: 44, zIndex: 10, maxHeight: 300, overflowY: 'auto',
+          background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 12, boxShadow: 'var(--shadow-lg)',
+        }}>
+          {busy && results === null && <p className="caption" style={{ padding: 14, margin: 0 }}>搜索中…</p>}
+          {results?.length === 0 && (
+            <p className="caption" style={{ padding: 14, margin: 0 }}>没找到这个人，确认下宝狸号或账号是否正确</p>
+          )}
+          {results?.map((u) => (
+            <button key={u.id} onClick={() => { onPick(u); setQ(''); setResults(null); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer' }}>
+              <Avatar url={u.avatarUrl} emoji={u.avatarEmoji} size={34} />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.nickname}</span>
+                <span className="caption mono" style={{ fontSize: 11 }}>{u.pawlyId || ''}</span>
+              </span>
+              <span className="caption" style={{ fontSize: 11, flexShrink: 0 }}>发消息 →</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
