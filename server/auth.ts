@@ -1,7 +1,7 @@
 // 手机号验证码登录。
 // 短信通道可插拔：配置了 SMS_* 环境变量则走真实短信（接入阿里云/腾讯云时实现 sendSms），
 // 未配置时为开发模式——验证码直接随接口返回（devCode），方便本地与演示环境联调。
-import { createHash, randomInt } from 'crypto';
+import { createHash, randomInt, randomBytes } from 'crypto';
 import { prisma } from './db/prisma';
 
 const CODE_TTL_MS = 5 * 60 * 1000; // 5 分钟有效
@@ -61,6 +61,31 @@ export async function verifyLoginCode(phone: string, code: string): Promise<{ ok
   return { ok: true };
 }
 
+// 宝狸号：8 位可读短码。去掉容易看混的 0/O/1/I/l，方便口头报号与手输。
+const PAWLY_ID_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+function randomPawlyId() {
+  const bytes = randomBytes(8);
+  let out = '';
+  for (let i = 0; i < 8; i++) out += PAWLY_ID_ALPHABET[bytes[i] % PAWLY_ID_ALPHABET.length];
+  return out;
+}
+
+// 生成并占用一个未被使用的宝狸号（撞了就重试，几乎不会发生）
+export async function assignPawlyId(userId: string): Promise<string> {
+  const existing = await prisma.user.findUnique({ where: { id: userId }, select: { pawlyId: true } });
+  if (existing?.pawlyId) return existing.pawlyId;
+  for (let i = 0; i < 8; i++) {
+    const candidate = randomPawlyId();
+    const taken = await prisma.user.findUnique({ where: { pawlyId: candidate }, select: { id: true } });
+    if (taken) continue;
+    try {
+      await prisma.user.update({ where: { id: userId }, data: { pawlyId: candidate } });
+      return candidate;
+    } catch { /* 并发下撞唯一键：换一个再来 */ }
+  }
+  throw new Error('宝狸号生成失败，请重试');
+}
+
 // 判断某个用户记录是否只是"游客"（没有绑定任何账号）
 const isGuest = (u: { phone?: string | null; email?: string | null } | null) => !!u && !u.phone && !u.email;
 
@@ -116,6 +141,7 @@ export async function registerAccount(
     if (!existing.passwordHash) {
       await prisma.user.update({ where: { id: existing.id }, data: { passwordHash } });
       if (existing.id !== currentUserId) await mergeGuestInto(currentUserId, existing.id);
+      await assignPawlyId(existing.id);
       return { ok: true, userId: existing.id };
     }
     return { ok: false, error: account.kind === 'phone' ? '该手机号已注册，请直接登录' : '该邮箱已注册，请直接登录' };
@@ -124,9 +150,11 @@ export async function registerAccount(
   const current = await prisma.user.findUnique({ where: { id: currentUserId } });
   if (isGuest(current)) {
     await prisma.user.update({ where: { id: currentUserId }, data: { ...where, passwordHash } });
+    await assignPawlyId(currentUserId);
     return { ok: true, userId: currentUserId };
   }
   const fresh = await prisma.user.create({ data: { ...where, passwordHash } });
+  await assignPawlyId(fresh.id);
   return { ok: true, userId: fresh.id };
 }
 
@@ -141,6 +169,7 @@ export async function loginWithPassword(
   // 账号不存在与密码错误返回同一句提示，避免被用来枚举已注册账号
   if (!user || !(await verify(user.passwordHash))) return { ok: false, error: '账号或密码不正确' };
   if (user.id !== currentUserId) await mergeGuestInto(currentUserId, user.id);
+  await assignPawlyId(user.id); // 老账号首次登录时补发
   return { ok: true, userId: user.id };
 }
 

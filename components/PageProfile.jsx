@@ -1,4 +1,4 @@
-// 个人主页（小红书式）：大头像 + 宝莉号 + 资料标签（性别/星座/常居地）
+// 个人主页（小红书式）：大头像 + 宝狸号 + 资料标签（性别/星座/常居地）
 // + 关注/粉丝/获赞与收藏统计 + 笔记/收藏/赞过三个页签 + 粉丝关注名单弹窗。
 // 数据接口：/api/profile /api/profile/follows /api/profile/collection /api/follow
 import { useState, useEffect, useCallback } from 'react';
@@ -178,8 +178,8 @@ export function ProfilePage({ userId, navigate }) {
                   )}
                 </div>
 
-                {/* 宝莉号：稳定可读的对外标识，取用户 id 后 6 位 */}
-                <div className="caption mono" style={{ marginTop: 6 }}>宝莉号：{data.id.slice(-6).toUpperCase()}</div>
+                {/* 宝狸号：注册时生成的唯一短码，可复制，别人凭它就能搜到你 */}
+                {data.pawlyId && <CopyablePawlyId id={data.pawlyId} />}
 
                 <p className="body" style={{ margin: '10px 0 0', fontSize: 14 }}>{data.bio || (data.isSelf ? '还没有简介，去"编辑资料"写一句吧' : '这位铲屎官还没写简介')}</p>
 
@@ -331,5 +331,22 @@ function FollowListDialog({ userId, kind, title, onClose, onOpenUser, onChanged 
         </div>
       </div>
     </div>
+  );
+}
+
+// 宝狸号 + 一键复制
+function CopyablePawlyId({ id }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(id); } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  };
+  return (
+    <button onClick={copy} title="点击复制"
+      style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 6, border: 0, background: 'transparent', padding: 0, cursor: 'pointer' }}>
+      <span className="caption mono">宝狸号：{id}</span>
+      <span className="caption" style={{ fontSize: 11, color: copied ? 'var(--sage)' : 'var(--ink-3)' }}>{copied ? '已复制' : '复制'}</span>
+    </button>
   );
 }

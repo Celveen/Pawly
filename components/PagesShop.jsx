@@ -23,7 +23,7 @@ export function HomePage({ navigate, onAdd, onAskAI }) {
           {/* 居中双色大标题：无标点，深绿+浅绿分层 */}
           <div className="container hero-title" style={{ textAlign: 'center' }}>
             <h1 className="h-display" style={{ margin: 0 }}>
-              <span className="word-pop d-1">养宠不懂</span>&nbsp;<span className="word-pop d-2">就问宝莉</span><br />
+              <span className="word-pop d-1">养宠不懂</span>&nbsp;<span className="word-pop d-2">就问宝狸</span><br />
               <span className="lite word-pop d-3">答案有出处的 AI 管家</span>
             </h1>
             <p className="word-pop d-5" style={{ fontSize: 17, lineHeight: 1.7, color: 'var(--ink-2)', maxWidth: 460, margin: '18px auto 0' }}>

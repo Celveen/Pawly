@@ -420,7 +420,7 @@ export const store = {
     const user = await prisma.user.findUnique({
       where: { id: targetUserId },
       select: {
-        id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true,
+        id: true, pawlyId: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true,
         bio: true, gender: true, birthday: true, location: true, createdAt: true,
       },
     });
@@ -436,6 +436,7 @@ export const store = {
     ]);
     return {
       id: user.id,
+      pawlyId: user.pawlyId || null,
       nickname: user.nickname || '铲屎官' + user.id.slice(-4),
       avatarEmoji: user.avatarEmoji || '👤',
       avatarUrl: avatarUrlOf(user),
@@ -506,6 +507,37 @@ export const store = {
       bio: u.bio || '',
       isFollowing: followedSet.has(u.id),
       isSelf: u.id === viewerId,
+    }));
+  },
+
+  // —— 找人 ——
+  // 按宝狸号 / 手机号 / 邮箱 精确匹配，或按昵称模糊匹配。
+  // 只有精确命中账号时才允许用手机号/邮箱找人，避免被用来遍历用户。
+  async searchUsers(viewerId: string, keyword: string) {
+    const kw = keyword.trim();
+    if (!kw) return [];
+    const rows = await prisma.user.findMany({
+      where: {
+        id: { not: viewerId },
+        // 游客不出现在搜索结果里
+        OR: [
+          { pawlyId: kw.toUpperCase() },
+          { phone: kw },
+          { email: kw.toLowerCase() },
+          { nickname: { contains: kw, mode: 'insensitive' } },
+        ],
+        AND: [{ OR: [{ phone: { not: null } }, { email: { not: null } }] }],
+      },
+      select: { id: true, pawlyId: true, nickname: true, bio: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true },
+      take: 20,
+    });
+    return rows.map((u) => ({
+      id: u.id,
+      pawlyId: u.pawlyId,
+      nickname: u.nickname || '铲屎官' + u.id.slice(-4),
+      bio: u.bio || '',
+      avatarEmoji: u.avatarEmoji || '👤',
+      avatarUrl: avatarUrlOf(u),
     }));
   },
 

@@ -5,6 +5,7 @@
 import { prisma } from './db/prisma';
 import { store, avatarUrlOf } from './db/store';
 import { runAgent } from './agent/runAgent';
+import { deepseekChat, modelConfig } from './deepseek';
 import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured, registerAccount, loginWithPassword, changePassword } from './auth';
 import { hashPassword, verifyPassword, parseAccount, checkPasswordStrength } from './password';
 import { petSnapshot, birthdayFromAgeMonths } from './pets';
@@ -325,6 +326,14 @@ export const services: Record<string, Handler> = {
   // 头像图片本体（由 /api/avatar 解码返回；公开可读，无需登录）
   'profile.avatar': async (_userId, b) => ({ dataUrl: await store.getAvatar(String(b?.userId || '')) }),
 
+  // 找人：按宝狸号 / 账号 / 昵称，用于发起私信
+  'users.search': async (userId, b) => {
+    await requireAccount(userId);
+    const kw = String(b?.keyword || '').trim();
+    if (kw.length < 2) return { users: [] };
+    return { users: await store.searchUsers(userId, kw) };
+  },
+
   // 粉丝 / 关注 名单
   'profile.follows': async (userId, b) => {
     const target = String(b?.userId || userId);
@@ -473,6 +482,37 @@ export const services: Record<string, Handler> = {
   },
 
   // —— AI 客服（带每日额度）——
+  // AI 自检：确认 key/模型/网络到底哪一环有问题（不回传 key 本身）
+  'chat.diagnose': async (userId) => {
+    await requireAccount(userId); // 仅登录用户可用，避免公开暴露部署信息
+    const cfg = modelConfig();
+    const started = Date.now();
+    try {
+      const r = await deepseekChat({ messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 });
+      return {
+        ok: true,
+        model: cfg.model,
+        baseUrl: cfg.baseUrl,
+        hasKey: cfg.hasKey,
+        latencyMs: Date.now() - started,
+        replyModel: r?.model || null,
+      };
+    } catch (e: any) {
+      return {
+        ok: false,
+        model: cfg.model,
+        baseUrl: cfg.baseUrl,
+        hasKey: cfg.hasKey,
+        latencyMs: Date.now() - started,
+        code: e?.code || 'unknown',
+        status: e?.status ?? null,
+        message: e?.message || String(e),
+        // 上游原文（截断），模型名写错、余额不足这类问题都能从这里看出来
+        detail: e?.detail || null,
+      };
+    }
+  },
+
   'chat.run': async (userId, b) => {
     await ensureUser(userId); // Agent 工具可能建档/下单，先保证用户行存在
     const q = await chatQuota(userId);
@@ -640,6 +680,7 @@ export const services: Record<string, Handler> = {
     // 额度只在后台记录（ChatUsage 表），不向前端透出数字
     const pub = {
       id: userId,
+      pawlyId: user?.pawlyId || null,
       nickname: user?.nickname || null,
       avatarEmoji: user?.avatarEmoji || null,
       avatarUrl: user ? avatarUrlOf(user) : null,

@@ -600,10 +600,10 @@ async function sharePoster(p) {
   ctx.fillStyle = '#1F2A1D'; ctx.fillRect(0, H - 120, W, 120);
   ctx.fillStyle = '#F5F9F2';
   ctx.font = '600 34px "Helvetica Neue", sans-serif';
-  ctx.fillText('Pawly 宝莉 🐾', 56, H - 68);
+  ctx.fillText('Pawly 宝狸 🐾', 56, H - 68);
   ctx.fillStyle = 'rgba(245,249,242,.6)';
   ctx.font = '22px "PingFang SC", sans-serif';
-  ctx.fillText('养宠不懂 就问宝莉 · 答案有出处的 AI 宠物管家', 56, H - 32);
+  ctx.fillText('养宠不懂 就问宝狸 · 答案有出处的 AI 宠物管家', 56, H - 32);
   // 下载
   const a = document.createElement('a');
   a.href = canvas.toDataURL('image/png');

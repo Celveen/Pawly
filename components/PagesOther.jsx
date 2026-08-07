@@ -517,6 +517,7 @@ export function MemberPage({ navigate, initialTab }) {
                 )}
               </div>
               <p style={{ margin: '8px 0 0', color: 'rgba(244,248,242,.7)', fontSize: 14 }}>
+                {me && !me.guest && me.pawlyId && `宝狸号 ${me.pawlyId} · `}
                 {me && !me.guest && `账号 ${me.phoneMasked || me.emailMasked} · `}
                 {pets.length > 0 ? `已添加 ${pets.length} 个毛孩子档案 · ${pets.map((p) => p.name).join('、')}` : '还没有宠物档案，去"宠物档案"添加吧'}
                 {me?.guest && ' · 登录后数据可跨设备同步'}
@@ -562,7 +563,7 @@ export function MemberPage({ navigate, initialTab }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '8px 0' }}>
                     <Emoji text="🐶" size={52} />
                     <div>
-                      <p className="caption" style={{ margin: '0 0 10px' }}>还没有档案，建好档案后宝莉能给出更贴合的建议。</p>
+                      <p className="caption" style={{ margin: '0 0 10px' }}>还没有档案，建好档案后宝狸能给出更贴合的建议。</p>
                       <button className="btn btn-sm" onClick={() => setTab('pets')} style={{ background: 'var(--green)', color: '#FFF9F2', borderRadius: 999 }}>去建立档案</button>
                     </div>
                   </div>
@@ -634,7 +635,7 @@ export function MemberPage({ navigate, initialTab }) {
               {orders.length === 0 && (
                 <div className="card" style={{ padding: 40, textAlign: 'center' }}>
                   <div style={{ display: 'grid', placeItems: 'center' }}><Emoji text="📦" size={56} /></div>
-                  <p className="body" style={{ marginTop: 12 }}>还没有订单。去商品页挑点好东西，或让宝莉助手帮你推荐~</p>
+                  <p className="body" style={{ marginTop: 12 }}>还没有订单。去商品页挑点好东西，或让宝狸助手帮你推荐~</p>
                 </div>
               )}
               <div style={{ display: 'grid', gap: 12 }}>
@@ -682,7 +683,7 @@ export function MemberPage({ navigate, initialTab }) {
 function BenefitsTab({ me, onLogin }) {
   const isMember = me && !me.guest;
   const benefits = [
-    { emoji: '🐾', title: 'AI 助手高用量', desc: '宝莉助手每日可用量大幅提升，挑粮、问养护、做方案随便聊', hot: true },
+    { emoji: '🐾', title: 'AI 助手高用量', desc: '宝狸助手每日可用量大幅提升，挑粮、问养护、做方案随便聊', hot: true },
     { emoji: '🏠', title: '数据跨设备同步', desc: '宠物档案、订单、收货地址、社区帖子绑定手机号，换设备登录即恢复' },
     { emoji: '🎁', title: '会员礼盒', desc: '入会礼包与节日惊喜（供应链接入后发放）', soon: true },
     { emoji: '💳', title: '全场 9 折', desc: '会员专享价（真实支付接入后生效）', soon: true },
@@ -946,7 +947,7 @@ function PetsTab({ pets, onChanged }) {
       {pets.length === 0 && !open && (
         <div className="card" style={{ padding: 40, textAlign: 'center' }}>
           <div style={{ display: 'grid', placeItems: 'center' }}><Emoji text="🐾" size={72} /></div>
-          <p className="body" style={{ marginTop: 12 }}>还没有宠物档案。点"添加宠物"，或直接告诉右下角的宝莉助手——它会自动帮你建档。</p>
+          <p className="body" style={{ marginTop: 12 }}>还没有宠物档案。点"添加宠物"，或直接告诉右下角的宝狸助手——它会自动帮你建档。</p>
         </div>
       )}
 

@@ -4,7 +4,7 @@ import { getProfileEnabledSpeciesScopes } from './knowledge/taxonomy';
 // #主Agent系统提示词
 export function buildSystemPrompt(): string {
   const profileSpecies = getProfileEnabledSpeciesScopes().join('、') || '当前未配置物种';
-  return `你是 Pawly 宝莉宠物用品店的 AI 导购助手"宝莉助手"。
+  return `你是 Pawly 宝狸宠物用品店的 AI 导购助手"宝狸助手"。
 
 【人设】语气轻松亲切，会用"铲屎官""毛孩子"等。医疗问题建议看兽医，绝不假装医生。
 
