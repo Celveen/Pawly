@@ -114,7 +114,7 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
         tools: toolDefs,
         tool_choice: 'auto',
         temperature: 0.2,
-        max_tokens: 1024,
+        max_tokens: 2048,
       });
 
       const msg = res.choices?.[0]?.message;
@@ -160,15 +160,6 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
             continue;
           }
           const finalResult = parsedPresentation.result;
-          const evidenceBoundaryResult = buildKnowledgeEvidenceBoundaryResult(routed, evidencePackets);
-          if (evidenceBoundaryResult) {
-            logAgentDebug({
-              scope: 'main-agent',
-              event: 'final_presentation_blocked_by_evidence_boundary',
-              details: { userId, step: step + 1 },
-            });
-            return evidenceBoundaryResult;
-          }
           const validation = validateFinalResult(currentDecision, finalResult, {
             productToolsUsed,
             routed,
@@ -291,15 +282,6 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
       }
 
       const fallbackResult = parseFinal(msg.content || '');
-      const evidenceBoundaryResult = buildKnowledgeEvidenceBoundaryResult(routed, evidencePackets);
-      if (evidenceBoundaryResult) {
-        logAgentDebug({
-          scope: 'main-agent',
-          event: 'direct_reply_blocked_by_evidence_boundary',
-          details: { userId, step: step + 1 },
-        });
-        return evidenceBoundaryResult;
-      }
       const directReplyValidation = validateFinalResult(currentDecision, fallbackResult, {
         productToolsUsed,
         routed,
@@ -388,23 +370,18 @@ function appendRejectedToolResponses(
   }
 }
 
-// #无证据知识回答收口
-function buildKnowledgeEvidenceBoundaryResult(
+// #无证据高风险场景：是否需要在回答里强制带上就医引导
+// 注意：这里只判断"要不要加约束"，不再直接用模板顶掉模型的回答——
+// 之前那样做会让用户连一条通用建议都拿不到，等于把"资料没覆盖"当成"不能说话"。
+export function needsVetGuardrail(
   routed: ReturnType<typeof routeIntent>,
   packets: AgentEvidencePacket[],
-): AgentResult | null {
+): boolean {
   const knowledgePacket = packets.find((packet) => packet.kind === 'knowledge');
-  if (!knowledgePacket || knowledgePacket.canDirectAnswer) return null;
-
-  const needsVet = routed.highRisk
+  if (!knowledgePacket || knowledgePacket.canDirectAnswer) return false;
+  return routed.highRisk
     || knowledgePacket.priority === 'high'
     || knowledgePacket.metadata?.needsVet === true;
-  if (!needsVet) return null;
-
-  return {
-    reply: '⚠️ 建议尽快就医\n当前缺少与该物种和症状相匹配的可靠证据，不能在线作出具体判断。请尽快带宠物到正规宠物医院就诊。\n\n⚠️线上建议不能替代面诊！',
-    proposals: [],
-  };
 }
 
 // #主Agent安全兜底结果
@@ -487,9 +464,6 @@ function buildKnowledgeFastPathResult(
 ): AgentResult | null {
   if (!isKnowledgePayload(result)) return null;
 
-  const evidenceBoundaryResult = buildKnowledgeEvidenceBoundaryResult(routed, packets);
-  if (evidenceBoundaryResult) return evidenceBoundaryResult;
-
   const answer = result.knowledge.answer.trim();
   if (routed.intent === 'knowledge' && isKnowledgeAnswerReady(answer)) {
     return { reply: answer, proposals: [] };
@@ -498,8 +472,15 @@ function buildKnowledgeFastPathResult(
   if (!routed.highRisk && !result.knowledge.needsVet) return null;
   if (answer.length >= 12) return { reply: answer, proposals: [] };
 
+  // 走到这里说明模型这一轮几乎没产出文字，只能给最保守的收口
   return {
-    reply: '⚠️ 建议尽快就医\n当前情况需要尽快由正规宠物医院进一步判断。\n\n⚠️线上建议不能替代面诊！',
+    reply: [
+      '⚠️ 这种情况建议尽快让兽医当面看一下',
+      '站内暂时没有完全对应的资料，我不方便在线判断具体原因。',
+      '在就医前可以先做的：保持环境安静温暖、记录症状出现的时间与频率、拍一段短视频给医生看、不要自行喂药。',
+      '',
+      '⚠️ 线上建议不能替代面诊',
+    ].join('\n'),
     proposals: [],
   };
 }

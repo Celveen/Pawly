@@ -847,8 +847,10 @@ function AddressTab() {
   );
 }
 
-// 手机号登录弹层。短信服务开通前为免验证码直登（仅手机号）；
-// 后端配置 SMS_* 后会要求验证码，届时恢复验证码输入框（git 历史里有现成实现）。
+// 宠物表单的空白初值（新增/取消时回到这里）
+const EMPTY_FORM = { name: '', species: '狗', breed: '', sex: '', ageValue: '', ageUnit: '岁', weightKg: '', notes: '' };
+
+// 从 ageMonths 反推"数字 + 单位"用于编辑回填
 function ageToForm(ageMonths) {
   if (ageMonths == null) return { ageValue: '', ageUnit: '岁' };
   if (ageMonths >= 12 && ageMonths % 12 === 0) return { ageValue: String(ageMonths / 12), ageUnit: '岁' };

@@ -584,9 +584,35 @@ export const store = {
       .filter((c) => peerMap.has(c.peerId));
   },
 
+  // 只读地拿会话（不存在就返回 null）。读消息绝不能顺手建会话：
+  // 否则「删除会话」之后，对话窗还在飞行中的轮询会把它重新创建出来；
+  // 而且只是点开某人聊天却一句没发，也会留下一条空会话。
+  async findConversation(u1: string, u2: string) {
+    const [userAId, userBId] = u1 < u2 ? [u1, u2] : [u2, u1];
+    return prisma.conversation.findUnique({ where: { userAId_userBId: { userAId, userBId } } });
+  },
+
   // 打开会话即视为已读：清零自己这一侧未读，并记录已读时间（供对方看到"已读"）
   async listMessages(userId: string, peerId: string, markRead = true) {
-    const conv = await this.getOrCreateConversation(userId, peerId);
+    const conv = await this.findConversation(userId, peerId);
+    const peerInfo = await prisma.user.findUnique({
+      where: { id: peerId },
+      select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true },
+    });
+    // 还没有会话（第一次找人聊天，或刚删过）：返回空对话，等真正发消息时再建
+    if (!conv) {
+      return {
+        conversationId: null,
+        peer: peerInfo && {
+          id: peerInfo.id,
+          nickname: peerInfo.nickname || '铲屎官' + peerInfo.id.slice(-4),
+          avatarEmoji: peerInfo.avatarEmoji || '👤',
+          avatarUrl: avatarUrlOf(peerInfo),
+        },
+        peerReadAt: null,
+        messages: [],
+      };
+    }
     const messages = await prisma.directMessage.findMany({
       where: { conversationId: conv.id },
       orderBy: { createdAt: 'asc' },
@@ -601,17 +627,13 @@ export const store = {
     }
     // 对方读到哪一刻：我发的消息早于这个时间就显示"已读"
     const peerReadAt = isA ? conv.readAtB : conv.readAtA;
-    const peer = await prisma.user.findUnique({
-      where: { id: peerId },
-      select: { id: true, nickname: true, avatarEmoji: true, avatarUrl: true, avatarUpdatedAt: true },
-    });
     return {
       conversationId: conv.id,
-      peer: peer && {
-        id: peer.id,
-        nickname: peer.nickname || '铲屎官' + peer.id.slice(-4),
-        avatarEmoji: peer.avatarEmoji || '👤',
-        avatarUrl: avatarUrlOf(peer),
+      peer: peerInfo && {
+        id: peerInfo.id,
+        nickname: peerInfo.nickname || '铲屎官' + peerInfo.id.slice(-4),
+        avatarEmoji: peerInfo.avatarEmoji || '👤',
+        avatarUrl: avatarUrlOf(peerInfo),
       },
       peerReadAt,
       messages: messages.map((m) => ({
@@ -648,8 +670,7 @@ export const store = {
 
   // 删除会话：连同消息一起清掉（onDelete: Cascade），双方都不再看到
   async deleteConversation(userId: string, peerId: string) {
-    const [userAId, userBId] = userId < peerId ? [userId, peerId] : [peerId, userId];
-    const conv = await prisma.conversation.findUnique({ where: { userAId_userBId: { userAId, userBId } } });
+    const conv = await this.findConversation(userId, peerId);
     if (!conv) return { ok: true };
     await prisma.conversation.delete({ where: { id: conv.id } });
     return { ok: true };
