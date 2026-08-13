@@ -104,7 +104,7 @@ export async function runKnowledgeAgent(input: KnowledgeAgentInput): Promise<Kno
         { role: 'user', content: buildKnowledgeUserPrompt({ ...input, evidence }, riskTags, riskLevel) },
       ],
       temperature: 0,
-      max_tokens: 1200,
+      max_tokens: 1600,
       response_format: { type: 'json_object' },
     });
     parsed = parseOutput(res.choices?.[0]?.message?.content || '');
