@@ -23,7 +23,7 @@
 |---|---|
 | **AI 助手** | 主 Agent + 知识 Agent 双层编排；宠物档案自动建档、真实商品检索与排序、社区内容检索、科普问答、订单查询；证据不足时给通用建议 + 红旗信号 + 建议面诊，而不是一句"请就医"打发 |
 | **商品电商** | 59 件商品（含详情、规格参数、评价）· 搜索与多维筛选 · 购物车 · 结算下单 · 订单列表 · 商品评价 |
-| **宠物科普** | 37 篇科普文章（4 篇自动导入 + 33 篇精编），按物种 + 大类召回，带来源引用与白名单站点检索 |
+| **宠物科普** | 76 篇科普文章（4 篇自动导入 + 72 篇精编），7 个分类 × 9 个物种双维筛选，篇篇带 `refs` 来源引用；同一份内容同时作为知识 Agent 的检索证据库 |
 | **社区** | 发帖 / 图文 / 评论 / 点赞 / 收藏 / 关注 / 瀑布流 / 全站搜索 |
 | **账号体系** | 邮箱或手机号 + 密码 注册登录（scrypt 加盐哈希）· 唯一宝狸号 · 游客数据自动并入账号 · 修改密码 |
 | **个人主页** | 参考小红书：头像照片上传、昵称/简介/性别/生日/常居地、星座、笔记 / 收藏 / 赞过三个页签、关注与粉丝名单 |
@@ -33,59 +33,33 @@
 
 ## 🏗️ 系统架构
 
-```mermaid
-flowchart TB
-  subgraph L1["第一层 · 用户入口"]
-    direction LR
-    A1["🌐 Web"]:::e
-    A2["💬 小程序<br/><i>规划中</i>"]:::p
-    A3["📱 App<br/><i>规划中</i>"]:::p
-  end
-
-  subgraph L2["第二层 · 接入层"]
-    direction LR
-    B1["API / BFF<br/><sub>app/api + lib/gateway</sub>"]:::b
-    B2["身份识别<br/><sub>Cookie 会话 + 密码账号</sub>"]:::b
-    B3["会话管理<br/><sub>ChatMessage 历史</sub>"]:::b
-  end
-
-  subgraph L3["第三层 · Agent 层"]
-    direction LR
-    C1["🤖 <b>客服主 Agent</b><br/><sub>统一理解用户问题<br/>决定调用哪类能力</sub>"]:::c
-    C2["📖 <b>知识 Agent</b><br/><sub>基于证据回答知识问题<br/>输出引用和风险提示</sub>"]:::c
-  end
-
-  subgraph L4["第四层 · 工具层"]
-    direction LR
-    D1["用户与宠物<br/>信息工具"]:::d
-    D2["订单与反馈<br/>工具"]:::d
-    D3["商品推荐<br/>工具"]:::d
-    D4["社区检索<br/>工具"]:::d
-    D5["下单支付<br/>工具"]:::d
-    D6["风险控制工具<br/><sub>就医引导 / 转人工</sub>"]:::d
-  end
-
-  subgraph L5["第五层 · 数据层"]
-    direction LR
-    E1[("用户与宠物库")]:::s
-    E2[("订单与反馈库")]:::s
-    E3[("商品与库存库")]:::s
-    E4[("科普知识库")]:::s
-    E5[("社区内容库")]:::s
-  end
-
-  L1 --> L2 --> L3 --> L4 --> L5
-  C1 <-->|"ask_knowledge_agent"| C2
-
-  classDef e fill:#EAF2FF,stroke:#3B82F6,color:#1E3A8A
-  classDef p fill:#F4F6F8,stroke:#9AA5B1,color:#5B6670
-  classDef b fill:#EAF6EE,stroke:#2C563A,color:#1F2A1D
-  classDef c fill:#FFF3E4,stroke:#DE7429,color:#7A3D0A
-  classDef d fill:#F1EDFA,stroke:#7C5CD3,color:#3B2A6B
-  classDef s fill:#E6F4F5,stroke:#2A7B85,color:#12454B
-```
+<div align="center">
+  <img src="docs/images/architecture.png" alt="宝狸 Pawly Agent 架构：用户入口 / 接入层 / Agent 层 / 工具层 / 数据层" width="880">
+</div>
 
 > 小程序端与 App 端为规划中的入口；当前接入层同时服务 Web 与后续端，所以协议层已按多端设计。
+>
+> 分层职责、编排流水线、证据包协议与已知短板，详见 [`docs/Pawly-架构与Agent设计.md`](docs/Pawly-架构与Agent设计.md)。
+
+## 📸 界面预览
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/home.jpg" alt="首页"><br><sub><b>首页</b> · 分类入口与本周人气好物</sub></td>
+<td width="50%"><img src="docs/images/shop.jpg" alt="商品页"><br><sub><b>商品</b> · 搜索、多维筛选与商品卡</sub></td>
+</tr>
+<tr>
+<td><img src="docs/images/product.jpg" alt="商品详情"><br><sub><b>商品详情</b> · 规格参数与评价</sub></td>
+<td><img src="docs/images/knowledge.jpg" alt="宠物科普"><br><sub><b>宠物科普</b> · 按物种 + 大类筛选，文章带来源标注</sub></td>
+</tr>
+<tr>
+<td><img src="docs/images/community.jpg" alt="社区"><br><sub><b>社区</b> · 瀑布流笔记、分类与发布入口</sub></td>
+<td><img src="docs/images/profile.jpg" alt="个人主页"><br><sub><b>个人主页</b> · 宝狸号、星座地区、笔记/收藏/赞过</sub></td>
+</tr>
+<tr>
+<td colspan="2"><img src="docs/images/member.jpg" alt="会员中心"><br><sub><b>会员中心</b> · 概览 / 订单 / 宠物档案 / 健康提醒 / 地址 / 权益</sub></td>
+</tr>
+</table>
 
 ## 🧠 Agent 设计
 
