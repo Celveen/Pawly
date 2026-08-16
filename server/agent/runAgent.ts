@@ -518,10 +518,17 @@ function isProductTool(toolName: string): boolean {
 }
 
 // #宠物物种上下文提取
+// 只有档案里全是同一个物种时才敢当作"当前物种"用。
+// 之前取的是第一只宠物的物种：同时养猫和狗的用户，档案顺序决定了搜商品被锁在哪个物种上，
+// 问"我想买狗粮"却只搜出猫粮，Agent 于是回答"狗粮还没上架"。物种不唯一时返回
+// undefined，交给问题本身或模型参数去定。
 function extractPetSpecies(value: unknown): string | undefined {
   if (!Array.isArray(value)) return undefined;
-  const species = value.find((item) => item && typeof item === 'object' && typeof (item as Record<string, unknown>).species === 'string') as Record<string, unknown> | undefined;
-  return typeof species?.species === 'string' ? species.species : undefined;
+  const speciesList = value
+    .map((item) => (item && typeof item === 'object' ? (item as Record<string, unknown>).species : undefined))
+    .filter((s): s is string => typeof s === 'string' && s.trim() !== '');
+  const unique = Array.from(new Set(speciesList));
+  return unique.length === 1 ? unique[0] : undefined;
 }
 
 // #已检索商品记录

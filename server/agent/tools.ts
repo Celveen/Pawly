@@ -123,8 +123,11 @@ const registeredTools: RegisteredTool[] = [
       const list = await store.searchProducts({
         // “主粮/鲜粮”等是大类词，不再当作商品名精确搜索。
         keyword: explicitCategory ? undefined : explicitTerms[0] || args?.keyword,
-        // 问题中已出现物种时优先锁定，避免模型参数误把柴犬搜成仓鼠。
-        species: ctx.currentPetSpecies || inferredSpecies || args?.species,
+        // 物种优先级：用户这句话里说了什么 > 档案里的宠物 > 模型给的参数。
+        // 顺序不能颠倒：档案排第一时，养猫又养狗的用户问“我想买狗粮”会被锁死在猫上，
+        // 搜出 3 款猫粮后 Agent 会一口咬定“狗粮还没上架”——库里其实有 3 款犬粮。
+        // 模型参数排最后，是因为它最容易把“柴犬”之类的品种词猜成别的物种。
+        species: inferredSpecies || ctx.currentPetSpecies || args?.species,
         category: explicitCategory || args?.category,
         maxPrice: args?.maxPrice,
         inStockOnly: args?.inStockOnly,
