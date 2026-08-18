@@ -3,9 +3,11 @@
 //  - 分离模式：server/index.ts 起独立进程，只监听内网，Next 侧经 HTTP 转发到这里
 //  - 单体模式（Vercel 演示）：Next 的 API 路由经 lib/gateway.ts 直接进程内调用
 import { prisma } from './db/prisma';
-import { store } from './db/store';
+import { store, avatarUrlOf } from './db/store';
 import { runAgent } from './agent/runAgent';
-import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured } from './auth';
+import { deepseekChat, modelConfig } from './deepseek';
+import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured, registerAccount, loginWithPassword, changePassword } from './auth';
+import { hashPassword, verifyPassword, parseAccount, checkPasswordStrength } from './password';
 import { petSnapshot, birthdayFromAgeMonths } from './pets';
 import { tokenMeter } from './tokenMeter';
 import { findViolationIn } from './moderation';
@@ -50,6 +52,13 @@ async function chatQuota(userId: string) {
 }
 
 type Handler = (userId: string, payload: any) => Promise<any>;
+
+// 私信等功能要求已注册账号（游客不可用）
+async function requireAccount(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, email: true } });
+  if (!user?.phone && !user?.email) throw new RpcError(401, '请先登录后再使用私信');
+  return user;
+}
 
 export const services: Record<string, Handler> = {
   // —— 商品 ——
@@ -272,14 +281,97 @@ export const services: Record<string, Handler> = {
     const nickname = b?.nickname !== undefined ? String(b.nickname).trim().slice(0, 20) : undefined;
     const bio = b?.bio !== undefined ? String(b.bio).trim().slice(0, 60) : undefined;
     const avatarEmoji = b?.avatarEmoji !== undefined ? String(b.avatarEmoji).slice(0, 8) : undefined;
-    const hit = findViolationIn(nickname, bio);
+    const location = b?.location !== undefined ? String(b.location).trim().slice(0, 20) : undefined;
+
+    // 性别：仅接受三个枚举值，空串表示"不展示"
+    let gender: string | null | undefined;
+    if (b?.gender !== undefined) {
+      const g = String(b.gender || '');
+      if (g && !['female', 'male', 'other'].includes(g)) throw new RpcError(400, '性别取值不合法');
+      gender = g || null;
+    }
+
+    // 生日：YYYY-MM-DD，空串表示清空；限制在合理区间内
+    let birthday: Date | null | undefined;
+    if (b?.birthday !== undefined) {
+      const raw = String(b.birthday || '').trim();
+      if (!raw) birthday = null;
+      else {
+        const d = new Date(raw + 'T00:00:00Z');
+        if (Number.isNaN(d.getTime())) throw new RpcError(400, '生日格式不正确');
+        const year = d.getUTCFullYear();
+        if (year < 1900 || d.getTime() > Date.now()) throw new RpcError(400, '生日超出合理范围');
+        birthday = d;
+      }
+    }
+
+    // 头像照片：压缩后的 dataURL，空串表示改回 emoji 头像
+    let avatarUrl: string | null | undefined;
+    if (b?.avatarUrl !== undefined) {
+      const raw = String(b.avatarUrl || '');
+      if (!raw) avatarUrl = null;
+      else {
+        if (!/^data:image\/(jpeg|png|webp);base64,/.test(raw)) throw new RpcError(400, '头像格式不支持');
+        if (raw.length > 400_000) throw new RpcError(400, '头像文件过大，请换一张');
+        avatarUrl = raw;
+      }
+    }
+
+    const hit = findViolationIn(nickname, bio, location);
     if (hit) throw new RpcError(400, `包含违规词「${hit}」，请修改`);
     await ensureUser(userId);
-    return store.updateProfile(userId, { nickname, avatarEmoji, bio });
+    return store.updateProfile(userId, { nickname, avatarEmoji, bio, gender, birthday, location, avatarUrl });
+  },
+
+  // 头像图片本体（由 /api/avatar 解码返回；公开可读，无需登录）
+  'profile.avatar': async (_userId, b) => ({ dataUrl: await store.getAvatar(String(b?.userId || '')) }),
+
+  // 找人：按宝狸号 / 账号 / 昵称，用于发起私信
+  'users.search': async (userId, b) => {
+    await requireAccount(userId);
+    const kw = String(b?.keyword || '').trim();
+    if (kw.length < 2) return { users: [] };
+    return { users: await store.searchUsers(userId, kw) };
+  },
+
+  // 粉丝 / 关注 名单
+  'profile.follows': async (userId, b) => {
+    const target = String(b?.userId || userId);
+    const kind = b?.kind === 'following' ? 'following' : 'followers';
+    return { users: await store.listFollowUsers(target, userId, kind) };
+  },
+
+  // 收藏与赞过：只允许查看自己的（与小红书一致，他人主页不暴露）
+  'profile.collection': async (userId, b) => {
+    const kind = b?.kind === 'liked' ? 'liked' : 'favorites';
+    const posts = kind === 'liked'
+      ? await store.listLikedPosts(userId, userId)
+      : await store.listFavoritePosts(userId, userId);
+    return { posts };
+  },
+
+  'posts.favorite': async (userId, b) => {
+    const postId = String(b?.postId || '');
+    if (!postId) throw new RpcError(400, '缺少 postId');
+    await ensureUser(userId);
+    const r = await store.toggleFavorite(userId, postId);
+    if (r.favorited) {
+      // 收藏通知（尽力而为，不影响主流程）
+      try {
+        const post = await prisma.post.findUnique({ where: { id: postId }, select: { userId: true, title: true } });
+        const actor = await prisma.user.findUnique({ where: { id: userId }, select: { nickname: true } });
+        if (post) await store.createNotification({
+          userId: post.userId, type: 'favorite', actorId: userId,
+          actorName: actor?.nickname || '铲屎官' + userId.slice(-4),
+          postId, content: `收藏了你的帖子「${post.title.slice(0, 20)}」`,
+        });
+      } catch {}
+    }
+    return r;
   },
 
   // —— 通知 ——
-  'notifications.list': async (userId) => store.listNotifications(userId),
+  'notifications.list': async (userId, b) => store.listNotifications(userId, b?.kind ? String(b.kind) : undefined),
   'notifications.unread': async (userId) => ({ count: await store.unreadNotificationCount(userId) }),
   'notifications.read': async (userId) => store.markNotificationsRead(userId),
 
@@ -390,6 +482,37 @@ export const services: Record<string, Handler> = {
   },
 
   // —— AI 客服（带每日额度）——
+  // AI 自检：确认 key/模型/网络到底哪一环有问题（不回传 key 本身）
+  'chat.diagnose': async (userId) => {
+    await requireAccount(userId); // 仅登录用户可用，避免公开暴露部署信息
+    const cfg = modelConfig();
+    const started = Date.now();
+    try {
+      const r = await deepseekChat({ messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 });
+      return {
+        ok: true,
+        model: cfg.model,
+        baseUrl: cfg.baseUrl,
+        hasKey: cfg.hasKey,
+        latencyMs: Date.now() - started,
+        replyModel: r?.model || null,
+      };
+    } catch (e: any) {
+      return {
+        ok: false,
+        model: cfg.model,
+        baseUrl: cfg.baseUrl,
+        hasKey: cfg.hasKey,
+        latencyMs: Date.now() - started,
+        code: e?.code || 'unknown',
+        status: e?.status ?? null,
+        message: e?.message || String(e),
+        // 上游原文（截断），模型名写错、余额不足这类问题都能从这里看出来
+        detail: e?.detail || null,
+      };
+    }
+  },
+
   'chat.run': async (userId, b) => {
     await ensureUser(userId); // Agent 工具可能建档/下单，先保证用户行存在
     const q = await chatQuota(userId);
@@ -451,6 +574,95 @@ export const services: Record<string, Handler> = {
     return r;
   },
 
+  // 注册：账号为手机号或邮箱 + 密码
+  'auth.register': async (userId, b) => {
+    const account = parseAccount(String(b?.account || ''));
+    if (!account) throw new RpcError(400, '请输入正确的手机号或邮箱');
+    const weak = checkPasswordStrength(String(b?.password || ''));
+    if (weak) throw new RpcError(400, weak);
+    await ensureUser(userId);
+    const hash = await hashPassword(String(b.password));
+    const r = await registerAccount(account, hash, userId);
+    if (!r.ok) throw new RpcError(400, r.error);
+    return { ok: true, userId: r.userId, account: account.value, kind: account.kind };
+  },
+
+  // 密码登录
+  'auth.loginPassword': async (userId, b) => {
+    const account = parseAccount(String(b?.account || ''));
+    const password = String(b?.password || '');
+    if (!account || !password) throw new RpcError(400, '账号或密码不正确');
+    await ensureUser(userId);
+    const r = await loginWithPassword(account, (hash) => verifyPassword(password, hash), userId);
+    if (!r.ok) throw new RpcError(400, r.error);
+    return { ok: true, userId: r.userId, account: account.value, kind: account.kind };
+  },
+
+  // 修改密码（需原密码）
+  'auth.changePassword': async (userId, b) => {
+    const oldPassword = String(b?.oldPassword || '');
+    const weak = checkPasswordStrength(String(b?.newPassword || ''));
+    if (weak) throw new RpcError(400, weak);
+    const newHash = await hashPassword(String(b.newPassword));
+    const r = await changePassword(userId, (hash) => verifyPassword(oldPassword, hash), newHash);
+    if (!r.ok) throw new RpcError(400, r.error);
+    return { ok: true };
+  },
+
+  // —— 私信 ——
+  // 私信需要正式账号：游客不能收发，避免匿名骚扰
+  'dm.conversations': async (userId) => {
+    await requireAccount(userId);
+    return { conversations: await store.listConversations(userId) };
+  },
+
+  'dm.thread': async (userId, b) => {
+    await requireAccount(userId);
+    const peerId = String(b?.peerId || '');
+    if (!peerId) throw new RpcError(400, '缺少 peerId');
+    if (peerId === userId) throw new RpcError(400, '不能给自己发消息');
+    const peer = await prisma.user.findUnique({ where: { id: peerId }, select: { id: true } });
+    if (!peer) throw new RpcError(404, '用户不存在');
+    return store.listMessages(userId, peerId);
+  },
+
+  'dm.send': async (userId, b) => {
+    await requireAccount(userId);
+    const peerId = String(b?.peerId || '');
+    const content = String(b?.content || '').trim();
+    // 图片：客户端已压缩，这里做数量、格式与体积兜底
+    const images: string[] = Array.isArray(b?.images) ? b.images.map(String) : [];
+    if (!peerId) throw new RpcError(400, '缺少 peerId');
+    if (peerId === userId) throw new RpcError(400, '不能给自己发消息');
+    if (!content && images.length === 0) throw new RpcError(400, '消息不能为空');
+    if (content.length > 500) throw new RpcError(400, '单条消息最多 500 字');
+    if (images.length > 3) throw new RpcError(400, '单条消息最多 3 张图片');
+    for (const img of images) {
+      if (!/^data:image\/(jpeg|png|webp);base64,/.test(img) && !/^https?:\/\//.test(img)) {
+        throw new RpcError(400, '图片格式不支持');
+      }
+      if (img.length > 600_000) throw new RpcError(400, '图片过大，请换一张');
+    }
+    const hit = findViolationIn(content);
+    if (hit) throw new RpcError(400, `包含违规词「${hit}」，请修改`);
+    const peer = await prisma.user.findUnique({ where: { id: peerId }, select: { id: true } });
+    if (!peer) throw new RpcError(404, '用户不存在');
+    return store.sendMessage(userId, peerId, content, images);
+  },
+
+  'dm.delete': async (userId, b) => {
+    await requireAccount(userId);
+    const peerId = String(b?.peerId || '');
+    if (!peerId) throw new RpcError(400, '缺少 peerId');
+    return store.deleteConversation(userId, peerId);
+  },
+
+  'dm.unread': async (userId) => {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, email: true } });
+    if (!user?.phone && !user?.email) return { count: 0 }; // 游客无私信
+    return { count: await store.unreadMessageCount(userId) };
+  },
+
   'auth.login': async (userId, b) => {
     const phone = String(b?.phone || '');
     if (!/^1\d{10}$/.test(phone)) throw new RpcError(400, '手机号格式不正确');
@@ -468,16 +680,24 @@ export const services: Record<string, Handler> = {
     // 额度只在后台记录（ChatUsage 表），不向前端透出数字
     const pub = {
       id: userId,
+      pawlyId: user?.pawlyId || null,
       nickname: user?.nickname || null,
       avatarEmoji: user?.avatarEmoji || null,
+      avatarUrl: user ? avatarUrlOf(user) : null,
       bio: user?.bio || null,
+      gender: user?.gender || null,
+      birthday: user?.birthday || null,
+      location: user?.location || null,
       points: user?.points || 0,
     };
-    if (!user?.phone) return { guest: true, ...pub };
+    const hasAccount = !!(user?.phone || user?.email);
+    if (!hasAccount) return { guest: true, ...pub };
     return {
       guest: false,
       ...pub,
-      phoneMasked: user.phone.slice(0, 3) + '****' + user.phone.slice(7),
+      phoneMasked: user!.phone ? user!.phone.slice(0, 3) + '****' + user!.phone.slice(7) : null,
+      // 邮箱同样打码：前两位 + *** + @域名
+      emailMasked: user!.email ? user!.email.replace(/^(.{1,2}).*(@.*)$/, '$1***$2') : null,
     };
   },
 

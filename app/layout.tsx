@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Pawly 宝莉 · 给毛孩子的好东西',
+  title: 'Pawly 宝狸 · 给毛孩子的好东西',
   description: '宠物用品电商 + AI 导购助手',
 };
 

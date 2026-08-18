@@ -1,5 +1,5 @@
 // 主 Agent 编排循环：调模型 → 执行工具 → 把结果回灌 → 直到给出最终答复
-import { deepseekChat } from '../deepseek';
+import { deepseekChat, UpstreamError } from '../deepseek';
 import { logAgentDebug } from './debug';
 import { summarizeKnowledgePayload } from './knowledge/summarize';
 import { buildEvidencePacketFromToolResult } from './orchestration/normalize';
@@ -114,7 +114,7 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
         tools: toolDefs,
         tool_choice: 'auto',
         temperature: 0.2,
-        max_tokens: 1024,
+        max_tokens: 2048,
       });
 
       const msg = res.choices?.[0]?.message;
@@ -160,15 +160,6 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
             continue;
           }
           const finalResult = parsedPresentation.result;
-          const evidenceBoundaryResult = buildKnowledgeEvidenceBoundaryResult(routed, evidencePackets);
-          if (evidenceBoundaryResult) {
-            logAgentDebug({
-              scope: 'main-agent',
-              event: 'final_presentation_blocked_by_evidence_boundary',
-              details: { userId, step: step + 1 },
-            });
-            return evidenceBoundaryResult;
-          }
           const validation = validateFinalResult(currentDecision, finalResult, {
             productToolsUsed,
             routed,
@@ -291,15 +282,6 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
       }
 
       const fallbackResult = parseFinal(msg.content || '');
-      const evidenceBoundaryResult = buildKnowledgeEvidenceBoundaryResult(routed, evidencePackets);
-      if (evidenceBoundaryResult) {
-        logAgentDebug({
-          scope: 'main-agent',
-          event: 'direct_reply_blocked_by_evidence_boundary',
-          details: { userId, step: step + 1 },
-        });
-        return evidenceBoundaryResult;
-      }
       const directReplyValidation = validateFinalResult(currentDecision, fallbackResult, {
         productToolsUsed,
         routed,
@@ -363,7 +345,7 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
     await emit(createAgentStreamEvent('run.error', {
       message: 'agent 内部异常已记录日志',
     }));
-    return buildSafeFallbackResult();
+    return buildSafeFallbackResult(error);
   }
 }
 
@@ -388,27 +370,32 @@ function appendRejectedToolResponses(
   }
 }
 
-// #无证据知识回答收口
-function buildKnowledgeEvidenceBoundaryResult(
+// #无证据高风险场景：是否需要在回答里强制带上就医引导
+// 注意：这里只判断"要不要加约束"，不再直接用模板顶掉模型的回答——
+// 之前那样做会让用户连一条通用建议都拿不到，等于把"资料没覆盖"当成"不能说话"。
+export function needsVetGuardrail(
   routed: ReturnType<typeof routeIntent>,
   packets: AgentEvidencePacket[],
-): AgentResult | null {
+): boolean {
   const knowledgePacket = packets.find((packet) => packet.kind === 'knowledge');
-  if (!knowledgePacket || knowledgePacket.canDirectAnswer) return null;
-
-  const needsVet = routed.highRisk
+  if (!knowledgePacket || knowledgePacket.canDirectAnswer) return false;
+  return routed.highRisk
     || knowledgePacket.priority === 'high'
     || knowledgePacket.metadata?.needsVet === true;
-  if (!needsVet) return null;
-
-  return {
-    reply: '⚠️ 建议尽快就医\n当前缺少与该物种和症状相匹配的可靠证据，不能在线作出具体判断。请尽快带宠物到正规宠物医院就诊。\n\n⚠️线上建议不能替代面诊！',
-    proposals: [],
-  };
 }
 
 // #主Agent安全兜底结果
-function buildSafeFallbackResult(): AgentResult {
+// 上游（模型服务）故障与"答案没组织好"是两回事：前者用户重发多少次都没用，
+// 必须给出不同措辞，否则会像在怪用户提问不清楚。
+function buildSafeFallbackResult(error?: unknown): AgentResult {
+  if (error instanceof UpstreamError) {
+    const hint = error.code === 'rate_limit'
+      ? 'AI 服务当前请求过多，休息一下再试～'
+      : error.code === 'no_key' || error.code === 'auth'
+        ? 'AI 服务未正确配置，我们已经收到告警，请稍后再来。'
+        : 'AI 服务暂时连不上，请稍后再试。';
+    return { reply: `抱歉，${hint}（这不是你的问题，不用改问法）`, proposals: [] };
+  }
   return {
     reply: '抱歉，我这次没组织好答案。你可以再发一次问题，或补充一下毛孩子的物种、年龄、症状持续时间或具体需求，我继续帮你判断。',
     proposals: [],
@@ -477,9 +464,6 @@ function buildKnowledgeFastPathResult(
 ): AgentResult | null {
   if (!isKnowledgePayload(result)) return null;
 
-  const evidenceBoundaryResult = buildKnowledgeEvidenceBoundaryResult(routed, packets);
-  if (evidenceBoundaryResult) return evidenceBoundaryResult;
-
   const answer = result.knowledge.answer.trim();
   if (routed.intent === 'knowledge' && isKnowledgeAnswerReady(answer)) {
     return { reply: answer, proposals: [] };
@@ -488,8 +472,15 @@ function buildKnowledgeFastPathResult(
   if (!routed.highRisk && !result.knowledge.needsVet) return null;
   if (answer.length >= 12) return { reply: answer, proposals: [] };
 
+  // 走到这里说明模型这一轮几乎没产出文字，只能给最保守的收口
   return {
-    reply: '⚠️ 建议尽快就医\n当前情况需要尽快由正规宠物医院进一步判断。\n\n⚠️线上建议不能替代面诊！',
+    reply: [
+      '⚠️ 这种情况建议尽快让兽医当面看一下',
+      '站内暂时没有完全对应的资料，我不方便在线判断具体原因。',
+      '在就医前可以先做的：保持环境安静温暖、记录症状出现的时间与频率、拍一段短视频给医生看、不要自行喂药。',
+      '',
+      '⚠️ 线上建议不能替代面诊',
+    ].join('\n'),
     proposals: [],
   };
 }
@@ -527,10 +518,17 @@ function isProductTool(toolName: string): boolean {
 }
 
 // #宠物物种上下文提取
+// 只有档案里全是同一个物种时才敢当作"当前物种"用。
+// 之前取的是第一只宠物的物种：同时养猫和狗的用户，档案顺序决定了搜商品被锁在哪个物种上，
+// 问"我想买狗粮"却只搜出猫粮，Agent 于是回答"狗粮还没上架"。物种不唯一时返回
+// undefined，交给问题本身或模型参数去定。
 function extractPetSpecies(value: unknown): string | undefined {
   if (!Array.isArray(value)) return undefined;
-  const species = value.find((item) => item && typeof item === 'object' && typeof (item as Record<string, unknown>).species === 'string') as Record<string, unknown> | undefined;
-  return typeof species?.species === 'string' ? species.species : undefined;
+  const speciesList = value
+    .map((item) => (item && typeof item === 'object' ? (item as Record<string, unknown>).species : undefined))
+    .filter((s): s is string => typeof s === 'string' && s.trim() !== '');
+  const unique = Array.from(new Set(speciesList));
+  return unique.length === 1 ? unique[0] : undefined;
 }
 
 // #已检索商品记录

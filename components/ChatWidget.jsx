@@ -1,11 +1,11 @@
-// 浮窗 AI 客服「宝莉助手」—— 集成进完整网站，调用后端 /api/chat（单主 Agent + 工具）
+// 浮窗 AI 客服「宝狸助手」—— 集成进完整网站，调用后端 /api/chat（单主 Agent + 工具）
 import { useState, useRef, useEffect } from 'react';
 import { fmt } from './util';
 import { PRODUCTS } from './data';
 import { Emoji } from './Emoji';
 import { CatMascot } from './Mascot';
 
-const ASSISTANT_NAME = '宝莉助手';
+const ASSISTANT_NAME = '宝狸助手';
 
 const PawIcon = ({ size = 26, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -52,6 +52,8 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
   // 记录初始渲染时是否已有保存的位置（保存 effect 会先写入默认值，不能事后再查 localStorage）
   const hadSavedPos = useRef(typeof window !== 'undefined' && (() => { try { return !!localStorage.getItem('pawly.chatPos'); } catch (e) { return false; } })());
   const [dragging, setDragging] = useState(false);
+  // SSR 阶段没有 window，先给一个常见桌面尺寸，挂载后由 effect 校正
+  const [viewport, setViewport] = useState({ w: 1280, h: 800 });
   const [showHint, setShowHint] = useState(false);
   const dragStateRef = useRef({ moved: false });
   const scrollRef = useRef(null);
@@ -96,6 +98,14 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
     };
     window.addEventListener('resize', clamp);
     return () => window.removeEventListener('resize', clamp);
+  }, []);
+  // 视口尺寸进 state：面板要靠它算放浮球上方还是下方，直接读 window 的话
+  // 窗口缩放后不会重新排版，面板会停在算错的位置上。
+  useEffect(() => {
+    const sync = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
   }, []);
 
   const sendToAI = async (userText) => {
@@ -156,17 +166,26 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
 
+  // 面板定位：必须让开浮球，否则浮球会压住对话框左下角（输入框和最后一条消息）。
+  // 原来纵向放不下时会退回 bottom = pos.y，跟浮球底边对齐，正好压上去。
+  // 现在改成：上方放得下就放上方，否则放下方；两边都局促时取较宽敞的一侧并压缩面板高度。
+  const LAUNCHER = 76, GAP = 16, EDGE = 8, MIN_PANEL_H = 260;
   const panelW = 380, panelH = 580;
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
-  const panelLeft = pos.x + panelW + 16 < vw ? pos.x : Math.max(8, vw - panelW - 8);
-  const panelBottom = pos.y + 92 + panelH < vh ? pos.y + 92 : Math.max(8, pos.y);
+  const vw = viewport.w, vh = viewport.h;
+  const roomAbove = vh - (pos.y + LAUNCHER + GAP) - EDGE; // 面板放浮球上方时的可用高度
+  const roomBelow = pos.y - GAP - EDGE;                   // 面板放浮球下方时的可用高度
+  const placeAbove = roomAbove >= Math.min(panelH, MIN_PANEL_H) || roomAbove >= roomBelow;
+  const panelHeight = Math.max(MIN_PANEL_H, Math.min(panelH, placeAbove ? roomAbove : roomBelow));
+  const panelBottom = placeAbove
+    ? pos.y + LAUNCHER + GAP
+    : Math.max(EDGE, pos.y - GAP - panelHeight);
+  const panelLeft = Math.max(EDGE, Math.min(pos.x, vw - panelW - EDGE));
 
   return (
     <>
       <div style={{
         position: 'fixed', left: panelLeft, bottom: panelBottom, zIndex: 79,
-        width: `min(${panelW}px, calc(100vw - 32px))`, height: `min(${panelH}px, calc(100vh - 140px))`,
+        width: `min(${panelW}px, calc(100vw - 32px))`, height: `min(${panelHeight}px, calc(100vh - 140px))`,
         background: 'var(--bg)', borderRadius: 20,
         boxShadow: '0 24px 64px -16px rgba(31,42,29,.30), 0 8px 16px rgba(31,42,29,.06)',
         border: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -247,7 +266,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
             boxShadow: '0 16px 36px -10px rgba(31,42,29,.35)',
             animation: 'hintPop .3s cubic-bezier(.22,.61,.36,1) both',
           }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝莉助手</div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>🐾 我是宝狸助手</div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.5 }}>
               试试问我「帮我家狗挑款狗粮」，照着你家毛孩子一步帮你选好 →
             </div>
@@ -266,7 +285,7 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
         </>
       )}
 
-      <button onPointerDown={onLauncherDown} className="chat-launcher" aria-label="打开宝莉助手 (可拖动)" title="点击打开 · 长按拖动"
+      <button onPointerDown={onLauncherDown} className="chat-launcher" aria-label="打开宝狸助手 (可拖动)" title="点击打开 · 长按拖动"
         style={{
           position: 'fixed', left: pos.x, bottom: pos.y, zIndex: 80, width: 76, height: 76, borderRadius: 999,
           background: 'var(--surface)', border: '1px solid var(--line)',

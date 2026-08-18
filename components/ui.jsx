@@ -5,6 +5,20 @@ import { fmt } from './util';
 import { ARTICLE_CATS, PRODUCTS, ARTICLES } from './data';
 import { Emoji } from './Emoji';
 import { getPetSpecies } from '@/lib/pet-species';
+import { LoginDialog } from './LoginDialog';
+
+// 头像：优先显示用户上传的照片（走 /api/avatar 带缓存），没有则回退到 emoji 头像。
+// 全站统一用它渲染，保证换头像后各处一致。
+export function Avatar({ url, emoji = '🐾', size = 32, ring, style }) {
+  const box = {
+    width: size, height: size, borderRadius: 999, flexShrink: 0,
+    background: 'var(--surface-2)', display: 'grid', placeItems: 'center', overflow: 'hidden',
+    ...(ring ? { border: `${ring}px solid var(--surface)` } : {}),
+    ...style,
+  };
+  if (url) return <span style={box}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} draggable={false} /></span>;
+  return <span style={box}><Emoji text={emoji || '🐾'} size={Math.round(size * 0.56)} /></span>;
+}
 
 // 漂浮装饰贴纸：绝对定位的 emoji，轻柔浮动（reduced-motion 自动静止；默认小屏隐藏）
 // 用法：父容器 position:relative，<FloatEmoji e="🎾" size={40} style={{ right: 20, top: 8 }} r={-10} dur={7.5} delay={.6} />
@@ -25,7 +39,7 @@ export const Logo = ({ size = 28 }) => (
       <path d="M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z" fill="currentColor" />
     </svg>
     <span className="serif" style={{ fontSize: 20, fontWeight: 600, letterSpacing: '0.01em' }}>Pawly</span>
-    <span className="logo-sub" style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500, marginLeft: -2 }}>宝莉</span>
+    <span className="logo-sub" style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500, marginLeft: -2 }}>宝狸</span>
   </div>
 );
 
@@ -92,6 +106,7 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
             </svg>
           </button>
+          <MessageEntry navigate={navigate} />
           <NotifyBell navigate={navigate} />
           <button onClick={onCartOpen} className="btn btn-line btn-sm" style={{ position: 'relative', paddingLeft: 14, paddingRight: 14 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -116,11 +131,51 @@ export function Header({ route, navigate, cartCount, onCartOpen }) {
   );
 }
 
-// 通知铃铛：未读角标 + 下拉面板（打开即标记已读）
+// 私信入口：未读角标 + 点击进入消息中心（游客接口返回 0，不展示角标）
+function MessageEntry({ navigate }) {
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const poll = () => fetch('/api/dm/unread')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d) setUnread(d.count || 0); })
+      .catch(() => {});
+    poll();
+    const t = setInterval(poll, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  return (
+    <button onClick={() => navigate({ page: 'messages' })} className="btn btn-ghost btn-sm" aria-label="私信"
+      style={{ width: 36, padding: 0, justifyContent: 'center', borderRadius: 999, position: 'relative' }}>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 5h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+        <path d="m3.5 6.5 8.5 6 8.5-6" />
+      </svg>
+      {unread > 0 && (
+        <span style={{
+          position: 'absolute', top: 2, right: 2, minWidth: 15, height: 15, padding: '0 4px', borderRadius: 999,
+          background: 'var(--accent)', color: '#FFF9F2', fontSize: 10, fontWeight: 700,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        }}>{unread > 99 ? '99+' : unread}</span>
+      )}
+    </button>
+  );
+}
+
+// 通知铃铛：未读角标 + 下拉面板（分类页签 / 打开即标记已读 / 点击跳到对应内容）
+const NOTIFY_TABS = [
+  { id: 'all', label: '全部' },
+  { id: 'interact', label: '赞和收藏' },
+  { id: 'comment', label: '评论' },
+  { id: 'follow', label: '关注' },
+];
+
 function NotifyBell({ navigate }) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [items, setItems] = useState(null);
+  const [tab, setTab] = useState('all');
   const wrapRef = useRef(null);
 
   // 未读数：进站拉一次，之后每 60s 轮询
@@ -140,20 +195,34 @@ function NotifyBell({ navigate }) {
     return () => window.removeEventListener('pointerdown', onDown);
   }, [open]);
 
+  const fetchList = async (kind) => {
+    setItems(null);
+    try {
+      const r = await fetch(`/api/notifications${kind && kind !== 'all' ? `?kind=${kind}` : ''}`);
+      setItems(r.ok ? await r.json() : []);
+    } catch { setItems([]); }
+  };
+
   async function toggle() {
     const next = !open;
     setOpen(next);
     if (next) {
-      try {
-        const r = await fetch('/api/notifications');
-        setItems(r.ok ? await r.json() : []);
-        await fetch('/api/notifications', { method: 'POST' });
-        setUnread(0);
-      } catch { setItems([]); }
+      await fetchList(tab);
+      // 打开即全部已读
+      try { await fetch('/api/notifications', { method: 'POST' }); setUnread(0); } catch {}
     }
   }
 
-  const typeEmoji = { like: '💚', comment: '💬', follow: '🐾', system: '💡' };
+  const switchTab = (id) => { setTab(id); fetchList(id); };
+
+  // 点通知：赞/收藏/评论跳到对应帖子，关注跳到对方主页
+  const openTarget = (n) => {
+    setOpen(false);
+    if (n.postId && ['like', 'favorite', 'comment'].includes(n.type)) navigate({ page: 'community', postId: n.postId });
+    else if (n.actorId) navigate({ page: 'profile', userId: n.actorId });
+  };
+
+  const typeEmoji = { like: '💚', favorite: '⭐', comment: '💬', follow: '🐾', system: '💡' };
   const ago = (iso) => {
     const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
     if (s < 3600) return `${Math.max(1, Math.floor(s / 60))} 分钟前`;
@@ -175,25 +244,44 @@ function NotifyBell({ navigate }) {
       </button>
       {open && (
         <div style={{
-          position: 'absolute', right: 0, top: 44, width: 320, maxHeight: 420, overflowY: 'auto', zIndex: 60,
+          position: 'absolute', right: 0, top: 44, width: 340, maxHeight: 460, display: 'flex', flexDirection: 'column', zIndex: 60,
           background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--line-2)',
-          boxShadow: 'var(--shadow-lg)', animation: 'dialogIn .2s ease both',
+          boxShadow: 'var(--shadow-lg)', animation: 'dialogIn .2s ease both', overflow: 'hidden',
         }}>
-          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line-2)', fontSize: 14, fontWeight: 700 }}>通知</div>
-          {items === null && <p className="caption" style={{ padding: 18 }}>加载中…</p>}
-          {items && items.length === 0 && <p className="caption" style={{ padding: '28px 18px', textAlign: 'center' }}>还没有通知</p>}
-          {items && items.map((n) => (
-            <button key={n.id} onClick={() => { setOpen(false); if (n.actorId) navigate({ page: 'profile', userId: n.actorId }); }}
-              style={{ display: 'flex', gap: 10, padding: '12px 18px', width: '100%', textAlign: 'left', border: 0, borderBottom: '1px solid var(--line-2)', background: n.read ? 'transparent' : 'rgba(222,116,41,.05)', cursor: 'pointer' }}>
-              <span style={{ fontSize: 16, flexShrink: 0 }}><Emoji text={typeEmoji[n.type] || '💡'} size={18} /></span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: 13, lineHeight: 1.5, display: 'block' }}>
-                  <b>{n.actorName || 'Pawly'}</b> {n.content || ''}
+          <div style={{ padding: '14px 18px 10px', fontSize: 14, fontWeight: 700 }}>通知</div>
+          {/* 分类页签 */}
+          <div className="h-scroll" style={{ display: 'flex', gap: 4, padding: '0 12px 10px', borderBottom: '1px solid var(--line-2)' }}>
+            {NOTIFY_TABS.map((t) => (
+              <button key={t.id} onClick={() => switchTab(t.id)}
+                style={{ height: 28, padding: '0 12px', borderRadius: 999, border: 0, whiteSpace: 'nowrap', cursor: 'pointer', fontSize: 12,
+                  background: tab === t.id ? 'var(--ink)' : 'var(--surface-2)',
+                  color: tab === t.id ? 'var(--bg)' : 'var(--ink-2)', fontWeight: tab === t.id ? 600 : 500 }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ overflowY: 'auto' }}>
+            {items === null && <p className="caption" style={{ padding: 18 }}>加载中…</p>}
+            {items && items.length === 0 && <p className="caption" style={{ padding: '28px 18px', textAlign: 'center' }}>这里还没有通知</p>}
+            {items && items.map((n) => (
+              <button key={n.id} onClick={() => openTarget(n)}
+                style={{ display: 'flex', gap: 10, padding: '12px 18px', width: '100%', textAlign: 'left', border: 0, borderBottom: '1px solid var(--line-2)', background: n.read ? 'transparent' : 'rgba(222,116,41,.05)', cursor: 'pointer', alignItems: 'flex-start' }}>
+                <span style={{ position: 'relative', flexShrink: 0 }}>
+                  <Avatar url={n.actorAvatarUrl} emoji={n.actorAvatar} size={32} />
+                  {/* 头像右下角挂类型小图标，一眼分清是赞还是评论 */}
+                  <span style={{ position: 'absolute', right: -3, bottom: -3, width: 16, height: 16, borderRadius: 999, background: 'var(--surface)', display: 'grid', placeItems: 'center', border: '1px solid var(--line-2)' }}>
+                    <Emoji text={typeEmoji[n.type] || '💡'} size={10} />
+                  </span>
                 </span>
-                <span className="caption" style={{ fontSize: 11.5 }}>{ago(n.createdAt)}</span>
-              </span>
-            </button>
-          ))}
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 13, lineHeight: 1.5, display: 'block' }}>
+                    <b>{n.actorName || 'Pawly'}</b> {n.content || ''}
+                  </span>
+                  <span className="caption" style={{ fontSize: 11.5 }}>{ago(n.createdAt)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -203,27 +291,42 @@ function NotifyBell({ navigate }) {
 // 顶栏右上角：未登录显示「登录」，已登录显示头像（点击进个人中心）
 function UserButton({ navigate }) {
   const [me, setMe] = useState(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  const load = () => fetch('/api/auth/me').then((r) => (r.ok ? r.json() : null)).then(setMe).catch(() => {});
   useEffect(() => {
     let alive = true;
     fetch('/api/auth/me').then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive) setMe(d); }).catch(() => {});
     return () => { alive = false; };
   }, []);
+
   const loggedIn = me && !me.guest;
-  if (loggedIn) {
-    return (
-      <button onClick={() => navigate({ page: 'member' })} aria-label="个人中心" title={me.phoneMasked || '个人中心'}
-        style={{
-          width: 36, height: 36, borderRadius: 999, border: '1px solid var(--line)',
-          background: 'var(--ink)', color: 'var(--bg)', display: 'grid', placeItems: 'center', padding: 0,
-        }}>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
-        </svg>
-      </button>
-    );
-  }
   return (
-    <button onClick={() => navigate({ page: 'member' })} className="btn btn-line btn-sm">登录</button>
+    <>
+      {loggedIn ? (
+        // 已登录：头像直接进个人中心
+        <button onClick={() => navigate({ page: 'member' })} aria-label="个人中心" title={me.phoneMasked || me.emailMasked || '个人中心'}
+          style={{
+            width: 36, height: 36, borderRadius: 999, border: '1px solid var(--line)', overflow: 'hidden',
+            background: 'var(--ink)', color: 'var(--bg)', display: 'grid', placeItems: 'center', padding: 0,
+          }}>
+          {me.avatarUrl
+            ? <img src={me.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : (
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+              </svg>
+            )}
+        </button>
+      ) : (
+        // 未登录：直接弹登录/注册，不再跳去会员页
+        <button onClick={() => setLoginOpen(true)} className="btn btn-line btn-sm">登录</button>
+      )}
+      {loginOpen && (
+        <LoginDialog onClose={() => setLoginOpen(false)}
+          onLoggedIn={() => { setLoginOpen(false); load(); navigate({ page: 'member' }); }} />
+      )}
+    </>
   );
 }
 
@@ -410,7 +513,7 @@ export function Footer({ navigate }) {
       <div className="container">
         {/* 编辑风品牌陈述：大衬线句子压场 */}
         <div style={{ marginBottom: 64, paddingBottom: 56, borderBottom: '1px solid rgba(244,248,242,.12)', position: 'relative', overflow: 'hidden' }}>
-          <div className="eyebrow" style={{ color: 'rgba(244,248,242,.45)', marginBottom: 20 }}>PAWLY · 宝莉</div>
+          <div className="eyebrow" style={{ color: 'rgba(244,248,242,.45)', marginBottom: 20 }}>PAWLY · 宝狸</div>
           <p className="serif m-h1" style={{ fontSize: 'clamp(28px, 3.6vw, 48px)', lineHeight: 1.22, margin: 0, color: '#F5F9F2', maxWidth: 760 }}>
             把宠物照顾明白这件事<br />没人天生就会 <span style={{ color: 'var(--green-soft)' }}>但可以问</span>
           </p>
@@ -451,7 +554,7 @@ export function Footer({ navigate }) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           fontSize: 12, color: 'rgba(255,255,255,.4)',
         }}>
-          <span>© 2026 Pawly 宝莉 · 所有狗狗都是好狗狗 · Emoji graphics by Microsoft Fluent Emoji (MIT)</span>
+          <span>© 2026 Pawly 宝狸 · 所有狗狗都是好狗狗 · Emoji graphics by Microsoft Fluent Emoji (MIT)</span>
           <span className="mono" style={{ whiteSpace: 'nowrap' }}>v 3.0 · 上海 → 你家门口</span>
         </div>
       </div>

@@ -138,6 +138,19 @@ export function buildPolicySystemHint(
     knowledgePacket && !knowledgePacket.canDirectAnswer && knowledgePacket.metadata?.needsVet !== true
       ? `- 普通无证据边界：当前没有可引用的对应资料。可以给出低风险、非诊断、非处方的通用处理思路和观察重点；不得猜测、排序或断言具体病因（避免“大概率就是/通常是某病”），不得给出用药剂量、伪造来源或把普通问题直接升级为急诊。`
       : null,
+    // 高风险且没有对应资料时：仍然要正常作答，只是必须按下面的结构来写。
+    // 早期版本在这种情况下直接回一句“建议尽快就医”，用户什么可操作的东西都拿不到，体验很差。
+    knowledgePacket && !knowledgePacket.canDirectAnswer
+      && (knowledgePacket.priority === 'high' || knowledgePacket.metadata?.needsVet === true)
+      ? [
+          '- 高风险无证据边界：站内没有完全对应的资料，但**不要因此拒绝回答**。请按这个结构给出有用的回复：',
+          '  ① 先一句话说明"这方面站内暂时没有完全对应的资料，下面是通用做法"；',
+          '  ② 给出该场景下公认、低风险、非诊断非处方的通用照护要点（例如环境温度、喂养节奏、清洁、观察频率），要具体到能照着做；',
+          '  ③ 列出需要立刻就医的红旗信号（写清楚是什么表现）；',
+          '  ④ 结尾提示尽快找兽医当面评估，并注明线上建议不能替代面诊。',
+          '  禁止：断言具体病因、给用药名称或剂量、伪造资料来源。',
+        ].join('\n')
+      : null,
     decision.mustIncludeGuidanceWhenRequested
       ? `- 强约束：如果用户明确要你挑/推荐商品，在风险未被判定为高危且未明确禁止 proposals 的前提下，不要停在知识解释，必须继续调商品相关工具并给出推荐。`
       : `- 强约束：若策略未要求继续导购，就不要为了凑方案而硬推商品。`,
