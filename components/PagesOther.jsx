@@ -6,6 +6,12 @@ import { ArticleCard, ProductCard, FloatEmoji, Avatar } from './ui';
 import { LoginDialog } from './LoginDialog';
 import { Emoji } from './Emoji';
 import { VideoSlot } from './VideoSlot';
+import { SCIENCE_STAGES, SCIENCE_SCENE_GROUPS } from './science-mvp-data';
+import { BREED_GUIDE_CATEGORIES } from './science-breed-guide';
+import { COST_REFERENCE } from './science-cost-data';
+import { NEWBIE_PREP_BY_CATEGORY, NEWBIE_PREP_SECTIONS } from './science-newbie-prep-data';
+import { FIT_CATEGORIES, FIT_COMMON_QUESTIONS, FIT_SPECIAL_QUESTIONS, evaluateFitTest } from './science-fit-test';
+import { OWNED_CARE_SPECIES, OWNED_CARE_LIFE_STAGES, getOwnedCareGuidance } from './science-owned-care-data';
 import { PET_CONTENT_FILTERS, PET_SPECIES, RODENT_ALIASES, getPetSpecies } from '@/lib/pet-species';
 
 const petEmoji = (sp) => getPetSpecies(sp).emoji;
@@ -15,6 +21,8 @@ export function ArticlesPage({ navigate }) {
   const [cat, setCat] = useState('all');
   const [species, setSpecies] = useState('all');
   const [q, setQ] = useState('');
+  const [stage, setStage] = useState('planning');
+  const [activeGroupId, setActiveGroupId] = useState(null);
   const filtered = useMemo(
     () => ARTICLES
       .filter((a) => (cat === 'all' || a.cat === cat) && (species === 'all' || articleMatchesSpecies(a, species)) && (q === '' || a.title.includes(q) || a.excerpt.includes(q)))
@@ -47,6 +55,21 @@ export function ArticlesPage({ navigate }) {
           </div>
         </div>
       </section>
+
+      {/* MVP 场景层只负责组织学习路径；文章正文仍由下方“全部科普”和 ArticlePage 统一维护。 */}
+      <ScienceMvpSection
+        stage={stage}
+        onStageChange={(nextStage) => { setStage(nextStage); setActiveGroupId(null); }}
+        activeGroupId={activeGroupId}
+        onOpenGroup={setActiveGroupId}
+        onCloseGroup={() => setActiveGroupId(null)}
+        navigate={navigate}
+      />
+
+      <div className="science-library-heading container" id="science-library">
+        <div><span className="eyebrow">Pawly Library</span><h2 className="h-2">全部科普</h2></div>
+        <p className="body">场景模块中的所有相关文章都来自这里；你也可以直接搜索或按分类浏览完整知识库。</p>
+      </div>
       <div style={{ borderTop: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)' }}>
         <div className="container">
           <div className="h-scroll" style={{ display: 'flex', gap: 4, padding: '8px 0' }}>
@@ -81,6 +104,472 @@ export function ArticlesPage({ navigate }) {
       </section>
     </>
   );
+}
+
+function ScienceMvpSection({ stage, onStageChange, activeGroupId, onOpenGroup, onCloseGroup, navigate }) {
+  // 轻量选择在科普页会话内共享：切换不同模块时仍保持同一只“我的宠物”，但不会写入档案或数据库。
+  const [ownedPetContext, setOwnedPetContext] = useState({ speciesId: 'dog', lifeStageId: 'adult' });
+  const groups = SCIENCE_SCENE_GROUPS[stage];
+  const activeGroup = groups.find((item) => item.id === activeGroupId);
+  const stageCopy = stage === 'planning'
+    ? { eyebrow: 'Before You Adopt · 准备养宠', title: '从了解品种开始', desc: '先认识不同类型与品种；需要做决定时，再通过适配测试、成本和接宠准备逐步确认。' }
+    : { eyebrow: 'Pet Care · 已经养宠', title: '从正在发生的问题开始', desc: '不用先判断知识分类，选择最接近的场景，再查看处理建议和公共科普文章。' };
+
+  return (
+    <section className="science-mvp-section" aria-label="宠物科普场景导航">
+      <div className="container">
+        <div className="science-stage-switch" role="tablist" aria-label="选择养宠阶段">
+          {SCIENCE_STAGES.map((item) => (
+            <button key={item.id} type="button" role="tab" aria-selected={stage === item.id} className={stage === item.id ? 'is-active' : ''} onClick={() => onStageChange(item.id)}>
+              <span className="science-stage-switch-icon"><Emoji text={item.emoji} size={32} /></span>
+              <span><strong>{item.title}</strong><small>{item.desc}</small></span>
+            </button>
+          ))}
+        </div>
+
+        <div className="science-scene-heading">
+          <div><span className="eyebrow">{stageCopy.eyebrow}</span><h2 className="h-2">{stageCopy.title}</h2></div>
+          <p className="body">{stageCopy.desc}</p>
+        </div>
+
+        <div className={`science-scene-grid science-scene-grid-${stage}`}>
+          {groups.map((group, index) => (
+            <button key={group.id} type="button" className={`science-scene-card${index === 0 ? ' is-featured' : ''}`} onClick={() => onOpenGroup(group.id)}>
+              <span className="science-scene-card-index">0{index + 1}</span>
+              <span className="science-scene-card-icon"><Emoji text={group.emoji} size={index === 0 ? 54 : 40} /></span>
+              {/* 卡片只保留入口需要的标题和说明，避免“知识点数量”干扰用户选择功能。 */}
+              <span className="science-scene-card-copy"><small>{group.eyebrow}</small><strong>{group.title}</strong><span>{group.desc}</span></span>
+              <span className="science-scene-card-arrow">›</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* “我适合养什么”使用独立测评流程；其他入口继续复用原有知识点弹层，彼此解耦。 */}
+      {activeGroup && (stage === 'planning' && activeGroup.id === 'fit'
+        ? <ScienceFitQuizDialog key={`${stage}-${activeGroup.id}`} group={activeGroup} onClose={onCloseGroup} navigate={navigate} />
+        : stage === 'planning' && activeGroup.id === 'breed-guide'
+          ? <ScienceBreedGuideDialog key={`${stage}-${activeGroup.id}`} group={activeGroup} onClose={onCloseGroup} navigate={navigate} />
+          : stage === 'planning' && activeGroup.id === 'cost'
+            ? <ScienceCostDialog key={`${stage}-${activeGroup.id}`} group={activeGroup} onClose={onCloseGroup} />
+            : stage === 'planning' && activeGroup.id === 'newbie-prep'
+              ? <ScienceNewbiePrepDialog key={`${stage}-${activeGroup.id}`} group={activeGroup} onClose={onCloseGroup} navigate={navigate} />
+            : <ScienceSceneDialog key={`${stage}-${activeGroup.id}`} group={activeGroup} stage={stage} onClose={onCloseGroup} navigate={navigate} ownedPetContext={ownedPetContext} onOwnedPetContextChange={setOwnedPetContext} />)}
+    </section>
+  );
+}
+
+function ScienceBreedGuideDialog({ group, onClose, navigate }) {
+  const [categoryId, setCategoryId] = useState(BREED_GUIDE_CATEGORIES[0].id);
+  const category = BREED_GUIDE_CATEGORIES.find((item) => item.id === categoryId) || BREED_GUIDE_CATEGORIES[0];
+  const relatedArticles = useMemo(() => relatedArticlesForTopic({
+    keywords: [category.label, ...category.breeds.map((item) => item.name)],
+    cats: categoryId === 'dog' || categoryId === 'cat' ? ['breed', 'puppy'] : categoryId === 'aquatic' || categoryId === 'reptile' ? ['health', 'nutri'] : ['nutri', 'groom'],
+  }), [category, categoryId]);
+
+  // 品种指南与通用知识点弹层保持同样的关闭和滚动行为，避免两个入口体验不一致。
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event) => { if (event.key === 'Escape') onClose(); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', onKeyDown); };
+  }, [onClose]);
+
+  return (
+    <div className="science-scene-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="science-scene-dialog science-breed-dialog" role="dialog" aria-modal="true" aria-label={group.title} onMouseDown={(event) => event.stopPropagation()}>
+        <button type="button" className="science-scene-close" aria-label="关闭" onClick={onClose}>×</button>
+        <header className="science-scene-dialog-header">
+          <span className="eyebrow">准备养宠 · 最受欢迎</span>
+          <h2>{group.title}</h2>
+          <p>先按类型浏览热门品种；特点描述帮助建立预期，但不能代替对具体个体、健康来源和长期责任的判断。</p>
+        </header>
+
+        <div className="science-scene-dialog-layout science-breed-layout">
+          <nav className="science-topic-nav science-breed-nav" aria-label="宠物类型">
+            {BREED_GUIDE_CATEGORIES.map((item) => <button key={item.id} type="button" className={categoryId === item.id ? 'is-active' : ''} onClick={() => setCategoryId(item.id)}><Emoji text={item.emoji} size={20} /><span>{item.label}</span><b>›</b></button>)}
+          </nav>
+
+          <div className="science-topic-detail">
+            <div className="science-topic-detail-title science-breed-intro"><span><Emoji text={category.emoji} size={16} /> {category.label}</span><h3>{category.label}的热门品种</h3><p>{category.intro}</p></div>
+            <div className="science-breed-grid">
+              {category.breeds.map((item) => (
+                <article key={item.id} className="science-breed-card">
+                  <h4>{item.name}</h4>
+                  <div>{item.traits.map((trait) => <span key={trait}>{trait}</span>)}</div>
+                  <p>{item.summary}</p>
+                  <small><strong>饲养重点：</strong>{item.care}</small>
+                </article>
+              ))}
+            </div>
+
+            <div className="science-related-articles">
+              <div className="science-related-heading"><div><span className="eyebrow">继续了解</span><h4>{category.label}相关科普</h4></div><button type="button" onClick={() => { onClose(); requestAnimationFrame(() => document.getElementById('science-library')?.scrollIntoView({ behavior: 'smooth' })); }}>浏览完整科普库</button></div>
+              <div className="science-related-list">{relatedArticles.map((article) => <button key={article.id} type="button" onClick={() => navigate({ page: 'article', id: article.id })}><span className="science-related-emoji"><Emoji text={article.emoji || '📚'} size={26} /></span><span><small>{ARTICLE_CATS.find((item) => item.id === article.cat)?.name || '宠物科普'} · {article.read}</small><strong>{article.title}</strong></span><b>›</b></button>)}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ScienceCostDialog({ group, onClose }) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event) => { if (event.key === 'Escape') onClose(); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', onKeyDown); };
+  }, [onClose]);
+
+  return (
+    <div className="science-scene-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="science-scene-dialog science-cost-dialog" role="dialog" aria-modal="true" aria-label={group.title} onMouseDown={(event) => event.stopPropagation()}>
+        <button type="button" className="science-scene-close" aria-label="关闭" onClick={onClose}>×</button>
+        <header className="science-scene-dialog-header">
+          <span className="eyebrow">准备养宠 · 公开数据参考</span>
+          <h2>{group.title}</h2>
+          <p>{COST_REFERENCE.scope}。这是预算起点，不是某只宠物的报价单。</p>
+        </header>
+
+        <div className="science-cost-summary">
+          {COST_REFERENCE.annual.map((item) => <article key={item.id}><span><Emoji text={item.emoji} size={25} /> {item.label}</span><strong>¥{item.annual.toLocaleString()}<small>/ 年</small></strong><p>约 ¥{item.monthly}/月<em>按年均 ÷ 12 计算</em></p></article>)}
+          <article className="science-cost-share"><span>消费结构</span><strong>{COST_REFERENCE.foodShare}%</strong><p>食品消费占比<em>其余消费不拆为虚构细项</em></p></article>
+        </div>
+
+        <div className="science-cost-disclaimer">{COST_REFERENCE.disclaimer}</div>
+
+        <section className="science-cost-section">
+          <div><span className="eyebrow">先列项目，再做预算</span><h3>需要纳入预算的成本项</h3></div>
+          <div className="science-cost-area-grid">{COST_REFERENCE.budgetAreas.map((item) => <article key={item.title}><Emoji text={item.emoji} size={30} /><div><h4>{item.title}</h4><p>{item.desc}</p></div></article>)}</div>
+        </section>
+
+        <section className="science-cost-section science-cost-notes">
+          <div><span className="eyebrow">口径说明</span><h3>这些金额不代表全部宠物</h3></div>
+          <ul>{COST_REFERENCE.notes.map((item) => <li key={item}>{item}</li>)}</ul>
+        </section>
+
+        <section className="science-cost-section science-cost-sources">
+          <div><span className="eyebrow">可追溯来源</span><h3>数据参考</h3></div>
+          <div>{COST_REFERENCE.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><span>{source.publisher} · {source.date}</span><strong>{source.title}</strong><p>{source.detail}</p><b>查看来源 ↗</b></a>)}</div>
+        </section>
+      </section>
+    </div>
+  );
+}
+
+function ScienceNewbiePrepDialog({ group, onClose, navigate }) {
+  const [categoryId, setCategoryId] = useState(BREED_GUIDE_CATEGORIES[0].id);
+  const [checkedItems, setCheckedItems] = useState(() => new Set());
+  const category = BREED_GUIDE_CATEGORIES.find((item) => item.id === categoryId) || BREED_GUIDE_CATEGORIES[0];
+  const prep = NEWBIE_PREP_BY_CATEGORY[categoryId];
+  // 所有品类都使用同一任务协议，后续接入宠物档案时只需替换任务来源，不必改弹层结构。
+  const tasks = NEWBIE_PREP_SECTIONS.flatMap((section) => prep[section.id]);
+  const requiredTasks = tasks.filter((task) => task.level === 'must');
+  const totalItems = tasks.length;
+  const completedItems = tasks.filter((task) => checkedItems.has(task.id)).length;
+  const completedRequired = requiredTasks.filter((task) => checkedItems.has(task.id)).length;
+  const relatedArticles = useMemo(() => relatedArticlesForTopic({ keywords: prep.keywords, cats: prep.cats }), [prep]);
+
+  // 清单勾选仅辅助当前浏览，不写入宠物档案或账号，避免用户未确认的信息被错误保存。
+  function toggleItem(itemId) {
+    setCheckedItems((current) => {
+      const next = new Set(current);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event) => { if (event.key === 'Escape') onClose(); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', onKeyDown); };
+  }, [onClose]);
+
+  return (
+    <div className="science-scene-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="science-scene-dialog science-newbie-dialog" role="dialog" aria-modal="true" aria-label={group.title} onMouseDown={(event) => event.stopPropagation()}>
+        <button type="button" className="science-scene-close" aria-label="关闭" onClick={onClose}>×</button>
+        <header className="science-scene-dialog-header">
+          <span className="eyebrow">准备养宠 · 分类清单</span>
+          <h2>{group.title}</h2>
+          <p>先选择计划饲养的品类，再按接宠前、到家当天和第一周完成专属准备。</p>
+        </header>
+
+        <div className="science-scene-dialog-layout science-newbie-layout">
+          <nav className="science-topic-nav science-breed-nav" aria-label="选择宠物品类">
+            {BREED_GUIDE_CATEGORIES.map((item) => <button key={item.id} type="button" className={categoryId === item.id ? 'is-active' : ''} onClick={() => setCategoryId(item.id)}><Emoji text={item.emoji} size={20} /><span>{item.label}</span><b>›</b></button>)}
+          </nav>
+
+          <div className="science-topic-detail">
+            <div className="science-topic-detail-title science-newbie-intro"><span><Emoji text={category.emoji} size={16} /> {category.label}的新手准备</span><h3>{category.label}接宠行动清单</h3><p>{prep.intro}</p><strong>已确认 {completedItems} / {totalItems} 项 · 必做 {completedRequired} / {requiredTasks.length} 项</strong></div>
+            <div className="science-newbie-readiness"><span>接宠前关键门槛</span><p>{prep.blocker}</p></div>
+            <div className="science-newbie-checklist-grid">
+              {NEWBIE_PREP_SECTIONS.map((section) => (
+                <section key={section.id} className="science-newbie-checklist">
+                  <div><span><Emoji text={section.emoji} size={17} /> {section.eyebrow}</span><h4>{section.title}</h4></div>
+                  <ul>{prep[section.id].map((task) => {
+                    const checked = checkedItems.has(task.id);
+                    const levelName = task.level === 'must' ? '必须完成' : '建议完成';
+                    return <li key={task.id}><button type="button" aria-pressed={checked} className={checked ? 'is-checked' : ''} onClick={() => toggleItem(task.id)}><i>{checked ? '✓' : ''}</i><span><small className={`science-newbie-level is-${task.level}`}>{levelName}</small><strong>{task.action}</strong><em><b>为什么：</b>{task.reason}</em><em><b>完成标准：</b>{task.done}</em></span></button></li>;
+                  })}</ul>
+                </section>
+              ))}
+            </div>
+            <div className="science-topic-caution science-newbie-caution"><strong>该品类关键提醒</strong><p>{prep.caution}</p></div>
+            <div className="science-newbie-extra-grid">
+              <section><span>当天不要做</span><ul>{prep.noDo.map((item) => <li key={item}>{item}</li>)}</ul></section>
+              <section><span>第一周重点记录</span><ul>{prep.records.map((item) => <li key={item}>{item}</li>)}</ul></section>
+            </div>
+
+            <div className="science-related-articles">
+              <div className="science-related-heading"><div><span className="eyebrow">下一步阅读</span><h4>{category.label}相关科普</h4></div><button type="button" onClick={() => { onClose(); requestAnimationFrame(() => document.getElementById('science-library')?.scrollIntoView({ behavior: 'smooth' })); }}>浏览完整科普库</button></div>
+              <div className="science-related-list">{relatedArticles.map((article) => <button key={article.id} type="button" onClick={() => navigate({ page: 'article', id: article.id })}><span className="science-related-emoji"><Emoji text={article.emoji || '📚'} size={26} /></span><span><small>{ARTICLE_CATS.find((item) => item.id === article.cat)?.name || '宠物科普'} · {article.read}</small><strong>{article.title}</strong></span><b>›</b></button>)}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+const FIT_INTENTS = [
+  { id: 'fixed', emoji: '🎯', title: '已经确定一种类型', desc: '先选猫、狗等类型，再推荐更具体的品种或饲养方向。' },
+  { id: 'compare', emoji: '⚖️', title: '正在两三种之间犹豫', desc: '只比较你选中的类型，帮助看清时间、预算和照护差异。' },
+  { id: 'open', emoji: '🧭', title: '完全没有想好', desc: '从生活习惯和陪伴偏好出发，先推荐更合适的宠物大类。' },
+];
+
+function ScienceFitQuizDialog({ group, onClose, navigate }) {
+  const [phase, setPhase] = useState('intent');
+  const [intent, setIntent] = useState(null);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [answerMap, setAnswerMap] = useState({});
+
+  // 仅“确定一种类型”时追加该类型专项题；比较和开放推荐保持同一套通用量尺。
+  const questions = useMemo(() => {
+    const specialQuestions = intent === 'fixed' && selectedCategories.length === 1
+      ? FIT_SPECIAL_QUESTIONS[selectedCategories[0]] || []
+      : [];
+    return [...FIT_COMMON_QUESTIONS, ...specialQuestions];
+  }, [intent, selectedCategories]);
+  const results = useMemo(
+    () => (phase === 'result' ? evaluateFitTest({ intent, selectedCategories, answerMap }) : []),
+    [phase, intent, selectedCategories, answerMap],
+  );
+  const currentQuestion = questions[questionIndex];
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event) => { if (event.key === 'Escape') onClose(); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', onKeyDown); };
+  }, [onClose]);
+
+  function chooseIntent(nextIntent) {
+    setIntent(nextIntent);
+    setSelectedCategories([]);
+    setAnswerMap({});
+    setQuestionIndex(0);
+    setPhase(nextIntent === 'open' ? 'questions' : 'categories');
+  }
+
+  function toggleCategory(categoryId) {
+    if (intent === 'fixed') {
+      setSelectedCategories([categoryId]);
+      return;
+    }
+    setSelectedCategories((current) => current.includes(categoryId)
+      ? current.filter((id) => id !== categoryId)
+      : current.length < 3 ? [...current, categoryId] : current);
+  }
+
+  function answerQuestion(values) {
+    setAnswerMap((current) => ({ ...current, [currentQuestion.id]: values }));
+    if (questionIndex === questions.length - 1) setPhase('result');
+    else setQuestionIndex((current) => current + 1);
+  }
+
+  function goBack() {
+    if (phase === 'categories') { setPhase('intent'); return; }
+    if (phase === 'questions' && questionIndex > 0) { setQuestionIndex((current) => current - 1); return; }
+    if (phase === 'questions') { setPhase(intent === 'open' ? 'intent' : 'categories'); return; }
+    if (phase === 'result') { setPhase('questions'); setQuestionIndex(Math.max(0, questions.length - 1)); }
+  }
+
+  function restart() {
+    setPhase('intent');
+    setIntent(null);
+    setSelectedCategories([]);
+    setQuestionIndex(0);
+    setAnswerMap({});
+  }
+
+  const categorySelectionReady = intent === 'fixed' ? selectedCategories.length === 1 : selectedCategories.length >= 2;
+  const progress = questions.length ? ((questionIndex + 1) / questions.length) * 100 : 0;
+  const topResult = results[0];
+  const topCategory = FIT_CATEGORIES.find((item) => item.id === (topResult?.categoryId || topResult?.id));
+  const relatedArticles = topResult ? relatedArticlesForTopic({
+    keywords: [topResult.label, topCategory?.label || '', ...(topResult.traits || [])].filter(Boolean),
+    cats: ['breed'],
+  }) : [];
+
+  return (
+    <div className="science-scene-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="science-scene-dialog science-fit-dialog" role="dialog" aria-modal="true" aria-label={group.title} onMouseDown={(event) => event.stopPropagation()}>
+        <button type="button" className="science-scene-close" aria-label="关闭" onClick={onClose}>×</button>
+        <header className="science-scene-dialog-header science-fit-header">
+          <span className="eyebrow">准备养宠 · 适配测评</span>
+          <h2>{phase === 'result' ? '你的养宠适配建议' : group.title}</h2>
+          <p>{phase === 'result' ? '结果只用于缩小选择范围，领养或购买前仍需结合个体健康、家庭共识和专业建议。' : '约 3 分钟，根据真实生活条件作答；没有“更好”的答案，只有更适合的选择。'}</p>
+        </header>
+
+        {phase === 'intent' && (
+          <div className="science-fit-step">
+            <div className="science-fit-step-title"><small>第 1 步</small><h3>你目前确定想养的类型了吗？</h3><p>这会决定最后推荐“宠物大类”还是“具体品种”。</p></div>
+            <div className="science-fit-intent-grid">
+              {FIT_INTENTS.map((item) => (
+                <button key={item.id} type="button" onClick={() => chooseIntent(item.id)}>
+                  <Emoji text={item.emoji} size={36} /><strong>{item.title}</strong><span>{item.desc}</span><b>›</b>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {phase === 'categories' && (
+          <div className="science-fit-step">
+            <div className="science-fit-step-title"><small>第 2 步</small><h3>{intent === 'fixed' ? '你已经确定哪一种类型？' : '选择 2～3 个想比较的类型'}</h3><p>{intent === 'fixed' ? '后续会增加对应专项题，并给出具体品种建议。' : '最多选择 3 个，结果会在这些类型中排序。'}</p></div>
+            <div className="science-fit-category-grid">
+              {FIT_CATEGORIES.map((item) => {
+                const selected = selectedCategories.includes(item.id);
+                return <button key={item.id} type="button" className={selected ? 'is-selected' : ''} aria-pressed={selected} onClick={() => toggleCategory(item.id)}><Emoji text={item.emoji} size={42} /><strong>{item.label}</strong><span>{selected ? '已选择' : '选择'}</span></button>;
+              })}
+            </div>
+            <div className="science-fit-actions"><button type="button" className="science-fit-secondary" onClick={goBack}>上一步</button><button type="button" className="science-fit-primary" disabled={!categorySelectionReady} onClick={() => { setQuestionIndex(0); setPhase('questions'); }}>开始测评</button></div>
+          </div>
+        )}
+
+        {phase === 'questions' && currentQuestion && (
+          <div className="science-fit-step">
+            <div className="science-fit-progress"><span>生活适配题 {questionIndex + 1} / {questions.length}</span><div><i style={{ width: `${progress}%` }} /></div></div>
+            <div className="science-fit-question"><h3>{currentQuestion.title}</h3>{currentQuestion.hint && <p>{currentQuestion.hint}</p>}</div>
+            <div className="science-fit-options">
+              {currentQuestion.options.map((item) => <button key={item.label} type="button" className={answerMap[currentQuestion.id] === item.values ? 'is-selected' : ''} onClick={() => answerQuestion(item.values)}><span>{item.label}</span><b>›</b></button>)}
+            </div>
+            <div className="science-fit-actions"><button type="button" className="science-fit-secondary" onClick={goBack}>上一步</button><small>答案仅用于本次测评，不会写入宠物档案</small></div>
+          </div>
+        )}
+
+        {phase === 'result' && (
+          <div className="science-fit-step science-fit-result-step">
+            <div className="science-fit-result-summary"><span>{intent === 'fixed' ? '具体品种建议' : '宠物类型建议'}</span><h3>更匹配你的前三个方向</h3><p>匹配度代表当前生活条件与典型照护需求的接近程度，不等同于医学或行为学结论。</p></div>
+            <div className="science-fit-results">
+              {results.map((item, index) => (
+                <article key={item.id} className={index === 0 ? 'is-top' : ''}>
+                  <div className="science-fit-result-rank"><span>0{index + 1}</span><Emoji text={item.emoji} size={38} /></div>
+                  <div><small>{item.level} · 匹配度 {item.score}%</small><h4>{item.label}</h4><div className="science-fit-tags">{item.traits.map((trait) => <span key={trait}>{trait}</span>)}</div></div>
+                  <div className="science-fit-result-notes"><p><strong>匹配点</strong>{item.strengths.length ? item.strengths.join('、') : '陪伴偏好与该方向较接近'}</p><p><strong>决定前确认</strong>{item.cautions.length ? item.cautions.join('；') : '继续确认个体性格、健康和长期照护安排'}</p></div>
+                </article>
+              ))}
+            </div>
+
+            {relatedArticles.length > 0 && <div className="science-related-articles science-fit-related"><div className="science-related-heading"><div><span className="eyebrow">下一步了解</span><h4>与首选方向相关的科普</h4></div><button type="button" onClick={() => { onClose(); requestAnimationFrame(() => document.getElementById('science-library')?.scrollIntoView({ behavior: 'smooth' })); }}>浏览完整科普库</button></div><div className="science-related-list">{relatedArticles.map((article) => <button key={article.id} type="button" onClick={() => navigate({ page: 'article', id: article.id })}><span className="science-related-emoji"><Emoji text={article.emoji || '📚'} size={26} /></span><span><small>{ARTICLE_CATS.find((item) => item.id === article.cat)?.name || '宠物科普'} · {article.read}</small><strong>{article.title}</strong></span><b>›</b></button>)}</div></div>}
+            <div className="science-fit-actions"><button type="button" className="science-fit-secondary" onClick={goBack}>修改上一题</button><button type="button" className="science-fit-primary" onClick={restart}>重新测评</button></div>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function ScienceSceneDialog({ group, stage, onClose, navigate, ownedPetContext, onOwnedPetContextChange }) {
+  const [topicId, setTopicId] = useState(group.topics[0].id);
+  const selectedTopic = group.topics.find((item) => item.id === topicId) || group.topics[0];
+  const ownedGuidance = stage === 'owned' ? getOwnedCareGuidance({ ...ownedPetContext, groupId: group.id }) : null;
+  const relatedArticles = useMemo(() => relatedArticlesForTopic(ownedGuidance || selectedTopic), [ownedGuidance, selectedTopic]);
+
+  // 弹层支持 Esc 关闭，并在打开期间阻止背景滚动，避免移动端内容位置丢失。
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event) => { if (event.key === 'Escape') onClose(); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', onKeyDown); };
+  }, [onClose]);
+
+  return (
+    <div className="science-scene-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="science-scene-dialog" role="dialog" aria-modal="true" aria-label={group.title} onMouseDown={(event) => event.stopPropagation()}>
+        <button type="button" className="science-scene-close" aria-label="关闭" onClick={onClose}>×</button>
+        <header className="science-scene-dialog-header">
+          <span className="eyebrow">{stage === 'planning' ? '准备养宠' : '已经养宠'} · {group.eyebrow}</span>
+          <h2>{group.title}</h2>
+          <p>{group.desc}</p>
+        </header>
+
+        {stage === 'owned' && (
+          <section className="science-owned-selector" aria-label="选择当前宠物">
+            <div><span className="eyebrow">轻量定制</span><strong>我正在养</strong><small>仅用于切换本页内容，不会保存为宠物档案。</small></div>
+            <label>物种<select value={ownedPetContext.speciesId} onChange={(event) => onOwnedPetContextChange((current) => ({ ...current, speciesId: event.target.value }))}>{OWNED_CARE_SPECIES.map((item) => <option key={item.id} value={item.id}>{item.emoji} {item.label}</option>)}</select></label>
+            <label>阶段<select value={ownedPetContext.lifeStageId} onChange={(event) => onOwnedPetContextChange((current) => ({ ...current, lifeStageId: event.target.value }))}>{OWNED_CARE_LIFE_STAGES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          </section>
+        )}
+
+        <div className="science-scene-dialog-layout">
+          <nav className="science-topic-nav" aria-label={`${group.title}知识点`}>
+            {group.topics.map((item, index) => <button key={item.id} type="button" className={topicId === item.id ? 'is-active' : ''} onClick={() => setTopicId(item.id)}><span>{String(index + 1).padStart(2, '0')}</span>{item.title}<b>›</b></button>)}
+          </nav>
+
+          <div className="science-topic-detail">
+            {ownedGuidance && <section className="science-owned-guidance"><span>{ownedGuidance.eyebrow}</span><h3>{ownedGuidance.title}</h3><p>{ownedGuidance.summary}</p><ol>{ownedGuidance.steps.map((step) => <li key={step}>{step}</li>)}</ol><div><strong>需要警惕</strong><p>{ownedGuidance.caution}</p></div></section>}
+            <div className="science-topic-detail-title"><span>当前知识点</span><h3>{selectedTopic.title}</h3><p>{selectedTopic.summary}</p></div>
+            <div className="science-topic-advice"><h4>{stage === 'planning' ? '建议提前完成' : '建议先这样处理'}</h4><ol>{selectedTopic.steps.map((step) => <li key={step}>{step}</li>)}</ol></div>
+            <div className="science-topic-caution"><strong>{stage === 'planning' ? '提前注意' : '需要警惕'}</strong><p>{selectedTopic.caution}</p></div>
+
+            <div className="science-related-articles">
+              <div className="science-related-heading"><div><span className="eyebrow">来自全部科普</span><h4>相关文章</h4></div><button type="button" onClick={() => { onClose(); requestAnimationFrame(() => document.getElementById('science-library')?.scrollIntoView({ behavior: 'smooth' })); }}>浏览完整科普库</button></div>
+              <div className="science-related-list">
+                {relatedArticles.map((article) => (
+                  <button key={article.id} type="button" onClick={() => navigate({ page: 'article', id: article.id })}>
+                    <span className="science-related-emoji"><Emoji text={article.emoji || '📚'} size={26} /></span>
+                    <span><small>{ARTICLE_CATS.find((item) => item.id === article.cat)?.name || '宠物科普'} · {article.read}</small><strong>{article.title}</strong></span>
+                    <b>›</b>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// 相关文章通过关键词与现有文章分类实时计算，不在场景模块内复制文章内容。
+// 高相关内容优先；没有精确关键词时以匹配分类的最新文章兜底，确保每个场景都有下一步阅读入口。
+function relatedArticlesForTopic(topic) {
+  const scored = ARTICLES.map((article) => {
+    const text = `${article.title} ${article.excerpt}`.toLowerCase();
+    const keywordScore = topic.keywords.reduce((score, keyword) => score + (text.includes(keyword.toLowerCase()) ? 4 : 0), 0);
+    const categoryScore = topic.cats.includes(article.cat) ? 2 : 0;
+    return { article, score: keywordScore + categoryScore };
+  }).filter((item) => item.score > 0);
+
+  const ranked = scored.sort((left, right) => right.score - left.score || articlePublicationTime(right.article) - articlePublicationTime(left.article));
+  if (ranked.length >= 3) return ranked.slice(0, 3).map((item) => item.article);
+
+  const selectedIds = new Set(ranked.map((item) => item.article.id));
+  const fallback = ARTICLES
+    .filter((article) => !selectedIds.has(article.id) && (topic.cats.length === 0 || topic.cats.includes(article.cat)))
+    .sort((a, b) => articlePublicationTime(b) - articlePublicationTime(a));
+  return [...ranked.map((item) => item.article), ...fallback].slice(0, 3);
 }
 
 function articlePublicationTime(article) {
