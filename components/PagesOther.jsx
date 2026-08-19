@@ -107,6 +107,7 @@ export function ArticlesPage({ navigate }) {
 }
 
 function ScienceMvpSection({ stage, onStageChange, activeGroupId, onOpenGroup, onCloseGroup, navigate }) {
+  const [ownedMode, setOwnedMode] = useState('mine');
   // 轻量选择在科普页会话内共享：切换不同模块时仍保持同一只“我的宠物”，但不会写入档案或数据库。
   const [ownedPetContext, setOwnedPetContext] = useState({ speciesId: 'dog', lifeStageId: 'adult' });
   const groups = SCIENCE_SCENE_GROUPS[stage];
@@ -127,22 +128,31 @@ function ScienceMvpSection({ stage, onStageChange, activeGroupId, onOpenGroup, o
           ))}
         </div>
 
-        <div className="science-scene-heading">
-          <div><span className="eyebrow">{stageCopy.eyebrow}</span><h2 className="h-2">{stageCopy.title}</h2></div>
-          <p className="body">{stageCopy.desc}</p>
-        </div>
+        {stage === 'owned' && (
+          <div className="science-owned-mode-switch" role="tablist" aria-label="选择已有宠物内容">
+            <button type="button" role="tab" aria-selected={ownedMode === 'mine'} className={ownedMode === 'mine' ? 'is-active' : ''} onClick={() => { setOwnedMode('mine'); onCloseGroup(); }}><Emoji text="💚" size={22} /><span><strong>我的宠物</strong><small>根据宠物档案定制照护</small></span></button>
+            <button type="button" role="tab" aria-selected={ownedMode === 'other'} className={ownedMode === 'other' ? 'is-active' : ''} onClick={() => { setOwnedMode('other'); onCloseGroup(); }}><Emoji text="🐾" size={22} /><span><strong>其他宠物</strong><small>查看其他物种怎么照料</small></span></button>
+          </div>
+        )}
 
-        <div className={`science-scene-grid science-scene-grid-${stage}`}>
-          {groups.map((group, index) => (
-            <button key={group.id} type="button" className={`science-scene-card${index === 0 ? ' is-featured' : ''}`} onClick={() => onOpenGroup(group.id)}>
-              <span className="science-scene-card-index">0{index + 1}</span>
-              <span className="science-scene-card-icon"><Emoji text={group.emoji} size={index === 0 ? 54 : 40} /></span>
-              {/* 卡片只保留入口需要的标题和说明，避免“知识点数量”干扰用户选择功能。 */}
-              <span className="science-scene-card-copy"><small>{group.eyebrow}</small><strong>{group.title}</strong><span>{group.desc}</span></span>
-              <span className="science-scene-card-arrow">›</span>
-            </button>
-          ))}
-        </div>
+        {stage === 'owned' && ownedMode === 'mine' ? <ScienceMyPetsPanel navigate={navigate} /> : <>
+          <div className="science-scene-heading">
+            <div><span className="eyebrow">{stageCopy.eyebrow}</span><h2 className="h-2">{stageCopy.title}</h2></div>
+            <p className="body">{stageCopy.desc}</p>
+          </div>
+
+          <div className={`science-scene-grid science-scene-grid-${stage}`}>
+            {groups.map((group, index) => (
+              <button key={group.id} type="button" className={`science-scene-card${index === 0 ? ' is-featured' : ''}`} onClick={() => onOpenGroup(group.id)}>
+                <span className="science-scene-card-index">0{index + 1}</span>
+                <span className="science-scene-card-icon"><Emoji text={group.emoji} size={index === 0 ? 54 : 40} /></span>
+                {/* 卡片只保留入口需要的标题和说明，避免“知识点数量”干扰用户选择功能。 */}
+                <span className="science-scene-card-copy"><small>{group.eyebrow}</small><strong>{group.title}</strong><span>{group.desc}</span></span>
+                <span className="science-scene-card-arrow">›</span>
+              </button>
+            ))}
+          </div>
+        </>}
       </div>
 
       {/* “我适合养什么”使用独立测评流程；其他入口继续复用原有知识点弹层，彼此解耦。 */}
@@ -157,6 +167,42 @@ function ScienceMvpSection({ stage, onStageChange, activeGroupId, onOpenGroup, o
             : <ScienceSceneDialog key={`${stage}-${activeGroup.id}`} group={activeGroup} stage={stage} onClose={onCloseGroup} navigate={navigate} ownedPetContext={ownedPetContext} onOwnedPetContextChange={setOwnedPetContext} />)}
     </section>
   );
+}
+
+// “我的宠物”只消费已有宠物档案并从通用科普库推荐内容；没有档案时提供明确的建立入口。
+function ScienceMyPetsPanel({ navigate }) {
+  const [pets, setPets] = useState([]);
+  const [selectedName, setSelectedName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const selectedPet = pets.find((pet) => pet.name === selectedName) || pets[0];
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/pets')
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('pets unavailable'))))
+      .then((data) => { if (alive) { setPets(Array.isArray(data) ? data : []); setSelectedName(data?.[0]?.name || ''); } })
+      .catch(() => { if (alive) setFailed(true); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
+
+  if (loading) return <div className="science-my-pets-empty"><Emoji text="🐾" size={38} /><strong>正在读取宠物档案</strong><p>准备为你的宠物匹配照护内容。</p></div>;
+  if (failed) return <div className="science-my-pets-empty"><Emoji text="🛠️" size={38} /><strong>暂时无法读取档案</strong><p>可以先去“其他宠物”浏览通用照护内容。</p><button type="button" onClick={() => navigate({ page: 'member', tab: 'pets' })}>打开宠物档案</button></div>;
+  if (!selectedPet) return <div className="science-my-pets-empty"><Emoji text="🐾" size={48} /><strong>还没有宠物档案</strong><p>建立档案后，可以获得根据物种和年龄阶段整理的照护建议。</p><button type="button" onClick={() => navigate({ page: 'member', tab: 'pets' })}>去建立宠物档案</button><small>也可以先浏览“其他宠物”</small></div>;
+
+  const species = getPetSpecies(selectedPet.species);
+  // 宠物档案使用下划线命名，科普定制数据使用连字符命名；此处集中转换，避免散落的物种映射。
+  const speciesId = species.id.replace('_', '-');
+  const lifeStageId = selectedPet.lifeStage === '幼年' ? 'young' : selectedPet.lifeStage === '老年' ? 'senior' : 'adult';
+  const modules = [{ id: 'problem', title: '异常观察', emoji: '🩺' }, { id: 'daily', title: '日常照护', emoji: '🫧' }, { id: 'health', title: '健康管理', emoji: '💉' }, { id: 'feeding', title: '饮食喂养', emoji: '🥣' }, { id: 'behavior', title: '行为与环境', emoji: '🎾' }];
+
+  return <div className="science-my-pets-panel">
+    <div className="science-my-pets-heading"><div><span className="eyebrow">Pet Profile · 我的宠物</span><h2 className="h-2">围绕 {selectedPet.name} 来看科普</h2><p>内容根据档案中的物种{selectedPet.ageMonths ? '和年龄阶段' : ''}整理，通用文章仍来自下方完整科普库。</p></div><button type="button" onClick={() => navigate({ page: 'member', tab: 'pets' })}>管理档案 →</button></div>
+    {pets.length > 1 && <div className="science-my-pet-tabs" role="tablist" aria-label="选择宠物档案">{pets.map((pet) => <button key={pet.name} type="button" className={selectedPet.name === pet.name ? 'is-active' : ''} onClick={() => setSelectedName(pet.name)}><Emoji text={petEmoji(pet.species)} size={21} /><span>{pet.name}</span></button>)}</div>}
+    <div className="science-my-pets-profile"><Emoji text={petEmoji(selectedPet.species)} size={44} /><div><strong>{selectedPet.name}</strong><span>{species.label}{selectedPet.breed ? ` · ${selectedPet.breed}` : ''} · {lifeStageId === 'young' ? '幼年/成长期' : lifeStageId === 'senior' ? '老年期' : '成年期'}</span></div></div>
+    <div className="science-my-pets-module-grid">{modules.map((module) => { const guidance = getOwnedCareGuidance({ speciesId, lifeStageId, groupId: module.id }); const articles = relatedArticlesForTopic(guidance); return <article key={module.id}><span className="science-my-pets-module-icon"><Emoji text={module.emoji} size={25} /></span><div><span className="eyebrow">{module.title}</span><h3>{guidance.title}</h3><p>{guidance.summary}</p><ul>{guidance.steps.slice(0, 2).map((step) => <li key={step}>{step}</li>)}</ul><div className="science-my-pets-articles">{articles.slice(0, 2).map((article) => <button key={article.id} type="button" onClick={() => navigate({ page: 'article', id: article.id })}>{article.title} <b>›</b></button>)}</div></div></article>; })}</div>
+  </div>;
 }
 
 function ScienceBreedGuideDialog({ group, onClose, navigate }) {
@@ -262,9 +308,13 @@ function ScienceCostDialog({ group, onClose }) {
 
 function ScienceNewbiePrepDialog({ group, onClose, navigate }) {
   const [categoryId, setCategoryId] = useState(BREED_GUIDE_CATEGORIES[0].id);
+  const [rodentTypeId, setRodentTypeId] = useState('hamster');
   const [checkedItems, setCheckedItems] = useState(() => new Set());
   const category = BREED_GUIDE_CATEGORIES.find((item) => item.id === categoryId) || BREED_GUIDE_CATEGORIES[0];
-  const prep = NEWBIE_PREP_BY_CATEGORY[categoryId];
+  // “鼠”是一级分类；进入清单后再区分仓鼠与豚鼠，既精简导航又保留两者不同照护规则。
+  const prepId = categoryId === 'hamster' ? rodentTypeId : categoryId;
+  const prepLabel = prepId === 'guinea-pig' ? '豚鼠' : category.label;
+  const prep = NEWBIE_PREP_BY_CATEGORY[prepId];
   // 所有品类都使用同一任务协议，后续接入宠物档案时只需替换任务来源，不必改弹层结构。
   const tasks = NEWBIE_PREP_SECTIONS.flatMap((section) => prep[section.id]);
   const requiredTasks = tasks.filter((task) => task.level === 'must');
@@ -307,7 +357,8 @@ function ScienceNewbiePrepDialog({ group, onClose, navigate }) {
           </nav>
 
           <div className="science-topic-detail">
-            <div className="science-topic-detail-title science-newbie-intro"><span><Emoji text={category.emoji} size={16} /> {category.label}的新手准备</span><h3>{category.label}接宠行动清单</h3><p>{prep.intro}</p><strong>已确认 {completedItems} / {totalItems} 项 · 必做 {completedRequired} / {requiredTasks.length} 项</strong></div>
+            <div className="science-topic-detail-title science-newbie-intro"><span><Emoji text={category.emoji} size={16} /> {prepLabel}的新手准备</span><h3>{prepLabel}接宠行动清单</h3><p>{prep.intro}</p><strong>已确认 {completedItems} / {totalItems} 项 · 必做 {completedRequired} / {requiredTasks.length} 项</strong></div>
+            {categoryId === 'hamster' && <div className="science-rodent-switch" role="group" aria-label="选择鼠类具体类型"><span>选择具体类型</span>{[['hamster', '仓鼠'], ['guinea-pig', '豚鼠']].map(([id, label]) => <button key={id} type="button" className={rodentTypeId === id ? 'is-active' : ''} onClick={() => setRodentTypeId(id)}>{label}</button>)}</div>}
             <div className="science-newbie-readiness"><span>接宠前关键门槛</span><p>{prep.blocker}</p></div>
             <div className="science-newbie-checklist-grid">
               {NEWBIE_PREP_SECTIONS.map((section) => (
@@ -328,7 +379,7 @@ function ScienceNewbiePrepDialog({ group, onClose, navigate }) {
             </div>
 
             <div className="science-related-articles">
-              <div className="science-related-heading"><div><span className="eyebrow">下一步阅读</span><h4>{category.label}相关科普</h4></div><button type="button" onClick={() => { onClose(); requestAnimationFrame(() => document.getElementById('science-library')?.scrollIntoView({ behavior: 'smooth' })); }}>浏览完整科普库</button></div>
+              <div className="science-related-heading"><div><span className="eyebrow">下一步阅读</span><h4>{prepLabel}相关科普</h4></div><button type="button" onClick={() => { onClose(); requestAnimationFrame(() => document.getElementById('science-library')?.scrollIntoView({ behavior: 'smooth' })); }}>浏览完整科普库</button></div>
               <div className="science-related-list">{relatedArticles.map((article) => <button key={article.id} type="button" onClick={() => navigate({ page: 'article', id: article.id })}><span className="science-related-emoji"><Emoji text={article.emoji || '📚'} size={26} /></span><span><small>{ARTICLE_CATS.find((item) => item.id === article.cat)?.name || '宠物科普'} · {article.read}</small><strong>{article.title}</strong></span><b>›</b></button>)}</div>
             </div>
           </div>
@@ -517,7 +568,7 @@ function ScienceSceneDialog({ group, stage, onClose, navigate, ownedPetContext, 
         {stage === 'owned' && (
           <section className="science-owned-selector" aria-label="选择当前宠物">
             <div><span className="eyebrow">轻量定制</span><strong>我正在养</strong><small>仅用于切换本页内容，不会保存为宠物档案。</small></div>
-            <label>物种<select value={ownedPetContext.speciesId} onChange={(event) => onOwnedPetContextChange((current) => ({ ...current, speciesId: event.target.value }))}>{OWNED_CARE_SPECIES.map((item) => <option key={item.id} value={item.id}>{item.emoji} {item.label}</option>)}</select></label>
+            <label>物种<select value={ownedPetContext.speciesId} onChange={(event) => onOwnedPetContextChange((current) => ({ ...current, speciesId: event.target.value }))}>{OWNED_CARE_SPECIES.filter((item) => item.id !== 'guinea-pig').map((item) => item.id === 'hamster' ? <optgroup key="rodent" label="🐹 鼠"><option value="hamster">仓鼠</option><option value="guinea-pig">豚鼠</option></optgroup> : <option key={item.id} value={item.id}>{item.emoji} {item.label}</option>)}</select></label>
             <label>阶段<select value={ownedPetContext.lifeStageId} onChange={(event) => onOwnedPetContextChange((current) => ({ ...current, lifeStageId: event.target.value }))}>{OWNED_CARE_LIFE_STAGES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           </section>
         )}
