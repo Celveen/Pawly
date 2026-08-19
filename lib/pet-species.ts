@@ -26,16 +26,14 @@ export const PET_FILTERS = [
   { id: 'mini_pig', label: '猪', speciesIds: ['mini_pig'], emoji: '🐷' },
 ] as const;
 
-// 科普页专用分类：把仓鼠及其他“鼠类”集中展示，但保留豚鼠的独立入口。
-// speciesIds 也预留了暂未进入宠物档案主列表的常见宠物鼠，方便后续文章直接标注。
+// 科普页与商品页共用分类：把仓鼠、豚鼠及其他“鼠类”统一收纳到“鼠”。
+// 具体文章和商品仍可继续使用“豚鼠”作为适用对象，聚合只发生在入口筛选层。
 export const PET_CONTENT_FILTERS = [
   PET_FILTERS[0],
   PET_FILTERS[1],
   PET_FILTERS[2],
   PET_FILTERS[3],
-  PET_FILTERS[4],
-  { id: 'rodent', label: '鼠', speciesIds: ['rodent', 'hamster', 'chinchilla', 'gerbil', 'rat', 'mouse', 'degu'], emoji: '🐹' },
-  PET_FILTERS[6],
+  { id: 'rodent', label: '鼠', speciesIds: ['rodent', 'hamster', 'guinea_pig', 'chinchilla', 'gerbil', 'rat', 'mouse', 'degu'], emoji: '🐹' },
   PET_FILTERS[7],
   PET_FILTERS[8],
   PET_FILTERS[9],
@@ -45,7 +43,7 @@ export const PET_CONTENT_FILTERS = [
 export const ARTICLE_PET_FILTERS = PET_CONTENT_FILTERS;
 
 export const RODENT_ALIASES = [
-  '鼠', '鼠类', '仓鼠', '金丝熊', '侏儒仓鼠', '龙猫', '毛丝鼠',
+  '鼠', '鼠类', '仓鼠', '金丝熊', '侏儒仓鼠', '豚鼠', '荷兰猪', '天竺鼠', '龙猫', '毛丝鼠',
   '沙鼠', '蒙古沙鼠', '花枝鼠', '宠物大鼠', '宠物鼠', '小鼠', '八齿鼠', '松鼠',
 ];
 

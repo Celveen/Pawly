@@ -6,7 +6,7 @@ export const FIT_CATEGORIES = [
   { id: 'dog', label: '狗', emoji: '🐶' },
   { id: 'rabbit', label: '兔', emoji: '🐰' },
   { id: 'bird', label: '鸟', emoji: '🦜' },
-  { id: 'hamster', label: '仓鼠', emoji: '🐹' },
+  { id: 'hamster', label: '鼠', emoji: '🐹' },
   { id: 'reptile', label: '爬宠', emoji: '🦎' },
 ];
 
