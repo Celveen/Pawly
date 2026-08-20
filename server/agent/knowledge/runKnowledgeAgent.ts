@@ -86,13 +86,18 @@ export async function runKnowledgeAgent(input: KnowledgeAgentInput): Promise<Kno
         inferredRiskTags: riskTags,
       },
     });
-    return buildRefusal(
-      riskLevel,
-      riskTags,
-      targetSpecies
-        ? `当前缺少针对该物种的可靠内部知识证据，不能给出稳妥的明确结论。`
-        : '当前没有可用的内部知识或白名单来源证据，不能给出可靠回答。',
-    );
+    const reason = targetSpecies
+      ? '当前缺少针对该物种的可靠内部知识证据，不能给出稳妥的明确结论。'
+      : '当前没有可用的内部知识或白名单来源证据，不能给出可靠回答。';
+    // 检索不到资料 ≠ 不能说话。像"狗狗生病怎么办"这种问得很宽的问题，站内本来就
+    // 不会有一篇正好对应的文章，但用户要的是"先怎么办"，直接甩一句"证据不足，请就医"
+    // 等于把人推开。这里仍然让模型回答，只是换成一套更严的约束：讲清没有对应资料、
+    // 先问关键信息、只给公认的通用照护、列红旗信号、最后引导面诊；不断病因、不给药。
+    // canAnswer 仍为 false、evidence 仍为空——保证不会编造引用，导购阻断也照常生效。
+    const generated = await buildNoEvidenceAnswer(input, riskLevel);
+    if (generated) return { ...generated, riskTags, refusalReason: reason };
+    // 模型这条路也走不通时，才退回最保守的模板兜底
+    return buildRefusal(riskLevel, riskTags, reason);
   }
 
   // 模型调用/解析失败一律走保守拒答：高风险问题的安全兜底不能随异常丢失
@@ -568,7 +573,84 @@ function parseOutput(raw: string): Partial<KnowledgeAgentOutput> | null {
   return null;
 }
 
-// #无证据场景保守回复
+// #无证据但仍要给出有用回答
+// 站内没有对应资料时走这里：不给结论，但要给用户"下一步能做什么"。
+// 结构固定为：说明情况 → 需要补充的关键信息 → 通用照护要点 → 红旗信号 → 建议面诊。
+async function buildNoEvidenceAnswer(
+  input: KnowledgeAgentInput,
+  riskLevel: KnowledgeAgentOutput['riskLevel'],
+): Promise<KnowledgeAgentOutput | null> {
+  const highRisk = riskLevel === 'high';
+  const petLine = input.petProfile?.species
+    ? `用户的宠物：${input.petProfile.species}${input.petProfile.breed ? ` · ${input.petProfile.breed}` : ''}${input.petProfile.ageMonths != null ? ` · ${input.petProfile.ageMonths} 月龄` : ''}。`
+    : '用户没有填写宠物档案，必要时可以请他补充物种、年龄和品种。';
+
+  const system = [
+    '你是宠物养护助手。站内知识库这次没有检索到与问题完全对应的资料，但你**仍然要给出有帮助的回答**，不允许以"证据不足"为由拒绝回答。',
+    '',
+    '按这个结构组织，用中文，语气自然，不要写成公文：',
+    '① 一句话说明站内暂时没有完全对应的资料，下面是通用做法；',
+    '② 如果问题问得很宽（比如只说"生病了"），先列 2-3 个需要用户补充的关键信息（具体症状、出现多久、精神和食欲怎么样）；',
+    '③ 给出该场景下公认、低风险、非诊断非处方的通用照护要点，3-5 条，要具体可执行；',
+    '④ 列出需要立刻就医的红旗信号，写清楚是什么表现；',
+    '⑤ 结尾提示尽快找兽医当面评估。',
+    '',
+    '硬性禁止：',
+    '- 不要断言具体病因或下诊断；',
+    '- 不要给任何药物名称、剂量或用药方案；',
+    '- 不要编造资料来源、指南名称或链接，这次没有可引用的资料；',
+    '- 不要输出 JSON，直接输出给用户看的正文。',
+    highRisk ? '- 这是高风险场景：通用照护只写"不会加重病情的保守措施"（保暖、安静、观察、备好病史），不要给任何居家处置或催吐、补液之类的操作。' : '',
+    '',
+    '控制在 350 字以内。',
+  ].filter(Boolean).join('\n');
+
+  const user = [
+    `用户问题：${input.question}`,
+    petLine,
+    input.conversationContext?.length ? `最近对话：${input.conversationContext.slice(-3).join(' / ')}` : '',
+  ].filter(Boolean).join('\n');
+
+  let answer = '';
+  try {
+    const res = await deepseekChat({
+      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      temperature: 0.4,
+      max_tokens: 900,
+    });
+    answer = (res.choices?.[0]?.message?.content || '').trim();
+  } catch (e: any) {
+    console.error('[knowledge] 无证据兜底生成失败:', e?.message || e);
+    return null;
+  }
+  // 模型没产出实质内容时交回调用方走模板，别把半句话推给用户
+  if (answer.replace(/\s/g, '').length < 40) return null;
+  if (highRisk && !answer.includes('⚠️线上建议不能替代面诊！')) {
+    answer = `${answer}\n\n⚠️线上建议不能替代面诊！`;
+  }
+
+  logAgentDebug({
+    scope: 'knowledge-agent',
+    event: 'no_evidence_general_answer',
+    details: { question: input.question, riskLevel, answerLength: answer.length },
+  });
+
+  return {
+    canAnswer: false,
+    answer,
+    summary: '站内没有完全对应的资料，已给出通用照护建议与就医红旗信号。',
+    evidence: [],
+    confidence: 'low',
+    riskLevel,
+    riskTags: [],
+    needsVet: highRisk,
+    needsHumanHandoff: highRisk,
+    followUpQuestions: [],
+    refusalReason: '',
+  };
+}
+
+// #无证据场景保守回复（模型也走不通时的最后兜底）
 function buildRefusal(
   riskLevel: KnowledgeAgentOutput['riskLevel'],
   riskTags: KnowledgeAgentOutput['riskTags'],
