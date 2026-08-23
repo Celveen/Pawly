@@ -304,7 +304,42 @@ function stabilizeKnowledgeAnswer(
   const normalized = normalizeKnowledgeText(text, opts.sourceLine, opts.needsVet);
   if (opts.riskLevel !== 'high') return normalized;
 
+  // 模型已经按高风险结构写出实质内容时，保留它自己的回答，只补齐必须出现的元素。
+  // 之前这里无条件套模板重写，模型分析出来的东西全被丢掉，所有高风险回答长得一模一样，
+  // 读起来像免责声明而不是回答——内测反馈的"太不沾锅"主要就是这里来的。
+  if (isSubstantiveHighRiskAnswer(normalized)) return ensureHighRiskEssentials(normalized);
+
+  // 内容太薄（模型没写出什么）时才退回模板骨架，保证高风险场景至少有可用信息
   return formatHighRiskStructuredAnswer(normalized, evidence, opts);
+}
+
+// #高风险回答是否已有实质内容
+// 去掉来源行与免责行后仍有足够篇幅，且确实落到了就医引导上，才算模型自己写好了
+function isSubstantiveHighRiskAnswer(normalized: string): boolean {
+  const body = stripAuxiliaryLines(normalized);
+  return body.replace(/\s/g, '').length >= 120 && /就医|兽医|急诊|面诊/.test(body);
+}
+
+// #补齐高风险回答必须出现的元素（不改写模型正文）
+function ensureHighRiskEssentials(normalized: string): string {
+  const lines = normalized.split('\n');
+  const hasLead = /建议尽快就医|尽快就医|立即就医|尽快送医|急诊/.test(lines.slice(0, 3).join(' '));
+  const withLead = hasLead ? normalized : ['⚠️ 建议尽快就医', '', normalized].join('\n');
+  return withLead.includes('⚠️线上建议不能替代面诊！')
+    ? withLead
+    : `${withLead}\n\n⚠️线上建议不能替代面诊！`;
+}
+
+// #剥掉来源行与免责行，只留模型正文
+function stripAuxiliaryLines(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line
+      && !line.startsWith('参考：')
+      && !line.startsWith('可进一步查阅：')
+      && !line.includes('⚠️线上建议不能替代面诊！'))
+    .join('\n');
 }
 
 // #高风险回答模板化收口
@@ -588,21 +623,26 @@ async function buildNoEvidenceAnswer(
   const system = [
     '你是宠物养护助手。站内知识库这次没有检索到与问题完全对应的资料，但你**仍然要给出有帮助的回答**，不允许以"证据不足"为由拒绝回答。',
     '',
-    '按这个结构组织，用中文，语气自然，不要写成公文：',
-    '① 一句话说明站内暂时没有完全对应的资料，下面是通用做法；',
-    '② 如果问题问得很宽（比如只说"生病了"），先列 2-3 个需要用户补充的关键信息（具体症状、出现多久、精神和食欲怎么样）；',
-    '③ 给出该场景下公认、低风险、非诊断非处方的通用照护要点，3-5 条，要具体可执行；',
+    '很多用户只是想先要个大概方向，不是来听免责声明的。请**依托你自己的养宠知识**把话讲实，',
+    '要克制的是"确定性"，不是"信息量"：可以讲常见的可能是什么，但要写成可能性，不要写成诊断。',
+    '',
+    '按这个结构组织，用中文，语气自然，像个懂行的朋友，不要写成公文：',
+    '① 一句话说明站内暂时没有完全对应的资料，下面是通用经验；',
+    '② 结合你自己的知识，列 2-4 个常见的可能方向，每个都写清"通常还会伴随什么表现"，',
+    '   让用户能自己对上号。措辞用"常见的可能有…""如果同时还有…那更像…"，不要下定论；',
+    '③ 针对上面几种可能，给出现在就能做的事，3-5 条，要具体可执行（怎么喂、怎么观察、观察多久、什么情况该复看）；',
     '④ 列出需要立刻就医的红旗信号，写清楚是什么表现；',
     '⑤ 结尾提示尽快找兽医当面评估。',
+    '⑥ 如果问题问得实在太宽（比如只说"生病了"），把②③收短一点，先问清具体症状、出现多久、精神食欲如何。',
     '',
     '硬性禁止：',
-    '- 不要断言具体病因或下诊断；',
+    '- 不要把可能性写成确定诊断（不要说"你家狗就是 xxx 病"）；',
     '- 不要给任何药物名称、剂量或用药方案；',
-    '- 不要编造资料来源、指南名称或链接，这次没有可引用的资料；',
+    '- 不要编造资料来源、指南名称或链接，这次没有可引用的资料，也不要说"根据某某指南"；',
     '- 不要输出 JSON，直接输出给用户看的正文。',
-    highRisk ? '- 这是高风险场景：通用照护只写"不会加重病情的保守措施"（保暖、安静、观察、备好病史），不要给任何居家处置或催吐、补液之类的操作。' : '',
+    highRisk ? '- 这是高风险场景：可能原因照常说，但"现在能做的"只写不会加重病情的保守措施（保暖、安静、禁食禁水与否按兽医要求、记录病史、尽快送医），不要给催吐、灌水、喂药之类的居家操作。' : '',
     '',
-    '控制在 350 字以内。',
+    '控制在 450 字以内。',
   ].filter(Boolean).join('\n');
 
   const user = [
@@ -616,7 +656,7 @@ async function buildNoEvidenceAnswer(
     const res = await deepseekChat({
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
       temperature: 0.4,
-      max_tokens: 900,
+      max_tokens: 1200,
     });
     answer = (res.choices?.[0]?.message?.content || '').trim();
   } catch (e: any) {
@@ -677,3 +717,7 @@ function buildRefusal(
     refusalReason,
   };
 }
+
+// #仅供测试：高风险回答的收口逻辑改动过好几轮，需要能单独验证
+// （模型写了实质内容就保留、内容太薄才退回模板骨架）
+export const __testables = { stabilizeKnowledgeAnswer };
