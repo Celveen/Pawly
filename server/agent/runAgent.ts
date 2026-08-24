@@ -7,6 +7,9 @@ import { buildPolicySystemHint, buildRoutingSystemHints, decideOrchestrationPoli
 import { chunkReplyText, createAgentStreamEvent } from './stream';
 import { buildSystemPrompt } from './systemPrompt';
 import { toolDefs, runTool } from './tools';
+import type { KnowledgePrefetch, ToolContext } from './tools';
+import { runKnowledgeAgent } from './knowledge/runKnowledgeAgent';
+import { inferPrimarySpeciesScope, normalizeSpeciesScope } from './knowledge/taxonomy';
 import { inferExplicitProductRequestTerms, matchesExplicitProductTerms } from './guidance/request';
 import { routeIntent } from './routeIntent';
 import type { AgentEvidencePacket, OrchestrationDecision } from './orchestration/types';
@@ -15,6 +18,9 @@ import type { AgentStreamEvent } from './stream';
 
 // #主Agent执行步数上限
 const MAX_STEPS = 8; // 防止工具调用死循环
+// 守门拒绝后的最大重试次数。每次重试 = 一次完整模型往返，放任它吃满 MAX_STEPS
+// 会让导购类问题多等好几秒，收益却很低（模型改不对的，第三次通常也改不对）。
+const MAX_GUARD_RETRIES = 2;
 
 // #主Agent运行配置
 interface RunAgentOptions {
@@ -56,16 +62,20 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
   try {
     const currentUserQuestion = [...history].reverse().find((message) => message.role === 'user')?.content || '';
     const explicitProductTerms = inferExplicitProductRequestTerms(currentUserQuestion);
-    const ctx: {
-      userId: string;
-      currentUserQuestion: string;
-      currentPetSpecies?: string;
-      explicitProductTerms: string[];
-    } = { userId, currentUserQuestion, explicitProductTerms };
+    const ctx: ToolContext & { currentUserQuestion: string; explicitProductTerms: string[] } =
+      { userId, currentUserQuestion, explicitProductTerms };
     const routed = routeIntent(history);
+    // 知识类问题：不等模型开口，先把知识 Agent 跑起来，让它和第一次模型调用并行。
+    // 原来是"主模型 → 知识模型 → 主模型"三层串行，这一步能砍掉中间那层的等待。
+    // 路由是纯规则的，判定为知识问题时准确率足够；万一模型最后没调这个工具，
+    // 代价只是一次多余的后台调用，不影响回答。
+    if (routed.recommendedTools.includes('ask_knowledge_agent') && currentUserQuestion) {
+      ctx.knowledgePrefetch = startKnowledgePrefetch(currentUserQuestion, routed);
+    }
     const evidencePackets: AgentEvidencePacket[] = [];
     let currentDecision: OrchestrationDecision = decideOrchestrationPolicy(routed, evidencePackets);
     let productToolsUsed = false;
+    let guardRetries = 0;
     let productSearchExecuted = false;
     const searchedProducts = new Map<string, { id: string; name?: string; sub?: string; badges?: string[]; pet?: string; cat?: string }>();
     logAgentDebug({
@@ -190,6 +200,21 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
               step: step + 1,
               guardId: validation.guardId,
             }));
+            // 守门重试要封顶。每次拒绝都是一次完整的模型往返，8 步用完用户要多等好几秒，
+            // 最后还常常掉到兜底话术——实测"帮我推荐狗粮"这类问题会把 8 步全部耗光。
+            // 超过上限就降级收口：去掉不合规的商品方案，保留模型已经写好的文字。
+            // 所有安全类守门（无工具证据、策略禁止导购、商品未上架）都是在拦 proposals，
+            // 去掉它就满足；只有"用户要推荐却没给方案"这条满足不了，但那属于体验问题，
+            // 给一段纯文字回复也远好过兜底话术。
+            guardRetries += 1;
+            if (guardRetries > MAX_GUARD_RETRIES) {
+              logAgentDebug({
+                scope: 'main-agent',
+                event: 'final_presentation_degraded',
+                details: { userId, step: step + 1, guardId: validation.guardId, guardRetries },
+              });
+              return { reply: finalResult.reply, proposals: [] };
+            }
             appendRejectedToolResponses(messages, msg.tool_calls, present.id, validation.retryHint);
             messages.push({
               role: 'system',
@@ -210,19 +235,40 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
           return finalResult;
         }
 
-        for (const tc of msg.tool_calls) {
+        // 工具执行改成并行。原来是 for + await 一个个跑，一步里若同时要宠物档案、商品和
+        // 知识 Agent，就得排队；知识 Agent 里还套着一次模型调用，最慢的那个把前面的全拖住。
+        // 两个必须守住的点：
+        //  ① get_pet_profile 会写 ctx.currentPetSpecies，而 search_products 要读它，
+        //     所以档案先单独跑完，剩下的才并行；
+        //  ② 结果仍按模型给出的原始顺序逐个处理，副作用与提前返回的行为完全不变。
+        const parsedCalls = msg.tool_calls.map((tc: any) => {
+          let args: any = {};
+          try { args = JSON.parse(tc.function.arguments || '{}'); } catch {}
+          return { tc, args };
+        });
+        const executions = new Array<Awaited<ReturnType<typeof executeToolSafely>>>(parsedCalls.length);
+        const deferred: number[] = [];
+        for (let i = 0; i < parsedCalls.length; i++) {
+          if (parsedCalls[i].tc.function.name !== 'get_pet_profile') { deferred.push(i); continue; }
+          const exec = await executeToolSafely('get_pet_profile', parsedCalls[i].args, ctx);
+          executions[i] = exec;
+          if (exec.ok) ctx.currentPetSpecies = extractPetSpecies(exec.result) || ctx.currentPetSpecies;
+        }
+        const parallelResults = await Promise.all(
+          deferred.map((i) => executeToolSafely(parsedCalls[i].tc.function.name, parsedCalls[i].args, ctx)),
+        );
+        deferred.forEach((i, k) => { executions[i] = parallelResults[k]; });
+
+        for (let callIndex = 0; callIndex < parsedCalls.length; callIndex++) {
+          const { tc } = parsedCalls[callIndex];
           await emit(createAgentStreamEvent('tool.call', {
             step: step + 1,
             toolName: tc.function.name,
           }));
-          let args: any = {};
-          try { args = JSON.parse(tc.function.arguments || '{}'); } catch {}
-          const execution = await executeToolSafely(tc.function.name, args, ctx);
+          const execution = executions[callIndex];
           if (execution.ok && isProductTool(tc.function.name)) productToolsUsed = true;
           const result = execution.ok ? execution.result : execution.fallbackResult;
-          if (execution.ok && tc.function.name === 'get_pet_profile') {
-            ctx.currentPetSpecies = extractPetSpecies(result) || ctx.currentPetSpecies;
-          }
+          // currentPetSpecies 已在上面的第一波里写好，这里不必再算一次
           if (execution.ok && tc.function.name === 'search_products') {
             productSearchExecuted = true;
             collectSearchedProducts(result, searchedProducts);
@@ -622,4 +668,25 @@ function parseFinal(raw: string): AgentResult {
     return { reply: obj.reply || '', proposals };
   }
   return { reply: raw || '', proposals: [] };
+}
+
+// #知识 Agent 预取
+// 用路由已经推断出来的物种和风险信号先跑一遍。这里刻意不传 petProfile 之外的东西：
+// 模型后面若给出更严重的风险标签，canReusePrefetch 会拒绝复用并重跑，安全性不打折。
+function startKnowledgePrefetch(question: string, routed: ReturnType<typeof routeIntent>): KnowledgePrefetch {
+  const species = normalizeSpeciesScope(inferPrimarySpeciesScope(question)) || undefined;
+  const riskTags = routed.highRisk ? ['disease'] : [];
+  const promise = runKnowledgeAgent({
+    question,
+    intent: routed.highRisk ? 'high_risk_knowledge' : 'knowledge',
+    petProfile: species ? { species } : undefined,
+    conversationContext: [],
+    suspectedRiskTags: riskTags as any,
+    evidence: [],
+  }).catch((e: any) => {
+    // 预取失败不能影响主流程：这里吞掉错误，工具真被调到时会正常重跑一次
+    logAgentDebug({ scope: 'main-agent', event: 'knowledge_prefetch_failed', details: { error: e?.message || String(e) } });
+    return null;
+  });
+  return { question, species, riskTags, promise: promise as Promise<unknown> };
 }

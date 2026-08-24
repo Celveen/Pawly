@@ -17,6 +17,18 @@ export interface ToolContext {
   currentUserQuestion?: string;
   currentPetSpecies?: string;
   explicitProductTerms?: string[];
+  // 知识 Agent 预取：路由判定是知识类问题时，主 Agent 在第一次模型调用之前就把知识
+  // Agent 跑起来，这里存那次调用的 Promise。等模型真的调 ask_knowledge_agent 时直接
+  // 复用，省掉一整层串行等待（原来是 主模型 → 知识模型 → 主模型 三层串行）。
+  // 只有在模型给的参数不会让风险判定变严时才复用，否则照常重跑，见下方 canReusePrefetch。
+  knowledgePrefetch?: KnowledgePrefetch;
+}
+
+export interface KnowledgePrefetch {
+  question: string;
+  species?: string;
+  riskTags: string[];
+  promise: Promise<unknown>;
 }
 
 // #工具处理函数类型
@@ -417,6 +429,15 @@ const registeredTools: RegisteredTool[] = [
       const profile = args?.petProfile && typeof args.petProfile === 'object' ? args.petProfile : null;
       const profileSpecies = typeof profile?.species === 'string' ? profile.species : undefined;
       const inferredSpecies = normalizeSpeciesScope(inferPrimarySpeciesScope(question));
+      const modelRiskTags: string[] = Array.isArray(args?.suspectedRiskTags)
+        ? args.suspectedRiskTags.map((s: any) => String(s)).filter(Boolean)
+        : [];
+
+      // 预取命中就直接用，省掉一层串行的模型往返
+      if (canReusePrefetch(ctx.knowledgePrefetch, question, profileSpecies || inferredSpecies || undefined, modelRiskTags)) {
+        return buildKnowledgeToolPayload(await ctx.knowledgePrefetch!.promise as any);
+      }
+
       const result = await runKnowledgeAgent({
         question,
         intent: args?.intent === 'high_risk_knowledge' ? 'high_risk_knowledge' : 'knowledge',
@@ -432,9 +453,7 @@ const registeredTools: RegisteredTool[] = [
         conversationContext: Array.isArray(args?.conversationContext)
           ? args.conversationContext.map((s: any) => String(s)).filter(Boolean).slice(0, 8)
           : [],
-        suspectedRiskTags: Array.isArray(args?.suspectedRiskTags)
-          ? args.suspectedRiskTags.map((s: any) => String(s)).filter(Boolean)
-          : [],
+        suspectedRiskTags: modelRiskTags as any,
         evidence: Array.isArray(args?.evidence) ? args.evidence.map((item: any) => ({
           source: String(item?.source || ''),
           title: String(item?.title || ''),
@@ -547,6 +566,25 @@ function normalizeGuidanceProducts(products: any[]) {
       inStock: typeof item.inStock === 'boolean' ? item.inStock : undefined,
     }))
     .filter((item) => item.id && item.name);
+}
+
+// #知识预取是否可以复用
+// 预取是在模型开口之前跑的，用的是路由推断出来的物种与风险标签。模型随后可能传来
+// 更严重的风险标签（比如它从上下文里看出"误食"），那次判定会比预取更严格——这种情况
+// 必须重跑，绝不能拿一份风险等级更低的缓存去回答。物种不一致同理，答案会跑偏。
+// 反过来，模型没带来新信息时复用是安全的：知识 Agent 本来就会从问题文本重新推一遍风险。
+export function canReusePrefetch(
+  prefetch: KnowledgePrefetch | undefined,
+  question: string,
+  species: string | undefined,
+  modelRiskTags: string[],
+): boolean {
+  if (!prefetch) return false;
+  if (prefetch.question.trim() !== question.trim()) return false;
+  if (species && prefetch.species && species !== prefetch.species) return false;
+  if (species && !prefetch.species) return false;
+  const known = new Set(prefetch.riskTags);
+  return modelRiskTags.every((tag) => known.has(tag));
 }
 
 // 将问题中的注册物种转换成商品库使用的中文标签。
