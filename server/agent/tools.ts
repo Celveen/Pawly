@@ -22,6 +22,8 @@ export interface ToolContext {
   // 复用，省掉一整层串行等待（原来是 主模型 → 知识模型 → 主模型 三层串行）。
   // 只有在模型给的参数不会让风险判定变严时才复用，否则照常重跑，见下方 canReusePrefetch。
   knowledgePrefetch?: KnowledgePrefetch;
+  // 知识 Agent 生成 answer 时的增量回调，用于把文字边生成边推给前端
+  onKnowledgeDelta?: (text: string) => void;
 }
 
 export interface KnowledgePrefetch {
@@ -405,21 +407,6 @@ const registeredTools: RegisteredTool[] = [
             enum: ['disease', 'drug', 'emergency', 'poison', 'post_op', 'vomit_diarrhea', 'bleeding', 'neurological', 'respiratory', 'urinary_block', 'young_or_senior'],
           },
         },
-        evidence: {
-          type: 'array',
-          description: '可选的补充证据列表；知识 Agent 还会自动尝试从内部科普知识库补充来源',
-          items: {
-            type: 'object',
-            properties: {
-              source: { type: 'string', description: '来源名，如内部知识库、WSAVA、AAHA' },
-              title: { type: 'string', description: '来源标题' },
-              url: { type: 'string', description: '来源链接，可选' },
-              evidenceType: { type: 'string', enum: ['internal_kb', 'guideline', 'association', 'hospital_reference'] },
-              snippet: { type: 'string', description: '摘录或要点，可选' },
-            },
-            required: ['source', 'title', 'evidenceType'],
-          },
-        },
       },
       required: ['question', 'intent'],
     },
@@ -454,14 +441,10 @@ const registeredTools: RegisteredTool[] = [
           ? args.conversationContext.map((s: any) => String(s)).filter(Boolean).slice(0, 8)
           : [],
         suspectedRiskTags: modelRiskTags as any,
-        evidence: Array.isArray(args?.evidence) ? args.evidence.map((item: any) => ({
-          source: String(item?.source || ''),
-          title: String(item?.title || ''),
-          url: item?.url ? String(item.url) : undefined,
-          evidenceType: item?.evidenceType,
-          snippet: item?.snippet ? String(item.snippet) : undefined,
-        })) : [],
-      });
+        // 不再接收模型自带的 evidence：这个字段占了工具定义近一半篇幅，而且是伪造
+        // 来源最方便的入口。证据一律由知识 Agent 自己检索，来源才可追溯。
+        evidence: [],
+      }, ctx.onKnowledgeDelta);
       return buildKnowledgeToolPayload(result);
     },
   ),
@@ -506,6 +489,26 @@ const registeredTools: RegisteredTool[] = [
 
 // #主Agent可调用工具定义
 export const toolDefs = registeredTools.map((tool) => tool.definition);
+
+// 每一步模型调用都要把工具定义整份重发，一轮 2~5 步。全量发是 6700 字，
+// 占整个提示的三分之二，直接换算成首字延迟和成本。
+// 这几个是任何问题都可能用到的，恒发；其余按路由推荐按需发。
+const CORE_TOOLS = new Set([
+  'get_pet_profile',
+  'upsert_pet',
+  'search_products',
+  'ask_knowledge_agent',
+  'present_recommendation',
+]);
+
+// #按路由裁剪本轮要发送的工具定义
+// 路由拿不准（confidence=low）时退回全量，宁可多花点也不要让模型无工具可用。
+export function toolDefsFor(recommended: readonly string[], confidence?: string) {
+  if (confidence === 'low') return toolDefs;
+  const allow = new Set([...CORE_TOOLS, ...recommended]);
+  const picked = registeredTools.filter((tool) => allow.has(tool.name)).map((tool) => tool.definition);
+  return picked.length ? picked : toolDefs;
+}
 
 const toolHandlerMap = new Map(registeredTools.map((tool) => [tool.name, tool.handler] as const));
 

@@ -1,4 +1,4 @@
-import { deepseekChat } from '../../deepseek';
+import { deepseekChat, deepseekChatStream } from '../../deepseek';
 import { logAgentDebug } from '../debug';
 import { buildKnowledgeSystemPrompt, buildKnowledgeUserPrompt } from './prompt';
 import { retrieveKnowledgeEvidence } from './retrieval';
@@ -22,7 +22,13 @@ import {
 import type { KnowledgeAgentInput, KnowledgeAgentOutput, KnowledgeTopicDomainScope, KnowledgeTopicScope } from './types';
 
 // #知识Agent主执行流程
-export async function runKnowledgeAgent(input: KnowledgeAgentInput): Promise<KnowledgeAgentOutput> {
+// onAnswerDelta：知识 Agent 的 answer 也要边生成边推。不接这个回调的话，知识类
+// 问题（站内最主要的问法）走的是"整段生成完再一次性吐出"，用户看到的就是
+// 假流式——瞬间刷完一屏。
+export async function runKnowledgeAgent(
+  input: KnowledgeAgentInput,
+  onAnswerDelta?: (text: string) => void,
+): Promise<KnowledgeAgentOutput> {
   const targetSpecies = normalizeSpeciesScope(input.petProfile?.species);
   const breedResolution = resolveBreedContext(input.petProfile?.breed, input.petProfile?.species);
   const targetBreeds = breedResolution.matchedBreedScopes;
@@ -94,7 +100,7 @@ export async function runKnowledgeAgent(input: KnowledgeAgentInput): Promise<Kno
     // 等于把人推开。这里仍然让模型回答，只是换成一套更严的约束：讲清没有对应资料、
     // 先问关键信息、只给公认的通用照护、列红旗信号、最后引导面诊；不断病因、不给药。
     // canAnswer 仍为 false、evidence 仍为空——保证不会编造引用，导购阻断也照常生效。
-    const generated = await buildNoEvidenceAnswer(input, riskLevel);
+    const generated = await buildNoEvidenceAnswer(input, riskLevel, onAnswerDelta);
     if (generated) return { ...generated, riskTags, refusalReason: reason };
     // 模型这条路也走不通时，才退回最保守的模板兜底
     return buildRefusal(riskLevel, riskTags, reason);
@@ -103,7 +109,7 @@ export async function runKnowledgeAgent(input: KnowledgeAgentInput): Promise<Kno
   // 模型调用/解析失败一律走保守拒答：高风险问题的安全兜底不能随异常丢失
   let parsed: Partial<KnowledgeAgentOutput> | null = null;
   try {
-    const res = await deepseekChat({
+    const res = await deepseekChatStream({
       messages: [
         { role: 'system', content: buildKnowledgeSystemPrompt() },
         { role: 'user', content: buildKnowledgeUserPrompt({ ...input, evidence }, riskTags, riskLevel) },
@@ -111,7 +117,7 @@ export async function runKnowledgeAgent(input: KnowledgeAgentInput): Promise<Kno
       temperature: 0,
       max_tokens: 1600,
       response_format: { type: 'json_object' },
-    });
+    }, onAnswerDelta ? makeJsonFieldStreamer('answer', onAnswerDelta) : undefined);
     parsed = parseOutput(res.choices?.[0]?.message?.content || '');
   } catch (e: any) {
     console.error('[knowledge] 模型调用失败:', e?.message || e);
@@ -614,6 +620,7 @@ function parseOutput(raw: string): Partial<KnowledgeAgentOutput> | null {
 async function buildNoEvidenceAnswer(
   input: KnowledgeAgentInput,
   riskLevel: KnowledgeAgentOutput['riskLevel'],
+  onAnswerDelta?: (text: string) => void,
 ): Promise<KnowledgeAgentOutput | null> {
   const highRisk = riskLevel === 'high';
   const petLine = input.petProfile?.species
@@ -653,11 +660,11 @@ async function buildNoEvidenceAnswer(
 
   let answer = '';
   try {
-    const res = await deepseekChat({
+    const res = await deepseekChatStream({
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
       temperature: 0.4,
       max_tokens: 1200,
-    });
+    }, onAnswerDelta ? (delta) => { if (delta.kind === 'content') onAnswerDelta(delta.text); } : undefined);
     answer = (res.choices?.[0]?.message?.content || '').trim();
   } catch (e: any) {
     console.error('[knowledge] 无证据兜底生成失败:', e?.message || e);
@@ -721,3 +728,57 @@ function buildRefusal(
 // #仅供测试：高风险回答的收口逻辑改动过好几轮，需要能单独验证
 // （模型写了实质内容就保留、内容太薄才退回模板骨架）
 export const __testables = { stabilizeKnowledgeAnswer };
+
+// #把流式 JSON 里某个字段的值边到边抽出来
+// 知识 Agent 用 json_object 模式返回，answer 藏在 JSON 里。等整段收全再解析就没有
+// 流式的意义了，所以复用与主 Agent 同一套增量扫描思路：定位字段名后逐字吐出，
+// 处理转义与跨分片截断，遇到收尾引号停止。
+function makeJsonFieldStreamer(field: string, onText: (text: string) => void) {
+  let raw = '';
+  let state: 'seeking' | 'reading' | 'done' = 'seeking';
+  let cursor = 0;
+  let pending = '';
+  const opening = new RegExp(`"${field}"\\s*:\\s*"`);
+
+  return (delta: { kind: 'content' | 'reply'; text: string }) => {
+    if (state === 'done' || delta.kind !== 'content' || !delta.text) return;
+    raw += delta.text;
+    if (state === 'seeking') {
+      const m = opening.exec(raw);
+      if (!m) return;
+      cursor = m.index + m[0].length;
+      state = 'reading';
+    }
+    let out = '';
+    while (cursor < raw.length) {
+      const ch = raw[cursor];
+      if (pending) {
+        pending += ch;
+        cursor += 1;
+        const decoded = decodeEscape(pending);
+        if (decoded === null) { if (pending.length >= 6) pending = ''; continue; }
+        out += decoded;
+        pending = '';
+        continue;
+      }
+      if (ch === '\\') { pending = ch; cursor += 1; continue; }
+      if (ch === '"') { state = 'done'; cursor += 1; break; }
+      out += ch;
+      cursor += 1;
+    }
+    if (out) onText(out);
+  };
+}
+
+// #解码单个 JSON 转义序列；序列还没收齐时返回 null
+function decodeEscape(seq: string): string | null {
+  const c = seq[1];
+  if (c === undefined) return null;
+  if (c === 'u') {
+    if (seq.length < 6) return null;
+    const code = parseInt(seq.slice(2, 6), 16);
+    return Number.isNaN(code) ? '' : String.fromCharCode(code);
+  }
+  const map: Record<string, string> = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', '"': '"', '\\': '\\', '/': '/' };
+  return map[c] ?? c;
+}

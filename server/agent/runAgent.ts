@@ -6,7 +6,7 @@ import { buildEvidencePacketFromToolResult } from './orchestration/normalize';
 import { buildPolicySystemHint, buildRoutingSystemHints, decideOrchestrationPolicy, validateFinalResult } from './orchestration/policy';
 import { chunkReplyText, createAgentStreamEvent } from './stream';
 import { buildSystemPrompt } from './systemPrompt';
-import { toolDefs, runTool } from './tools';
+import { toolDefs, toolDefsFor, runTool } from './tools';
 import type { KnowledgePrefetch, ToolContext } from './tools';
 import { runKnowledgeAgent } from './knowledge/runKnowledgeAgent';
 import { inferPrimarySpeciesScope, normalizeSpeciesScope } from './knowledge/taxonomy';
@@ -40,15 +40,14 @@ export async function* runAgentStream(userId: string, history: ChatMessage[]): A
   let notify: (() => void) | null = null;
   let finished = false;
 
-  // 用标记记录"这一轮到底流出去过没有"。不能去翻 queue——事件被消费后就从队列里
-  // 移走了，等跑完再看队列必然是空的，会误判成没流过，把全文又推一遍（实测收到两份答复）。
-  let streamedAnyText = false;
+  // 记录"到目前为止已经流出去的文字"。不能去翻 queue——事件被消费后就从队列里移走了，
+  // 等跑完再看必然是空的，会误判成没流过、把全文又推一遍（实测前端收到两份答复）。
+  let streamedText = '';
 
   const push = (event: AgentStreamEvent) => {
-    if (event.type === 'reply.delta' && event.data.chunk) streamedAnyText = true;
-    // 守门让模型重写时前端会清空，这里同步归零：若重写后没有再流出文字，
-    // 收尾时要把完整答复补推一次，否则前端只剩一个空气泡
-    if (event.type === 'reply.reset') streamedAnyText = false;
+    if (event.type === 'reply.delta' && event.data.chunk) streamedText += event.data.chunk;
+    // 守门让模型重写时前端会清空，这里同步归零
+    if (event.type === 'reply.reset') streamedText = '';
     queue.push(event);
     notify?.();
     notify = null;
@@ -56,10 +55,22 @@ export async function* runAgentStream(userId: string, history: ChatMessage[]): A
 
   const running = runAgentCore(userId, history, { onEvent: push })
     .then((result) => {
-      // 模型没走流式（比如上游忽略了 stream:true）时，这里补一次全量文本，
-      // 保证前端无论如何都能拿到完整答复
-      if (!streamedAnyText) {
-        for (const chunk of chunkReplyText(result.reply)) {
+      // 收尾对账：流出去的文字未必等于最终答复。知识回答会经过后处理（补来源行、
+      // 补免责行），守门也可能让模型重写。这里统一校准，保证前端最后拿到的一定是
+      // result.reply 本身：能续上就只补差量，续不上就让前端清空重来。
+      const finalText = result.reply || '';
+      if (!streamedText) {
+        for (const chunk of chunkReplyText(finalText)) {
+          push(createAgentStreamEvent('reply.delta', { chunk, done: false }));
+        }
+      } else if (finalText.startsWith(streamedText)) {
+        const rest = finalText.slice(streamedText.length);
+        for (const chunk of chunkReplyText(rest)) {
+          push(createAgentStreamEvent('reply.delta', { chunk, done: false }));
+        }
+      } else if (finalText !== streamedText) {
+        push(createAgentStreamEvent('reply.reset', { reason: 'final_text_differs' }));
+        for (const chunk of chunkReplyText(finalText)) {
           push(createAgentStreamEvent('reply.delta', { chunk, done: false }));
         }
       }
@@ -101,8 +112,18 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
     // 路由是纯规则的，判定为知识问题时准确率足够；万一模型最后没调这个工具，
     // 代价只是一次多余的后台调用，不影响回答。
     if (routed.recommendedTools.includes('ask_knowledge_agent') && currentUserQuestion) {
-      ctx.knowledgePrefetch = startKnowledgePrefetch(currentUserQuestion, routed);
+      // 只有纯知识问题才把预取的增量直接推给前端：这类问题大概率由知识答复直接收口，
+      // 首字能提前到整轮的最开头。导购类问题最终说的是商品，先流知识文字再整段替换
+      // 反而更糟，所以那种情况只在后台预取、不往外推。
+      const streamPrefetch = routed.intent === 'knowledge';
+      ctx.knowledgePrefetch = startKnowledgePrefetch(
+        currentUserQuestion,
+        routed,
+        streamPrefetch ? (text) => void emit(createAgentStreamEvent('reply.delta', { chunk: text, done: false })) : undefined,
+      );
     }
+    // 模型真的调用 ask_knowledge_agent（没命中预取）时，同样要边生成边推
+    ctx.onKnowledgeDelta = (text) => void emit(createAgentStreamEvent('reply.delta', { chunk: text, done: false }));
     const evidencePackets: AgentEvidencePacket[] = [];
     let currentDecision: OrchestrationDecision = decideOrchestrationPolicy(routed, evidencePackets);
     let productToolsUsed = false;
@@ -138,6 +159,9 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
       ...history.map((m) => ({ role: m.role, content: m.content })),
     ];
 
+    // 只发这一轮可能用到的工具定义，别每步都把 10 个工具的完整 schema 重发一遍
+    const stepTools = toolDefsFor(routed.recommendedTools, routed.confidence);
+
     for (let step = 0; step < MAX_STEPS; step++) {
       logAgentDebug({
         scope: 'main-agent',
@@ -154,17 +178,34 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
       // deepseekChatStream 会把它从流式 JSON 参数中抽出来，逐字回调到这里。
       // 返回结构与非流式完全一致，下面的编排逻辑不受影响。
       let streamedChars = 0;
-      const res = await deepseekChatStream({
+      const stepBody = {
         messages,
-        tools: toolDefs,
-        tool_choice: 'auto',
+        tools: stepTools,
+        tool_choice: 'auto' as const,
         temperature: 0.2,
         max_tokens: 2048,
-      }, (delta) => {
-        if (!delta.text) return;
-        streamedChars += delta.text.length;
-        void emit(createAgentStreamEvent('reply.delta', { chunk: delta.text, done: false }));
-      });
+      };
+      let res: any;
+      try {
+        res = await deepseekChatStream(stepBody, (delta) => {
+          if (!delta.text) return;
+          streamedChars += delta.text.length;
+          void emit(createAgentStreamEvent('reply.delta', { chunk: delta.text, done: false }));
+        });
+      } catch (streamError) {
+        // 流式被上游拒绝时（不认 stream_options、网关不支持 SSE、连接被中断），
+        // 不能让整轮直接失败——用户看到的就是"AI 服务暂时连不上"。
+        // 退回一次非流式调用：没有逐字效果，但答案照常给得出来。
+        if (!(streamError instanceof UpstreamError) || streamError.code === 'no_key' || streamError.code === 'auth') throw streamError;
+        logAgentDebug({
+          scope: 'main-agent',
+          event: 'stream_fallback_to_blocking',
+          details: { userId, step: step + 1, code: streamError.code, detail: streamError.detail },
+        });
+        if (streamedChars > 0) await emit(createAgentStreamEvent('reply.reset', { reason: 'stream_failed' }));
+        streamedChars = 0;
+        res = await deepseekChat(stepBody);
+      }
 
       const msg = res.choices?.[0]?.message;
       if (!msg) {
@@ -716,7 +757,11 @@ function parseFinal(raw: string): AgentResult {
 // #知识 Agent 预取
 // 用路由已经推断出来的物种和风险信号先跑一遍。这里刻意不传 petProfile 之外的东西：
 // 模型后面若给出更严重的风险标签，canReusePrefetch 会拒绝复用并重跑，安全性不打折。
-function startKnowledgePrefetch(question: string, routed: ReturnType<typeof routeIntent>): KnowledgePrefetch {
+function startKnowledgePrefetch(
+  question: string,
+  routed: ReturnType<typeof routeIntent>,
+  onAnswerDelta?: (text: string) => void,
+): KnowledgePrefetch {
   const species = normalizeSpeciesScope(inferPrimarySpeciesScope(question)) || undefined;
   const riskTags = routed.highRisk ? ['disease'] : [];
   const promise = runKnowledgeAgent({
@@ -726,7 +771,7 @@ function startKnowledgePrefetch(question: string, routed: ReturnType<typeof rout
     conversationContext: [],
     suspectedRiskTags: riskTags as any,
     evidence: [],
-  }).catch((e: any) => {
+  }, onAnswerDelta).catch((e: any) => {
     // 预取失败不能影响主流程：这里吞掉错误，工具真被调到时会正常重跑一次
     logAgentDebug({ scope: 'main-agent', event: 'knowledge_prefetch_failed', details: { error: e?.message || String(e) } });
     return null;
