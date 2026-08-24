@@ -30,6 +30,47 @@ async function callAI(messages) {
   return r.json(); // { reply, proposals }
 }
 
+// 流式对话：边收边显示。onDelta 拿到增量文本，onReset 表示这段作废要清空重来
+// （守门判定模型这一版输出不合规、让它重写时会发生）。
+// 任何一步走不通都抛错，由调用方回落到非流式的 /api/chat。
+async function callAIStream(messages, { onDelta, onReset }) {
+  const r = await fetch('/api/chat/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages }),
+  });
+  if (!r.ok || !r.body) throw new Error('stream unavailable');
+
+  const reader = r.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let final = null;
+  let errored = '';
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let sep;
+    while ((sep = buffer.indexOf('\n\n')) >= 0) {
+      const raw = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      const line = raw.split('\n').find((l) => l.startsWith('data:'));
+      if (!line) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      let evt;
+      try { evt = JSON.parse(payload); } catch { continue; }
+      if (evt.type === 'reply.delta' && evt.data?.chunk) onDelta(evt.data.chunk);
+      else if (evt.type === 'reply.reset') onReset();
+      else if (evt.type === 'run.complete') final = evt.data;
+      else if (evt.type === 'run.error') errored = evt.data?.message || 'AI 暂时不可用';
+    }
+  }
+  if (!final) throw new Error(errored || 'stream incomplete');
+  return final; // { reply, proposals }
+}
+
 function readPos() {
   try {
     const saved = JSON.parse(localStorage.getItem('pawly.chatPos') || 'null');
@@ -114,8 +155,41 @@ export default function ChatWidget({ onAdd, navigate, onCartOpen, openSignal }) 
     setLoading(true);
     try {
       const claudeMessages = newMsgs.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }));
-      const { reply, proposals } = await callAI(claudeMessages);
-      setMessages((m) => [...m, { role: 'assistant', text: reply || '抱歉，我刚走神了，再说一次？', proposals: proposals && proposals.length ? proposals : undefined }]);
+      // 先占一条空的助手气泡，流式增量往里填
+      let streamed = '';
+      let placed = false;
+      const placeholderAt = newMsgs.length;
+      const paint = (text) => {
+        setMessages((m) => {
+          const next = [...m];
+          if (!placed) { next.push({ role: 'assistant', text, streaming: true }); }
+          else { next[placeholderAt] = { ...next[placeholderAt], text }; }
+          return next;
+        });
+        placed = true;
+      };
+
+      let result;
+      try {
+        result = await callAIStream(claudeMessages, {
+          onDelta: (chunk) => { streamed += chunk; paint(streamed); },
+          // 守门让模型重写时，把已经显示的半成品清掉，避免用户看到会被替换的内容
+          onReset: () => { streamed = ''; paint(''); },
+        });
+      } catch (streamErr) {
+        // 流式不可用（老部署、反代不支持 SSE 等）就退回一次性返回，功能不受影响
+        console.warn('[chat] 流式不可用，回退非流式:', streamErr?.message || streamErr);
+        result = await callAI(claudeMessages);
+      }
+
+      const { reply, proposals } = result || {};
+      const finalText = reply || streamed || '抱歉，我刚走神了，再说一次？';
+      setMessages((m) => {
+        const next = [...m];
+        const bubble = { role: 'assistant', text: finalText, proposals: proposals && proposals.length ? proposals : undefined };
+        if (placed) next[placeholderAt] = bubble; else next.push(bubble);
+        return next;
+      });
       if (!open) setUnread((u) => u + 1);
     } catch (e) {
       setMessages((m) => [...m, { role: 'assistant', text: '哎呀，我这边网络有点问题，稍后再问我？' }]);

@@ -9,6 +9,8 @@ export type AgentStreamEvent =
   | { type: 'tool.result'; at: string; data: { step: number; toolName: string; preview: string } }
   | { type: 'guard.reject'; at: string; data: { step: number; guardId: string } }
   | { type: 'reply.delta'; at: string; data: { chunk: string; done: boolean } }
+  // 守门拒绝时用：让前端把已经显示出来的半成品清空重来
+  | { type: 'reply.reset'; at: string; data: { reason: string } }
   | { type: 'run.complete'; at: string; data: AgentResult }
   | { type: 'run.error'; at: string; data: { message: string } };
 

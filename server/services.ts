@@ -4,7 +4,7 @@
 //  - 单体模式（Vercel 演示）：Next 的 API 路由经 lib/gateway.ts 直接进程内调用
 import { prisma } from './db/prisma';
 import { store, avatarUrlOf } from './db/store';
-import { runAgent } from './agent/runAgent';
+import { runAgent, runAgentStream } from './agent/runAgent';
 import { deepseekChat, modelConfig } from './deepseek';
 import { sendLoginCode, verifyLoginCode, loginWithPhone, smsConfigured, registerAccount, loginWithPassword, changePassword } from './auth';
 import { hashPassword, verifyPassword, parseAccount, checkPasswordStrength } from './password';
@@ -707,4 +707,50 @@ export async function dispatch(op: string, userId: string, payload: any) {
   const handler = services[op];
   if (!handler) throw new RpcError(404, `未知操作: ${op}`);
   return handler(userId, payload);
+}
+
+// 流式版对话。额度、计量、历史保存都和 chat.run 完全一致，唯一区别是
+// 回复边生成边通过 onEvent 推出去。抽成独立入口而不是给 chat.run 加参数，
+// 是因为 rpc 通道只能返回 JSON，流式必须走单独的 SSE 路由。
+export async function chatRunStream(
+  userId: string,
+  body: any,
+  onEvent: (event: unknown) => void,
+): Promise<{ reply: string; proposals: unknown[] }> {
+  await ensureUser(userId);
+  const q = await chatQuota(userId);
+  if (q.used >= q.limit) {
+    return {
+      reply: q.member
+        ? '今天的 AI 使用量已经到上限啦，明天再来找我玩吧 🐾'
+        : '今天的免费 AI 使用量用完啦～登录成为 Pawly Club 会员即可继续畅聊（会员页 → 手机号登录）',
+      proposals: [],
+    };
+  }
+  const meter = { total: 0 };
+  let result: any = { reply: '', proposals: [] };
+  await tokenMeter.run(meter, async () => {
+    const stream = runAgentStream(userId, Array.isArray(body?.messages) ? body.messages : []);
+    for (;;) {
+      const next = await stream.next();
+      if (next.done) { result = next.value; break; }
+      onEvent(next.value);
+    }
+  });
+  try {
+    await store.incrChatUsage(userId, today(), Math.max(1, meter.total));
+  } catch (e: any) {
+    console.error('[quota] 额度计量失败（忽略）:', e?.message || e);
+  }
+  try {
+    const msgs = Array.isArray(body?.messages) ? body.messages : [];
+    const lastUser = [...msgs].reverse().find((m: any) => m?.role === 'user');
+    const toSave: Array<{ role: string; content: string }> = [];
+    if (lastUser?.content) toSave.push({ role: 'user', content: String(lastUser.content).slice(0, 2000) });
+    if (result?.reply) toSave.push({ role: 'assistant', content: String(result.reply).slice(0, 4000) });
+    await store.appendChatMessages(userId, toSave);
+  } catch (e: any) {
+    console.error('[chat] 历史保存失败（忽略）:', e?.message || e);
+  }
+  return result;
 }
