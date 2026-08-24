@@ -11,6 +11,7 @@
     "knowledge:coverage": "tsx scripts/check-knowledge-coverage.ts",
     "knowledge:import": "tsx scripts/import-knowledge.ts",
     "emoji:check": "tsx scripts/check-emoji-coverage.ts",
+    "stream:check": "tsx scripts/check-deepseek-stream.ts",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:reset": "prisma db push --force-reset",

@@ -1,5 +1,5 @@
 // 主 Agent 编排循环：调模型 → 执行工具 → 把结果回灌 → 直到给出最终答复
-import { deepseekChat, UpstreamError } from '../deepseek';
+import { deepseekChat, deepseekChatStream, UpstreamError } from '../deepseek';
 import { logAgentDebug } from './debug';
 import { summarizeKnowledgePayload } from './knowledge/summarize';
 import { buildEvidencePacketFromToolResult } from './orchestration/normalize';
@@ -33,21 +33,52 @@ export async function runAgent(userId: string, history: ChatMessage[]): Promise<
 }
 
 // #主Agent流式执行入口
+// 之前这里是"伪流式"：先把整轮跑完、事件全量缓冲，再一次性吐出来，用户等待时间没有任何变化。
+// 现在改成真流式——事件产生即入队、即产出，模型边生成边推。
 export async function* runAgentStream(userId: string, history: ChatMessage[]): AsyncGenerator<AgentStreamEvent, AgentResult, void> {
-  const events: AgentStreamEvent[] = [];
-  const result = await runAgentCore(userId, history, {
-    onEvent(event) {
-      events.push(event);
-    },
-  });
+  const queue: AgentStreamEvent[] = [];
+  let notify: (() => void) | null = null;
+  let finished = false;
 
-  for (const event of events) yield event;
-  for (const chunk of chunkReplyText(result.reply)) {
-    yield createAgentStreamEvent('reply.delta', { chunk, done: false });
+  // 用标记记录"这一轮到底流出去过没有"。不能去翻 queue——事件被消费后就从队列里
+  // 移走了，等跑完再看队列必然是空的，会误判成没流过，把全文又推一遍（实测收到两份答复）。
+  let streamedAnyText = false;
+
+  const push = (event: AgentStreamEvent) => {
+    if (event.type === 'reply.delta' && event.data.chunk) streamedAnyText = true;
+    // 守门让模型重写时前端会清空，这里同步归零：若重写后没有再流出文字，
+    // 收尾时要把完整答复补推一次，否则前端只剩一个空气泡
+    if (event.type === 'reply.reset') streamedAnyText = false;
+    queue.push(event);
+    notify?.();
+    notify = null;
+  };
+
+  const running = runAgentCore(userId, history, { onEvent: push })
+    .then((result) => {
+      // 模型没走流式（比如上游忽略了 stream:true）时，这里补一次全量文本，
+      // 保证前端无论如何都能拿到完整答复
+      if (!streamedAnyText) {
+        for (const chunk of chunkReplyText(result.reply)) {
+          push(createAgentStreamEvent('reply.delta', { chunk, done: false }));
+        }
+      }
+      push(createAgentStreamEvent('reply.delta', { chunk: '', done: true }));
+      push(createAgentStreamEvent('run.complete', result));
+      return result;
+    })
+    .catch((e: any) => {
+      push(createAgentStreamEvent('run.error', { message: e?.message || String(e) }));
+      throw e;
+    })
+    .finally(() => { finished = true; notify?.(); notify = null; });
+
+  for (;;) {
+    while (queue.length) yield queue.shift()!;
+    if (finished) break;
+    await new Promise<void>((resolve) => { notify = resolve; });
   }
-  yield createAgentStreamEvent('reply.delta', { chunk: '', done: true });
-  yield createAgentStreamEvent('run.complete', result);
-  return result;
+  return running;
 }
 
 // #主Agent核心执行器
@@ -119,12 +150,20 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
         },
       });
       await emit(createAgentStreamEvent('step.start', { step: step + 1, maxSteps: MAX_STEPS }));
-      const res = await deepseekChat({
+      // 边生成边推给前端：最终答复藏在 present_recommendation 的 reply 字段里，
+      // deepseekChatStream 会把它从流式 JSON 参数中抽出来，逐字回调到这里。
+      // 返回结构与非流式完全一致，下面的编排逻辑不受影响。
+      let streamedChars = 0;
+      const res = await deepseekChatStream({
         messages,
         tools: toolDefs,
         tool_choice: 'auto',
         temperature: 0.2,
         max_tokens: 2048,
+      }, (delta) => {
+        if (!delta.text) return;
+        streamedChars += delta.text.length;
+        void emit(createAgentStreamEvent('reply.delta', { chunk: delta.text, done: false }));
       });
 
       const msg = res.choices?.[0]?.message;
@@ -162,6 +201,7 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
                 reason: parsedPresentation.reason,
               },
             });
+            if (streamedChars > 0) await emit(createAgentStreamEvent('reply.reset', { reason: 'invalid_presentation' }));
             appendRejectedToolResponses(messages, msg.tool_calls, present.id, parsedPresentation.reason);
             messages.push({
               role: 'system',
@@ -206,6 +246,9 @@ async function runAgentCore(userId: string, rawHistory: ChatMessage[], options: 
             // 所有安全类守门（无工具证据、策略禁止导购、商品未上架）都是在拦 proposals，
             // 去掉它就满足；只有"用户要推荐却没给方案"这条满足不了，但那属于体验问题，
             // 给一段纯文字回复也远好过兜底话术。
+            // 这一步的文字已经流给前端了，但内容被判定不合规，必须让前端清空重来，
+            // 否则用户会看到一段将被替换的半成品答复。
+            if (streamedChars > 0) await emit(createAgentStreamEvent('reply.reset', { reason: validation.guardId }));
             guardRetries += 1;
             if (guardRetries > MAX_GUARD_RETRIES) {
               logAgentDebug({

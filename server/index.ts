@@ -3,7 +3,7 @@
 // 且每个请求必须携带与前端层约定的 x-internal-key，双保险。
 // 启动：INTERNAL_API_KEY=xxx BACKEND_PORT=28898 npm run backend
 import express from 'express';
-import { dispatch, RpcError } from './services';
+import { chatRunStream, dispatch, RpcError } from './services';
 
 const PORT = Number(process.env.BACKEND_PORT || 28898);
 const HOST = process.env.BACKEND_HOST || '127.0.0.1';
@@ -31,6 +31,34 @@ app.post('/rpc/:op', async (req, res) => {
     if (e instanceof RpcError) return res.status(e.status).json({ error: e.message });
     console.error(`[backend] ${req.params.op} error:`, e?.message || e);
     res.status(500).json({ error: '服务内部错误' });
+  }
+});
+
+// 流式对话：SSE 直出。不能走 /rpc/:op，那条通道只会 res.json 一次性返回。
+app.post('/chat/stream', async (req, res) => {
+  if (req.get('x-internal-key') !== KEY) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+  const userId = req.get('x-user-id') || '';
+  if (!userId) return res.status(400).json({ error: '缺少用户身份' });
+
+  res.set({
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no', // 反代默认会缓冲，不关掉就退化成一次性返回
+  });
+  res.flushHeaders?.();
+
+  const send = (event: unknown) => { res.write(`data: ${JSON.stringify(event)}\n\n`); };
+  try {
+    await chatRunStream(userId, req.body ?? {}, send);
+  } catch (e: any) {
+    console.error('[backend] chat/stream error:', e?.message || e);
+    send({ type: 'run.error', at: new Date().toISOString(), data: { message: 'AI 暂时不可用' } });
+  } finally {
+    res.write('data: [DONE]\n\n');
+    res.end();
   }
 });
 
