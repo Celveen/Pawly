@@ -57,6 +57,14 @@ npm run check
 （小程序不支持、Node 支持）、页面三件套缺失、tabBar / 分包预载引用错、`usingComponents`
 指向不存在的组件、wxml 里用了没声明的组件。
 
+```bash
+npm test
+```
+
+跑两组回归：mock 层各路由的返回结构与校验分支（35 项），以及未读数广播的合并 /
+脏检查 / 失败保值行为（7 项）—— 后者是启动路径，`unread` 有 4 个订阅者，
+多发一次广播就多几轮 `setData`。
+
 （原模板的 TDesign 组件库已移除：界面全是按 Pawly 视觉手写的，日期/地区用小程序原生 `<picker>`。
 想用回来就 `npm i tdesign-miniprogram@1.11.2` 再「工具 → 构建 npm」。）
 

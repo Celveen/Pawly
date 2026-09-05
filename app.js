@@ -39,9 +39,11 @@ App({
   onLaunch() {
     this.measureLayout();
     this.globalData.cart = wx.getStorageSync(CART_KEY) || [];
-    this.refreshMe();
-    this.refreshUnread();
     this.checkUpdate();
+    // 给首屏让路：网络回调会连带 setData，放在 App 生命周期的同步路径上
+    // 会被工具记成 [Perf] App.emit took Nms。未读数交给紧随其后的 onShow 拉，
+    // 不必在这里重复发一轮。
+    setTimeout(() => this.refreshMe(), 0);
   },
 
   onShow() {
@@ -79,15 +81,25 @@ App({
       });
   },
 
+  /**
+   * 未读数：两个接口并成一次广播，数值没变则完全不广播。
+   * 'unread' 有 4 个订阅者（tabBar + 三个 tab 页），每次广播都连带 setData，
+   * 分两次发等于把这轮开销翻倍；而未读数大多数时候是没变的。
+   * 某个接口失败时保留原值，不要把角标误清成 0。
+   */
   refreshUnread() {
-    api.unreadDm().then((r) => {
-      this.globalData.unreadDm = (r && r.count) || 0;
-      this.emit('unread', this.globalData);
-    }).catch(() => {});
-    api.unreadNotifications().then((r) => {
-      this.globalData.unreadNotify = (r && r.count) || 0;
-      this.emit('unread', this.globalData);
-    }).catch(() => {});
+    return Promise.all([
+      api.unreadDm().catch(() => null),
+      api.unreadNotifications().catch(() => null),
+    ]).then(([dm, notify]) => {
+      const g = this.globalData;
+      const nextDm = dm ? dm.count || 0 : g.unreadDm;
+      const nextNotify = notify ? notify.count || 0 : g.unreadNotify;
+      if (nextDm === g.unreadDm && nextNotify === g.unreadNotify) return;
+      g.unreadDm = nextDm;
+      g.unreadNotify = nextNotify;
+      this.emit('unread', g);
+    });
   },
 
   /* —— 购物车 —— */
