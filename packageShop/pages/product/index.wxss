@@ -1,0 +1,73 @@
+.pd { padding: 0 0 20rpx; }
+
+.cart-entry { position: relative; width: 64rpx; height: 64rpx; border-radius: 999rpx; }
+.cart-entry:active { background: rgba(31, 42, 29, 0.07); }
+.cart-icon {
+  width: 100%; height: 100%;
+  background-repeat: no-repeat; background-position: center; background-size: 38rpx 38rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4h2l2.4 12.3a2 2 0 0 0 2 1.7h8.2a2 2 0 0 0 2-1.6L21 8H6'/%3E%3Ccircle cx='9' cy='21' r='1.4'/%3E%3Ccircle cx='18' cy='21' r='1.4'/%3E%3C/svg%3E");
+}
+.cart-badge { position: absolute; top: 2rpx; right: -2rpx; }
+
+.hero { height: 560rpx; border-radius: 0; }
+.hero-emoji { font-size: 260rpx; line-height: 1; }
+
+.main { margin: -40rpx 32rpx 0; position: relative; z-index: 2; padding: 36rpx 32rpx; }
+.price-row { align-items: baseline; }
+.price { font-size: 52rpx; font-weight: 700; letter-spacing: -1.2rpx; }
+.was { text-decoration: line-through; font-size: 26rpx; }
+.title { margin-top: 20rpx; line-height: 1.32; }
+.sub { margin-top: 12rpx; }
+.badges { margin-top: 22rpx; display: flex; flex-wrap: wrap; gap: 12rpx; }
+.rating { margin-top: 22rpx; display: flex; align-items: baseline; }
+.rating-star { color: #DE7429; font-size: 26rpx; }
+.rating-n { margin-left: 6rpx; font-size: 28rpx; font-weight: 700; }
+
+.block { margin: 24rpx 32rpx 0; padding: 32rpx; }
+.block-head { margin-bottom: 22rpx; }
+.detail { white-space: pre-wrap; }
+
+/* 问宝狸 */
+.ask {
+  margin: 24rpx 32rpx 0; padding: 28rpx 30rpx; border-radius: 32rpx;
+  background: rgba(110, 152, 120, 0.14); border: 1rpx solid rgba(110, 152, 120, 0.28);
+  display: flex; align-items: center; gap: 18rpx;
+}
+.ask-paw {
+  width: 48rpx; height: 48rpx; flex-shrink: 0;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='%232C563A'%3E%3Ccircle cx='9' cy='11' r='3'/%3E%3Ccircle cx='16' cy='8' r='3'/%3E%3Ccircle cx='23' cy='11' r='3'/%3E%3Ccircle cx='6' cy='18' r='2.4'/%3E%3Cpath d='M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z'/%3E%3C/svg%3E");
+}
+.ask-title { font-size: 27rpx; font-weight: 600; color: #2C563A; }
+.ask-go { flex-shrink: 0; font-size: 25rpx; font-weight: 600; color: #DE7429; }
+
+/* 评价 */
+.review { padding: 26rpx 0; border-bottom: 1rpx solid rgba(31, 42, 29, 0.06); }
+.review:last-child { border-bottom: 0; padding-bottom: 0; }
+.review-head { display: flex; align-items: center; gap: 14rpx; }
+.review-ava { width: 48rpx; height: 48rpx; border-radius: 999rpx; background: #F0E8D3; font-size: 26rpx; line-height: 48rpx; text-align: center; }
+.review-name { font-size: 25rpx; font-weight: 600; }
+.review-stars { font-size: 24rpx; color: #DE7429; font-weight: 600; }
+.review-text { margin-top: 14rpx; font-size: 26rpx; }
+.review-time { margin-top: 10rpx; }
+
+.rel-head { margin: 44rpx 32rpx 0; }
+
+/* 底部条 */
+.bar-hold { height: 200rpx; }
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 300;
+  background: rgba(247, 242, 229, 0.96); backdrop-filter: blur(20rpx);
+  border-top: 1rpx solid rgba(31, 42, 29, 0.07);
+  padding: 18rpx 24rpx 0;
+  display: flex; align-items: center; gap: 16rpx; flex-wrap: wrap;
+}
+.stepper {
+  display: flex; align-items: center; height: 80rpx;
+  border: 1rpx solid rgba(31, 42, 29, 0.14); border-radius: 999rpx; background: #FFFFFF;
+}
+.step { width: 62rpx; text-align: center; font-size: 32rpx; color: rgba(31, 42, 29, 0.7); line-height: 80rpx; }
+.step:active { opacity: 0.5; }
+.step-n { min-width: 48rpx; text-align: center; font-size: 28rpx; font-weight: 700; }
+.bar-btn { flex: 1; height: 84rpx; border-radius: 999rpx; font-size: 27rpx; }
+.bar-safe { width: 100%; height: calc(18rpx + env(safe-area-inset-bottom)); }

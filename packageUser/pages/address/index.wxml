@@ -1,0 +1,70 @@
+<pawly-nav title="收货地址" eyebrow="ADDRESS">
+  <view slot="right" class="add-btn" bindtap="openNew">+ 新增</view>
+</pawly-nav>
+
+<view class="ad">
+  <block wx:if="{{list && list.length}}">
+    <view wx:for="{{list}}" wx:key="id" class="item card" data-id="{{item.id}}" bindtap="choose">
+      <view class="item-main" data-i="{{index}}" catchtap="openEdit">
+        <view class="item-top">
+          <text class="item-name">{{item.name}}</text>
+          <text class="mono item-phone">{{item.phone}}</text>
+          <view class="badge item-def" wx:if="{{item.isDefault}}">默认</view>
+        </view>
+        <view class="caption item-detail">{{item.province}}{{item.city}}{{item.district}}{{item.detail}}</view>
+      </view>
+      <view class="item-acts">
+        <view class="act" wx:if="{{!item.isDefault}}" data-id="{{item.id}}" catchtap="setDefault">设为默认</view>
+        <view class="act act-del" data-id="{{item.id}}" catchtap="remove">删除</view>
+      </view>
+    </view>
+    <view class="caption tip" wx:if="{{pick}}">点一下地址即可选中并返回结算</view>
+  </block>
+
+  <view wx:elif="{{list === null}}" class="caption pad">加载中…</view>
+  <empty-state wx:else emoji="📍" title="{{error ? '加载失败' : '还没有收货地址'}}"
+    desc="{{error || '添加一个，下单时就不用重复填了'}}" action="新增地址" bind:action="openNew" />
+
+  <view class="safe-hold"></view>
+</view>
+
+<view wx:if="{{editing}}" class="mask" bindtap="close"></view>
+<view wx:if="{{editing}}" class="sheet" catchtap="stop">
+  <view class="sheet-head">
+    <view class="h-3">{{form.id ? '编辑地址' : '新增地址'}}</view>
+    <view class="sheet-close" bindtap="close"></view>
+  </view>
+  <scroll-view class="sheet-body" scroll-y>
+    <view class="fld-row">
+      <view class="fld grow">
+        <view class="caption fld-label">收件人</view>
+        <input class="input" value="{{form.name}}" data-k="name" bindinput="onField" maxlength="12" placeholder="姓名" placeholder-class="placeholder" />
+      </view>
+      <view class="fld grow">
+        <view class="caption fld-label">手机号</view>
+        <input class="input" type="number" value="{{form.phone}}" data-k="phone" bindinput="onField" maxlength="11" placeholder="11 位手机号" placeholder-class="placeholder" />
+      </view>
+    </view>
+
+    <view class="fld">
+      <view class="caption fld-label">所在地区</view>
+      <picker mode="region" value="{{form.region}}" bindchange="onRegion">
+        <view class="input picker">{{form.province ? form.province + ' ' + form.city + ' ' + form.district : '选择省 / 市 / 区'}}</view>
+      </picker>
+    </view>
+
+    <view class="fld">
+      <view class="caption fld-label">详细地址</view>
+      <textarea class="textarea" value="{{form.detail}}" data-k="detail" bindinput="onField" maxlength="60"
+        placeholder="街道、楼栋、门牌号" placeholder-class="placeholder" auto-height show-confirm-bar="{{false}}" />
+    </view>
+
+    <view class="fld switch-row">
+      <text>设为默认地址</text>
+      <switch checked="{{form.isDefault}}" bindchange="onDefault" color="#2C563A" />
+    </view>
+
+    <view class="btn btn-primary btn-lg btn-block" bindtap="save">保存地址</view>
+    <view class="sheet-hold"></view>
+  </scroll-view>
+</view>

@@ -1,0 +1,21 @@
+<view class="pc pc-{{mode}} press" bindtap="onOpen">
+  <view class="art-box pc-art" style="background: radial-gradient(closest-side at 42% 38%, rgba(255,255,255,.42), transparent), {{p.bg}}">
+    <text class="art-emoji pc-emoji">{{p.emoji}}</text>
+    <view class="pet-pill">{{petEmoji}} {{petLabel}}</view>
+    <view class="tag-pill" wx:if="{{p.tag}}">{{p.tag}}</view>
+    <view class="soldout" wx:if="{{p.stock === 0}}">已售罄</view>
+  </view>
+  <view class="pc-body">
+    <view class="pc-name clamp-2">{{p.name}}</view>
+    <view class="caption pc-sub ellipsis">{{p.sub}}</view>
+    <view class="row-between pc-foot">
+      <view class="row gap-8" style="align-items: baseline">
+        <text class="pc-price mono">{{priceText}}</text>
+        <text class="caption mono pc-was" wx:if="{{wasText}}">{{wasText}}</text>
+      </view>
+      <view wx:if="{{showAdd}}" class="pc-add {{bump ? 'pc-add-bump' : ''}}" catchtap="onAdd">
+        <view class="pc-plus"></view>
+      </view>
+    </view>
+  </view>
+</view>

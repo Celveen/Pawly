@@ -1,0 +1,56 @@
+<pawly-nav title="" eyebrow="" />
+
+<view class="lg">
+  <view class="brand">
+    <view class="brand-paw"></view>
+    <view class="h-display brand-title">你好呀<text class="br"></text><text class="lite">铲屎官</text></view>
+    <view class="body brand-sub">登录后同步宠物档案、订单与社区数据；AI 管家也会记得你家宝贝。</view>
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{mode === 'login' ? 'tab-on' : ''}}" data-m="login" bindtap="onMode">登录</view>
+    <view class="tab {{mode === 'register' ? 'tab-on' : ''}}" data-m="register" bindtap="onMode">注册</view>
+  </view>
+
+  <view class="form card">
+    <view class="fld">
+      <view class="caption fld-label">手机号 / 邮箱</view>
+      <input class="input" value="{{account}}" data-k="account" bindinput="onField" placeholder="13800138000 或 you@mail.com" placeholder-class="placeholder" />
+    </view>
+
+    <view class="fld" wx:if="{{mode === 'register'}}">
+      <view class="caption fld-label">昵称（选填）</view>
+      <input class="input" value="{{nickname}}" data-k="nickname" bindinput="onField" maxlength="20" placeholder="别人在社区看到的名字" placeholder-class="placeholder" />
+    </view>
+
+    <view class="fld">
+      <view class="caption fld-label">密码</view>
+      <input class="input" password value="{{password}}" data-k="password" bindinput="onField" placeholder="至少 6 位" placeholder-class="placeholder" />
+    </view>
+
+    <view class="fld" wx:if="{{mode === 'register'}}">
+      <view class="caption fld-label">确认密码</view>
+      <input class="input" password value="{{confirm}}" data-k="confirm" bindinput="onField" placeholder="再输一次" placeholder-class="placeholder" />
+    </view>
+
+    <view class="agree" bindtap="onAgree">
+      <view class="box {{agreed ? 'box-on' : ''}}"></view>
+      <text class="caption">我已阅读并同意</text>
+      <text class="link" catchtap="showAgreement">《用户协议与隐私政策》</text>
+    </view>
+
+    <view class="btn btn-primary btn-lg btn-block" bindtap="submit">
+      {{submitting ? '处理中…' : (mode === 'login' ? '登录' : '注册并登录')}}
+    </view>
+  </view>
+
+  <view class="or">
+    <view class="or-line"></view><text class="caption">其他方式</text><view class="or-line"></view>
+  </view>
+  <view class="btn btn-line btn-block wx-btn" bindtap="wxLogin">
+    <text class="wx-icon">💬</text>微信一键登录
+  </view>
+
+  <view class="caption note">游客状态下也能浏览商品、科普和社区，只是数据不会跨设备同步。登录后，游客期间产生的数据会自动并入账号。</view>
+  <view class="safe-hold"></view>
+</view>

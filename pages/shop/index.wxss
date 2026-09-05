@@ -1,0 +1,89 @@
+.shop { padding-bottom: 20rpx; }
+
+/* 顶栏购物车 */
+.cart-entry { position: relative; width: 64rpx; height: 64rpx; border-radius: 999rpx; }
+.cart-entry:active { background: rgba(31, 42, 29, 0.07); }
+.cart-icon {
+  width: 100%; height: 100%;
+  background-repeat: no-repeat; background-position: center; background-size: 38rpx 38rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4h2l2.4 12.3a2 2 0 0 0 2 1.7h8.2a2 2 0 0 0 2-1.6L21 8H6'/%3E%3Ccircle cx='9' cy='21' r='1.4'/%3E%3Ccircle cx='18' cy='21' r='1.4'/%3E%3C/svg%3E");
+}
+.cart-badge { position: absolute; top: 2rpx; right: -2rpx; }
+
+/* 标题区 */
+.head { padding: 32rpx 32rpx 0; }
+.head-title { line-height: 1.24; }
+.br { display: block; height: 0; }
+.soft { color: #6E9878; }
+
+.search {
+  margin-top: 32rpx; position: relative; height: 92rpx;
+  background: #FFFFFF; border: 1rpx solid rgba(31, 42, 29, 0.15); border-radius: 22rpx;
+  display: flex; align-items: center; padding: 0 20rpx 0 72rpx;
+}
+.search-icon {
+  position: absolute; left: 26rpx; width: 32rpx; height: 32rpx;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-opacity='.55' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+}
+.search-input { flex: 1; font-size: 27rpx; color: #1F2A1D; }
+.search-clear {
+  width: 40rpx; height: 40rpx; border-radius: 999rpx; flex-shrink: 0;
+  background-color: rgba(31, 42, 29, 0.1);
+  background-repeat: no-repeat; background-position: center; background-size: 20rpx 20rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+}
+
+.hot { margin-top: 20rpx; display: flex; align-items: center; flex-wrap: wrap; gap: 12rpx; }
+.hot-word {
+  height: 52rpx; padding: 0 22rpx; border-radius: 999rpx;
+  border: 1rpx solid rgba(31, 42, 29, 0.14); background: rgba(255, 253, 246, 0.7);
+  color: rgba(31, 42, 29, 0.66); font-size: 23rpx; line-height: 50rpx;
+}
+.hot-word:active { background: #FFFFFF; }
+
+/* 分类 chips */
+.chips { margin-top: 32rpx; white-space: nowrap; }
+.chips-inner { display: inline-flex; gap: 14rpx; padding: 0 32rpx; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8rpx; height: 68rpx; padding: 0 26rpx;
+  border-radius: 999rpx; background: #FFFFFF; border: 1rpx solid rgba(31, 42, 29, 0.1);
+  font-size: 25rpx; color: rgba(31, 42, 29, 0.72); white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.chip-on { background: #1F2A1D; border-color: #1F2A1D; color: #F7F2E5; font-weight: 600; }
+.chip-icon { font-size: 26rpx; }
+
+/* 宠物筛选 + 排序 */
+.filters { margin-top: 20rpx; display: flex; align-items: center; gap: 12rpx; padding-right: 32rpx; }
+.pets { flex: 1; min-width: 0; white-space: nowrap; }
+.pets-inner { display: inline-flex; gap: 10rpx; padding: 0 0 0 32rpx; }
+.pet {
+  display: inline-flex; align-items: center; gap: 6rpx; height: 58rpx; padding: 0 20rpx;
+  border-radius: 999rpx; border: 1rpx solid rgba(31, 42, 29, 0.1);
+  font-size: 23rpx; color: rgba(31, 42, 29, 0.66); white-space: nowrap;
+}
+.pet-on { background: rgba(110, 152, 120, 0.16); border-color: #6E9878; color: #2C563A; font-weight: 600; }
+.pet-e { font-size: 24rpx; }
+.sort {
+  flex-shrink: 0; display: flex; align-items: center; gap: 8rpx; height: 58rpx; padding: 0 20rpx;
+  border-radius: 999rpx; border: 1rpx solid rgba(31, 42, 29, 0.1); background: #FFFFFF;
+  font-size: 23rpx; color: rgba(31, 42, 29, 0.72);
+}
+.sort-arrow {
+  width: 20rpx; height: 20rpx; transition: transform 0.2s ease;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+.sort-arrow-up { transform: rotate(180deg); }
+.sort-menu {
+  margin: 16rpx 32rpx 0; background: #FFFFFF; border-radius: 22rpx;
+  border: 1rpx solid rgba(31, 42, 29, 0.07); overflow: hidden;
+  box-shadow: 0 12rpx 32rpx -12rpx rgba(31, 42, 29, 0.24);
+}
+.sort-item { padding: 26rpx 32rpx; font-size: 26rpx; border-bottom: 1rpx solid rgba(31, 42, 29, 0.05); }
+.sort-item:last-child { border-bottom: 0; }
+.sort-item-on { color: #2C563A; font-weight: 600; }
+
+.count { padding: 26rpx 32rpx 0; }
+.grid-2 { margin: 20rpx 32rpx 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20rpx; }

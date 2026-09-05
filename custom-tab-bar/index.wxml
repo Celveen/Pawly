@@ -1,0 +1,35 @@
+<view class="tabbar">
+  <view class="tabbar-bg"></view>
+  <view class="tabbar-inner">
+    <block wx:for="{{list}}" wx:key="path" wx:for-item="item">
+      <view
+        wx:if="{{!item.center}}"
+        class="tab {{active === index ? 'on' : ''}}"
+        data-index="{{index}}"
+        data-path="{{item.path}}"
+        bindtap="onTap"
+        hover-class="tab-hover"
+        hover-stay-time="80"
+      >
+        <view class="tab-icon icon-{{item.icon}}"></view>
+        <view class="tab-text">{{item.text}}</view>
+        <view class="tab-dot" wx:if="{{active === index}}"></view>
+        <view class="tab-badge" wx:if="{{item.icon === 'shop' && cartCount > 0}}">{{cartCount > 99 ? '99+' : cartCount}}</view>
+        <view class="tab-badge" wx:if="{{item.icon === 'my' && unread > 0}}">{{unread > 99 ? '99+' : unread}}</view>
+      </view>
+
+      <view
+        wx:else
+        class="tab tab-center"
+        data-index="{{index}}"
+        data-path="{{item.path}}"
+        bindtap="onTap"
+      >
+        <view class="center-btn {{active === index ? 'center-on' : ''}}">
+          <view class="center-paw"></view>
+        </view>
+        <view class="tab-text center-text {{active === index ? 'on-text' : ''}}">{{item.text}}</view>
+      </view>
+    </block>
+  </view>
+</view>

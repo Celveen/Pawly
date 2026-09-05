@@ -1,0 +1,6 @@
+<view class="es">
+  <text class="es-emoji">{{emoji}}</text>
+  <view class="es-title">{{title}}</view>
+  <view class="caption es-desc" wx:if="{{desc}}">{{desc}}</view>
+  <view class="btn btn-line btn-sm es-btn" wx:if="{{action}}" bindtap="onAction">{{action}}</view>
+</view>

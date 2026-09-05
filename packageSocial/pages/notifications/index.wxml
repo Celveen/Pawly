@@ -1,0 +1,32 @@
+<pawly-nav title="通知" eyebrow="NOTIFICATIONS" />
+
+<view class="nt">
+  <view class="tabs">
+    <view wx:for="{{tabs}}" wx:key="id" class="tab {{tab === item.id ? 'tab-on' : ''}}" data-id="{{item.id}}" bindtap="onTab">{{item.name}}</view>
+  </view>
+
+  <block wx:if="{{list && list.length}}">
+    <view class="list">
+      <view wx:for="{{list}}" wx:key="id" class="row card {{item.read ? '' : 'row-new'}}"
+        data-post-id="{{item.postId}}" data-actor-id="{{item.actorId}}" bindtap="goTarget">
+        <view class="ava">
+          <image wx:if="{{item.avatarUrlFull}}" class="ava-img" src="{{item.avatarUrlFull}}" mode="aspectFill" />
+          <text wx:else>{{item.actorAvatar || '🐾'}}</text>
+        </view>
+        <view class="grow">
+          <view class="row-top">
+            <text class="row-name ellipsis">{{item.actor || '有人'}}</text>
+            <text class="caption">{{item.time}}</text>
+          </view>
+          <view class="row-text clamp-2">{{item.text}}</view>
+        </view>
+        <view class="row-dot" wx:if="{{!item.read}}"></view>
+      </view>
+    </view>
+  </block>
+  <view wx:elif="{{list === null}}" class="caption pad">加载中…</view>
+  <empty-state wx:else emoji="🔔" title="{{error ? '加载失败' : '暂时没有新通知'}}"
+    desc="{{error || '发帖、互动之后，这里会热闹起来'}}" action="去社区看看" bind:action="goCommunity" />
+
+  <view class="safe-hold"></view>
+</view>

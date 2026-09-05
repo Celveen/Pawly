@@ -1,0 +1,55 @@
+<pawly-nav title="{{peer.nickname || '私信'}}" eyebrow="DIRECT MESSAGE">
+  <view slot="right" class="peer" bindtap="goProfile">
+    <image wx:if="{{peerAvatar}}" class="peer-img" src="{{peerAvatar}}" mode="aspectFill" />
+    <text wx:else class="peer-emoji">{{peer.avatarEmoji || '🐾'}}</text>
+  </view>
+</pawly-nav>
+
+<view class="dm" style="height:calc(100vh - {{navH}}px)">
+  <scroll-view class="stream" scroll-y scroll-into-view="{{scrollTo}}" scroll-with-animation enhanced show-scrollbar="{{false}}">
+    <view class="stream-inner">
+      <view class="caption hint" wx:if="{{!messages.length && !error}}">还没有消息，打个招呼吧 🐾</view>
+      <view class="caption hint" wx:if="{{error}}">{{error}}</view>
+
+      <view wx:for="{{messages}}" wx:key="key" id="m-{{item.key}}" class="msg {{item.mine ? 'msg-mine' : ''}}">
+        <view class="msg-body">
+          <view wx:if="{{item.text}}" class="bubble {{item.mine ? 'bubble-mine' : 'bubble-peer'}}">{{item.text}}</view>
+          <view class="msg-imgs" wx:if="{{item.imgs.length}}">
+            <image wx:for="{{item.imgs}}" wx:for-item="src" wx:key="*this" wx:for-index="ii"
+              class="msg-img" src="{{src}}" mode="aspectFill"
+              data-urls="{{item.imgs}}" data-i="{{ii}}" bindtap="previewImage" />
+          </view>
+          <view class="caption msg-time">{{item.time}}</view>
+        </view>
+      </view>
+      <view class="stream-hold"></view>
+    </view>
+  </scroll-view>
+
+  <view class="composer" style="bottom:{{inputBottom}}px">
+    <view class="pending" wx:if="{{pending.length}}">
+      <view wx:for="{{pending}}" wx:key="*this" class="pending-item">
+        <image class="pending-img" src="{{item}}" mode="aspectFill" />
+        <view class="pending-del" data-i="{{index}}" bindtap="removePending"></view>
+      </view>
+    </view>
+    <view class="composer-inner">
+      <view class="img-btn" bindtap="addImages"></view>
+      <input
+        class="composer-input"
+        value="{{input}}"
+        bindinput="onInput"
+        bindfocus="onFocus"
+        bindblur="onBlur"
+        bindconfirm="send"
+        confirm-type="send"
+        confirm-hold
+        adjust-position="{{false}}"
+        placeholder="说点什么…"
+        placeholder-class="placeholder"
+      />
+      <view class="send-btn {{input || pending.length ? 'on' : ''}}" bindtap="send">发送</view>
+    </view>
+    <view class="composer-safe" wx:if="{{!inputBottom}}"></view>
+  </view>
+</view>

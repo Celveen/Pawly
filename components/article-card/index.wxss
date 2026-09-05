@@ -1,0 +1,21 @@
+.ac {
+  background: #FFFFFF; border-radius: 32rpx; border: 1rpx solid rgba(31, 42, 29, 0.07);
+  box-shadow: 0 2rpx 4rpx rgba(31, 42, 29, 0.05); overflow: hidden;
+}
+.ac-wide { width: 480rpx; }
+.ac-art { border-radius: 0; }
+.ac-wide .ac-art, .ac-hero .ac-art { aspect-ratio: 16 / 10; }
+.ac-emoji { font-size: 120rpx; }
+.ac-body { padding: 26rpx 28rpx 28rpx; }
+.ac-eyebrow { margin-bottom: 14rpx; }
+.ac-title { font-size: 30rpx; font-weight: 600; line-height: 1.36; letter-spacing: -0.3rpx; color: #1F2A1D; }
+.ac-excerpt { margin-top: 12rpx; font-size: 25rpx; }
+.ac-author { margin-top: 20rpx; }
+
+/* 列表横排：左侧小图 + 右侧文字 */
+.ac-row { display: flex; align-items: stretch; padding: 0; }
+.ac-row .ac-art { width: 220rpx; flex-shrink: 0; aspect-ratio: auto; align-self: stretch; }
+.ac-row .ac-emoji { font-size: 84rpx; }
+.ac-row .ac-body { flex: 1; min-width: 0; padding: 24rpx 26rpx; display: flex; flex-direction: column; }
+.ac-row .ac-title { font-size: 28rpx; }
+.ac-row .ac-author { margin-top: auto; padding-top: 16rpx; }

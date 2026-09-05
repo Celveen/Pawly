@@ -1,0 +1,58 @@
+<pawly-nav title="私信" eyebrow="MESSAGES" />
+
+<view class="ms">
+  <view class="search">
+    <view class="search-icon"></view>
+    <input class="search-input" value="{{q}}" bindinput="onInput" placeholder="按宝狸号 / 昵称 / 手机号找人" placeholder-class="placeholder" />
+    <view class="search-clear" wx:if="{{q}}" bindtap="clearQ"></view>
+  </view>
+
+  <!-- 搜人结果 -->
+  <block wx:if="{{q}}">
+    <view class="eyebrow eyebrow-rule sec">找到的人</view>
+    <view wx:if="{{searching}}" class="caption pad">搜索中…</view>
+    <view wx:elif="{{results.length}}" class="list">
+      <view wx:for="{{results}}" wx:key="id" class="row card" data-id="{{item.id}}" bindtap="goThread">
+        <view class="ava">
+          <image wx:if="{{item.avatarUrlFull}}" class="ava-img" src="{{item.avatarUrlFull}}" mode="aspectFill" />
+          <text wx:else>{{item.avatarEmoji || '🐾'}}</text>
+        </view>
+        <view class="grow">
+          <view class="row-name ellipsis">{{item.nickname || '铲屎官'}}</view>
+          <view class="caption clamp-1">{{item.bio || item.pawlyId}}</view>
+        </view>
+        <view class="row-go">私信</view>
+      </view>
+    </view>
+    <view wx:else class="caption pad">没找到这个人</view>
+  </block>
+
+  <!-- 会话列表 -->
+  <block wx:else>
+    <block wx:if="{{list && list.length}}">
+      <view class="list">
+        <view wx:for="{{list}}" wx:key="peerId" class="row card" data-id="{{item.peerId}}" bindtap="goThread" bindlongpress="onLongPress">
+          <view class="ava">
+            <image wx:if="{{item.avatarUrlFull}}" class="ava-img" src="{{item.avatarUrlFull}}" mode="aspectFill" />
+            <text wx:else>{{item.avatarEmoji || '🐾'}}</text>
+            <view class="dot-badge ava-badge" wx:if="{{item.unread > 0}}">{{item.unread > 99 ? '99+' : item.unread}}</view>
+          </view>
+          <view class="grow">
+            <view class="row-top">
+              <text class="row-name ellipsis">{{item.nickname || '铲屎官'}}</text>
+              <text class="caption">{{item.time}}</text>
+            </view>
+            <view class="caption row-last clamp-1">{{item.lastMessage}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="caption tip">长按会话可以删除</view>
+    </block>
+    <view wx:elif="{{list === null}}" class="caption pad">加载中…</view>
+    <empty-state wx:else emoji="✉️" title="{{error ? '加载失败' : '还没有私信'}}"
+      desc="{{error || '在社区里遇到聊得来的铲屎官，点头像就能私聊'}}"
+      action="去社区看看" bind:action="goCommunity" />
+  </block>
+
+  <view class="safe-hold"></view>
+</view>

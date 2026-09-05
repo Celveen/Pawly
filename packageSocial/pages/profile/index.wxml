@@ -1,0 +1,101 @@
+<pawly-nav title="{{isMe ? '我的主页' : '主页'}}" eyebrow="PROFILE">
+  <view slot="right" wx:if="{{isMe}}" class="edit-btn" bindtap="goEdit">编辑</view>
+</pawly-nav>
+
+<view class="pf" wx:if="{{profile}}">
+  <!-- 头部 -->
+  <view class="head">
+    <view class="head-top">
+      <view class="ava">
+        <image wx:if="{{avatar}}" class="ava-img" src="{{avatar}}" mode="aspectFill" />
+        <text wx:else class="ava-emoji">{{profile.avatarEmoji || '🐾'}}</text>
+      </view>
+      <view class="grow">
+        <view class="pf-name">{{profile.nickname || '铲屎官'}}</view>
+        <view class="caption pf-id" wx:if="{{profile.pawlyId}}">宝狸号 {{profile.pawlyId}}</view>
+        <view class="pf-chips">
+          <view class="badge" wx:if="{{profile.gender === 'female'}}">♀ 女</view>
+          <view class="badge" wx:elif="{{profile.gender === 'male'}}">♂ 男</view>
+          <view class="badge" wx:if="{{star}}">{{star}}</view>
+          <view class="badge" wx:if="{{profile.location}}">📍 {{profile.location}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="body pf-bio" wx:if="{{profile.bio}}">{{profile.bio}}</view>
+
+    <view class="stats">
+      <view class="stat" data-t="posts" bindtap="onTab">
+        <text class="stat-n mono">{{profile.postCount}}</text><text class="caption">笔记</text>
+      </view>
+      <view class="stat" data-t="following" bindtap="onTab">
+        <text class="stat-n mono">{{profile.followingCount}}</text><text class="caption">关注</text>
+      </view>
+      <view class="stat" data-t="followers" bindtap="onTab">
+        <text class="stat-n mono">{{profile.followerCount}}</text><text class="caption">粉丝</text>
+      </view>
+      <view class="stat">
+        <text class="stat-n mono">{{profile.likeCount}}</text><text class="caption">获赞</text>
+      </view>
+    </view>
+
+    <view class="acts" wx:if="{{!isMe}}">
+      <view class="btn {{profile.followedByMe ? 'btn-line' : 'btn-primary'}} act-btn" bindtap="toggleFollow">
+        {{profile.followedByMe ? '已关注' : '关注'}}
+      </view>
+      <view class="btn btn-line act-btn" bindtap="goDm">私信</view>
+    </view>
+  </view>
+
+  <!-- 页签 -->
+  <view class="tabs">
+    <view class="tab {{tab === 'posts' ? 'tab-on' : ''}}" data-t="posts" bindtap="onTab">笔记</view>
+    <block wx:if="{{isMe}}">
+      <view class="tab {{tab === 'favorites' ? 'tab-on' : ''}}" data-t="favorites" bindtap="onTab">收藏</view>
+      <view class="tab {{tab === 'liked' ? 'tab-on' : ''}}" data-t="liked" bindtap="onTab">赞过</view>
+    </block>
+    <view class="tab {{tab === 'following' ? 'tab-on' : ''}}" data-t="following" bindtap="onTab">关注</view>
+    <view class="tab {{tab === 'followers' ? 'tab-on' : ''}}" data-t="followers" bindtap="onTab">粉丝</view>
+  </view>
+
+  <!-- 人物列表 -->
+  <block wx:if="{{tab === 'followers' || tab === 'following'}}">
+    <view class="users" wx:if="{{users.length}}">
+      <view wx:for="{{users}}" wx:key="id" class="user-row card" data-id="{{item.id}}" bindtap="goUser">
+        <view class="u-ava">
+          <image wx:if="{{item.avatarUrlFull}}" class="ava-img" src="{{item.avatarUrlFull}}" mode="aspectFill" />
+          <text wx:else>{{item.avatarEmoji || '🐾'}}</text>
+        </view>
+        <view class="grow">
+          <view class="u-name ellipsis">{{item.nickname || '铲屎官'}}</view>
+          <view class="caption clamp-1" wx:if="{{item.bio}}">{{item.bio}}</view>
+        </view>
+      </view>
+    </view>
+    <empty-state wx:else emoji="👥" title="{{tab === 'followers' ? '还没有粉丝' : '还没有关注谁'}}" desc="去社区逛逛，遇到聊得来的就关注一下" />
+  </block>
+
+  <!-- 笔记瀑布 -->
+  <block wx:else>
+    <view class="masonry" wx:if="{{list.length}}">
+      <view class="col">
+        <post-card wx:for="{{colA}}" wx:key="id" p="{{item}}" bind:open="goPost" bind:like="onLike" />
+      </view>
+      <view class="col">
+        <post-card wx:for="{{colB}}" wx:key="id" p="{{item}}" bind:open="goPost" bind:like="onLike" />
+      </view>
+    </view>
+    <empty-state wx:else emoji="📝"
+      title="{{tab === 'posts' ? '还没有笔记' : tab === 'favorites' ? '还没有收藏' : '还没有赞过'}}"
+      desc="{{tab === 'posts' ? '发一条，记录你和它的日常' : '去社区逛逛吧'}}"
+      action="{{isMe && tab === 'posts' ? '去发笔记' : ''}}" bind:action="goPublish" />
+  </block>
+
+  <view class="safe-hold"></view>
+</view>
+
+<view wx:elif="{{error}}" class="err">
+  <text class="err-emoji">📡</text>
+  <view class="h-3">{{error}}</view>
+  <view class="btn btn-line btn-sm err-btn" bindtap="load">重新加载</view>
+</view>

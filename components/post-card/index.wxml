@@ -1,0 +1,25 @@
+<view class="po press" bindtap="onOpen">
+  <view class="po-cover" style="background:{{p.bg}}">
+    <image wx:if="{{cover}}" class="po-img" src="{{cover}}" mode="widthFix" lazy-load />
+    <text wx:else class="po-emoji">{{p.emoji}}</text>
+    <view class="po-count" wx:if="{{p.imagesCount > 1}}">1/{{p.imagesCount}}</view>
+    <view class="po-topic" wx:if="{{p.topic}}">{{p.topic}}</view>
+  </view>
+  <view class="po-body">
+    <view class="po-title clamp-2">{{p.title}}</view>
+    <view class="po-tags" wx:if="{{p.topics.length}}">
+      <text wx:for="{{p.topics}}" wx:key="*this" class="po-tag">#{{item}}</text>
+    </view>
+    <view class="po-foot">
+      <view class="po-author" catchtap="onAuthor">
+        <image wx:if="{{avatar}}" class="po-avatar-img" src="{{avatar}}" mode="aspectFill" />
+        <text wx:else class="po-avatar">{{p.authorAvatar}}</text>
+        <text class="po-name ellipsis">{{p.author}}</text>
+      </view>
+      <view class="po-like" catchtap="onLike">
+        <view class="po-heart {{p.likedByMe ? 'po-heart-on' : ''}}"></view>
+        <text class="po-like-n">{{p.likeCount}}</text>
+      </view>
+    </view>
+  </view>
+</view>

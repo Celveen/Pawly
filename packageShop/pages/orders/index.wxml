@@ -1,0 +1,31 @@
+<pawly-nav title="我的订单" eyebrow="ORDERS" />
+
+<view class="od">
+  <block wx:if="{{orders && orders.length}}">
+    <view wx:for="{{orders}}" wx:key="id" class="order card">
+      <view class="order-head">
+        <view class="grow">
+          <view class="order-no mono">{{item.id}}</view>
+          <view class="caption">{{item.time}} · 共 {{item.count}} 件</view>
+        </view>
+        <view class="order-status">{{item.status}}</view>
+      </view>
+      <view class="order-items">
+        <view wx:for="{{item.items}}" wx:for-item="it" wx:key="id" class="oi" data-id="{{it.id}}" bindtap="goProduct">
+          <view class="oi-art" style="background:{{it.bg}}"><text class="oi-emoji">{{it.emoji}}</text></view>
+          <view class="grow">
+            <view class="oi-name clamp-1">{{it.name}}</view>
+            <view class="caption">×{{it.qty}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="order-foot">
+        <text class="caption">实付</text>
+        <text class="mono order-total">{{item.totalText}}</text>
+      </view>
+    </view>
+  </block>
+  <view wx:elif="{{orders === null}}" class="loading caption">加载中…</view>
+  <empty-state wx:else emoji="📦" title="{{error ? '加载失败' : '还没有订单'}}" desc="{{error || '挑点好东西给毛孩子吧'}}" action="去逛逛" bind:action="goShop" />
+  <view class="safe-hold"></view>
+</view>

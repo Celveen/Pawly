@@ -1,0 +1,22 @@
+.nt { padding: 24rpx 32rpx 0; }
+.tabs { display: flex; gap: 12rpx; }
+.tab {
+  height: 66rpx; padding: 0 26rpx; border-radius: 999rpx; line-height: 64rpx;
+  background: #FFFFFF; border: 1rpx solid rgba(31, 42, 29, 0.1);
+  font-size: 24rpx; color: rgba(31, 42, 29, 0.72);
+}
+.tab-on { background: #1F2A1D; border-color: #1F2A1D; color: #F7F2E5; font-weight: 600; }
+
+.pad { padding: 60rpx 0; text-align: center; }
+.list { margin-top: 28rpx; }
+.row { position: relative; display: flex; align-items: center; gap: 20rpx; padding: 26rpx; margin-bottom: 16rpx; }
+.row-new { background: rgba(255, 253, 246, 1); border-color: rgba(222, 116, 41, 0.24); }
+.ava {
+  width: 84rpx; height: 84rpx; border-radius: 999rpx; background: #F0E8D3; flex-shrink: 0;
+  font-size: 40rpx; line-height: 84rpx; text-align: center; overflow: hidden;
+}
+.ava-img { width: 100%; height: 100%; }
+.row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16rpx; }
+.row-name { font-size: 27rpx; font-weight: 600; }
+.row-text { margin-top: 8rpx; font-size: 25rpx; color: rgba(31, 42, 29, 0.7); line-height: 1.55; }
+.row-dot { position: absolute; right: 20rpx; top: 20rpx; width: 14rpx; height: 14rpx; border-radius: 999rpx; background: #DE7429; }

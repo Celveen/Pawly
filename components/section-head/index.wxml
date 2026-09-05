@@ -1,0 +1,15 @@
+<view class="sh">
+  <view class="hairline" wx:if="{{rule}}"></view>
+  <view class="sh-row">
+    <view class="grow">
+      <view class="eyebrow sh-eyebrow">
+        <text class="mono" wx:if="{{no}}">{{no}}</text>
+        <text class="sh-dash" wx:if="{{no && en}}">—</text>
+        <text wx:if="{{en}}">{{en}}</text>
+      </view>
+      <view class="h-1 sh-title">{{title}}</view>
+      <view class="caption sh-sub" wx:if="{{sub}}">{{sub}}</view>
+    </view>
+    <view class="sh-action" wx:if="{{action}}" bindtap="onAction" hover-class="sh-action-hover">{{action}} →</view>
+  </view>
+</view>

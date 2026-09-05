@@ -1,0 +1,47 @@
+.po {
+  background: #FFFFFF; border-radius: 28rpx; overflow: hidden;
+  border: 1rpx solid rgba(31, 42, 29, 0.07);
+  box-shadow: 0 2rpx 4rpx rgba(31, 42, 29, 0.05);
+  margin-bottom: 20rpx;
+}
+.po-cover {
+  position: relative; width: 100%; min-height: 260rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.po-img { width: 100%; display: block; }
+.po-emoji { font-size: 132rpx; line-height: 1; padding: 60rpx 0; }
+.po-count {
+  position: absolute; right: 14rpx; top: 14rpx;
+  height: 34rpx; padding: 0 12rpx; border-radius: 999rpx;
+  background: rgba(31, 42, 29, 0.5); color: #FFF9F2;
+  font-size: 19rpx; line-height: 34rpx;
+}
+.po-topic {
+  position: absolute; left: 14rpx; bottom: 14rpx;
+  height: 36rpx; padding: 0 14rpx; border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.9); color: #1F2A1D;
+  font-size: 19rpx; font-weight: 600; line-height: 36rpx;
+}
+.po-body { padding: 20rpx 22rpx 22rpx; }
+.po-title { font-size: 27rpx; font-weight: 600; line-height: 1.42; color: #1F2A1D; }
+.po-tags { margin-top: 10rpx; display: flex; flex-wrap: wrap; gap: 10rpx; }
+.po-tag { font-size: 21rpx; color: #6E9878; font-weight: 500; }
+.po-foot { margin-top: 18rpx; display: flex; align-items: center; justify-content: space-between; gap: 12rpx; }
+.po-author { display: flex; align-items: center; gap: 10rpx; min-width: 0; flex: 1; }
+.po-avatar {
+  width: 40rpx; height: 40rpx; border-radius: 999rpx; background: #F0E8D3;
+  font-size: 22rpx; line-height: 40rpx; text-align: center; flex-shrink: 0;
+}
+.po-avatar-img { width: 40rpx; height: 40rpx; border-radius: 999rpx; flex-shrink: 0; }
+.po-name { font-size: 22rpx; color: rgba(31, 42, 29, 0.66); }
+.po-like { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; padding: 6rpx; }
+.po-like:active { opacity: 0.6; }
+.po-heart {
+  width: 32rpx; height: 32rpx;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20.3s-7.4-4.6-7.4-9.6a4.3 4.3 0 0 1 7.4-3 4.3 4.3 0 0 1 7.4 3c0 5-7.4 9.6-7.4 9.6Z'/%3E%3C/svg%3E");
+}
+.po-heart-on {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23DE7429'%3E%3Cpath d='M12 20.3s-7.4-4.6-7.4-9.6a4.3 4.3 0 0 1 7.4-3 4.3 4.3 0 0 1 7.4 3c0 5-7.4 9.6-7.4 9.6Z'/%3E%3C/svg%3E");
+}
+.po-like-n { font-size: 22rpx; color: rgba(31, 42, 29, 0.66); }

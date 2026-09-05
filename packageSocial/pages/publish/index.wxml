@@ -1,0 +1,84 @@
+<pawly-nav title="发笔记" eyebrow="NEW POST">
+  <view slot="right" class="pub-btn {{title && content ? 'on' : ''}}" bindtap="submit">{{submitting ? '发布中' : '发布'}}</view>
+</pawly-nav>
+
+<view class="pb">
+  <!-- 分区 -->
+  <view class="field">
+    <view class="eyebrow eyebrow-rule field-head">发到哪个分区</view>
+    <view class="topics">
+      <view wx:for="{{topics}}" wx:key="id" class="topic {{topic === item.id ? 'topic-on' : ''}}" data-id="{{item.id}}" bindtap="onTopic">
+        <text wx:if="{{item.emoji}}" class="topic-e">{{item.emoji}}</text>{{item.name}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 正文 -->
+  <view class="field card">
+    <input class="title-input" value="{{title}}" bindinput="onTitle" maxlength="40" placeholder="标题（40 字以内）" placeholder-class="placeholder" />
+    <view class="hairline"></view>
+    <textarea
+      class="content-input"
+      value="{{content}}"
+      bindinput="onContent"
+      maxlength="2000"
+      placeholder="说说你家毛孩子的日常、踩过的坑、想问的问题…"
+      placeholder-class="placeholder"
+      auto-height
+      show-confirm-bar="{{false}}"
+    />
+    <view class="caption count">{{content.length}} / 2000</view>
+  </view>
+
+  <!-- 图片 -->
+  <view class="field">
+    <view class="eyebrow eyebrow-rule field-head">配图（最多 9 张，选填）</view>
+    <view class="imgs">
+      <view wx:for="{{images}}" wx:key="*this" class="img-item">
+        <image class="img" src="{{item}}" mode="aspectFill" data-i="{{index}}" bindtap="previewImage" />
+        <view class="img-del" data-i="{{index}}" catchtap="removeImage"></view>
+      </view>
+      <view wx:if="{{images.length < 9}}" class="img-add" bindtap="addImages">
+        <view class="img-plus"></view>
+        <text class="caption">添加</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 无图时的封面 -->
+  <view class="field" wx:if="{{!images.length}}">
+    <view class="eyebrow eyebrow-rule field-head">没有图？挑个表情封面</view>
+    <view class="cover-preview" style="background:{{bg}}"><text class="cover-emoji">{{emoji}}</text></view>
+    <view class="picks">
+      <view wx:for="{{emojis}}" wx:key="*this" class="pick {{emoji === item ? 'pick-on' : ''}}" data-e="{{item}}" bindtap="onEmoji">{{item}}</view>
+    </view>
+    <view class="picks">
+      <view wx:for="{{bgs}}" wx:key="*this" class="swatch {{bg === item ? 'swatch-on' : ''}}" style="background:{{item}}" data-c="{{item}}" bindtap="onBg"></view>
+    </view>
+  </view>
+
+  <!-- 话题标签 -->
+  <view class="field">
+    <view class="eyebrow eyebrow-rule field-head">话题标签（最多 5 个）</view>
+    <view class="tags" wx:if="{{tags.length}}">
+      <view wx:for="{{tags}}" wx:key="*this" class="tag-on" data-t="{{item}}" bindtap="removeTag">#{{item}} ×</view>
+    </view>
+    <view class="tag-row">
+      <input class="input tag-input" value="{{tagInput}}" bindinput="onTagInput" bindconfirm="addTag" placeholder="自定义标签，回车添加" placeholder-class="placeholder" />
+      <view class="btn btn-line btn-sm" bindtap="addTag">添加</view>
+    </view>
+    <view class="tags mt-16">
+      <view wx:for="{{suggested}}" wx:key="*this" class="tag-sug" data-t="{{item}}" bindtap="addTag">#{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 宠物名 -->
+  <view class="field">
+    <view class="eyebrow eyebrow-rule field-head">和哪只宝贝有关（选填）</view>
+    <input class="input" value="{{petName}}" bindinput="onPetName" maxlength="12" placeholder="比如：糯米" placeholder-class="placeholder" />
+  </view>
+
+  <view class="btn btn-primary btn-lg btn-block submit" bindtap="submit">{{submitting ? '发布中…' : '发布笔记'}}</view>
+  <view class="caption notice">发布即表示内容由你原创或已获授权；请勿发布违规内容。</view>
+  <view class="safe-hold"></view>
+</view>

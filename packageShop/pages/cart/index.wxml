@@ -1,0 +1,51 @@
+<pawly-nav title="购物车" eyebrow="CART">
+  <view slot="right" class="clear" wx:if="{{items.length}}" bindtap="clear">清空</view>
+</pawly-nav>
+
+<view class="ct">
+  <block wx:if="{{items.length}}">
+    <view class="ship-tip" wx:if="{{!free}}">再买 <text class="mono">{{gap}}</text> 免运费</view>
+    <view class="ship-tip ship-ok" wx:else>已满 ¥99，本单免运费 🎉</view>
+
+    <view class="list">
+      <view wx:for="{{items}}" wx:key="id" class="item card">
+        <view class="item-art" style="background:{{item.bg}}" data-id="{{item.id}}" bindtap="goProduct">
+          <text class="item-emoji">{{item.emoji}}</text>
+        </view>
+        <view class="grow item-main">
+          <view class="item-name clamp-2" data-id="{{item.id}}" bindtap="goProduct">{{item.name}}</view>
+          <view class="caption item-sub ellipsis">{{item.sub}}</view>
+          <view class="item-foot">
+            <text class="item-price mono">{{item.priceText}}</text>
+            <view class="stepper">
+              <view class="step" data-id="{{item.id}}" data-qty="{{item.qty}}" bindtap="minus">−</view>
+              <text class="step-n mono">{{item.qty}}</text>
+              <view class="step" data-id="{{item.id}}" data-qty="{{item.qty}}" bindtap="plus">＋</view>
+            </view>
+          </view>
+        </view>
+        <view class="item-del" data-id="{{item.id}}" bindtap="remove"></view>
+      </view>
+    </view>
+
+    <view class="sum card">
+      <view class="sum-row"><text class="grow caption">商品小计</text><text class="mono">{{subtotal}}</text></view>
+      <view class="sum-row"><text class="grow caption">运费</text><text class="mono">{{shipping}}</text></view>
+      <view class="hairline sum-line"></view>
+      <view class="sum-row"><text class="grow">合计</text><text class="mono sum-total">{{total}}</text></view>
+    </view>
+
+    <view class="bar-hold"></view>
+  </block>
+
+  <empty-state wx:else emoji="🦴" title="购物车空空如也" desc="主子等不及啦，快去挑点好东西~" action="去逛逛" bind:action="goShop" />
+</view>
+
+<view class="bar" wx:if="{{items.length}}">
+  <view class="bar-sum">
+    <text class="caption">合计（{{count}} 件）</text>
+    <text class="mono bar-total">{{total}}</text>
+  </view>
+  <view class="btn btn-primary bar-btn" bindtap="checkout">去结算</view>
+  <view class="bar-safe"></view>
+</view>

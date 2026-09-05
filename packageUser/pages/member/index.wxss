@@ -1,0 +1,33 @@
+.mb { padding: 24rpx 32rpx 0; }
+
+.hero { position: relative; overflow: hidden; background: #1F2A1D; color: #F5F9F2;
+  border-radius: 40rpx; padding: 48rpx 40rpx 44rpx; }
+.hero-paw { position: absolute; right: -50rpx; bottom: -70rpx; font-size: 300rpx; opacity: 0.07; line-height: 1; }
+.hero-eyebrow { color: rgba(244, 248, 242, 0.5); }
+.hero-title { margin-top: 20rpx; font-size: 46rpx; font-weight: 600; line-height: 1.22; letter-spacing: -1rpx; }
+.br { display: block; height: 0; }
+.hero-price { margin-top: 26rpx; display: flex; align-items: baseline; position: relative; }
+.hero-num { font-size: 68rpx; font-weight: 700; letter-spacing: -2rpx; color: #DE7429; }
+.hero-unit { font-size: 26rpx; color: rgba(244, 248, 242, 0.6); }
+.hero-desc { margin-top: 16rpx; font-size: 25rpx; line-height: 1.72; color: rgba(244, 248, 242, 0.72); position: relative; }
+.hero-btn { margin-top: 34rpx; width: 100%; border-radius: 24rpx; position: relative; }
+
+.sec { margin: 48rpx 0 22rpx; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18rpx; }
+.tile { padding: 30rpx 28rpx; display: flex; flex-direction: column; gap: 6rpx; }
+.tile-n { font-size: 44rpx; font-weight: 700; letter-spacing: -1rpx; }
+.warn { color: #DE7429; }
+
+.benefits { display: flex; flex-direction: column; gap: 16rpx; }
+.benefit { display: flex; align-items: center; gap: 20rpx; padding: 28rpx; }
+.benefit-e { font-size: 44rpx; }
+.benefit-t { font-size: 28rpx; font-weight: 600; }
+.benefit-d { margin-top: 6rpx; line-height: 1.6; }
+
+.faq { padding: 8rpx 30rpx; }
+.faq-item { padding: 28rpx 0; border-bottom: 1rpx solid rgba(31, 42, 29, 0.06); }
+.faq-item:last-child { border-bottom: 0; }
+.faq-q { font-size: 27rpx; font-weight: 600; }
+.faq-a { margin-top: 10rpx; line-height: 1.68; }
+
+.notice { margin-top: 32rpx; text-align: center; font-size: 21rpx; }

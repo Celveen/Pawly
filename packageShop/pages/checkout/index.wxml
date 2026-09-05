@@ -1,0 +1,84 @@
+<pawly-nav title="确认订单" eyebrow="CHECKOUT" />
+
+<view class="co">
+  <!-- 收货地址 -->
+  <view class="addr card press" bindtap="goAddress">
+    <block wx:if="{{address}}">
+      <view class="addr-icon">📍</view>
+      <view class="grow">
+        <view class="addr-line">
+          <text class="addr-name">{{address.name}}</text>
+          <text class="addr-phone mono">{{address.phone}}</text>
+        </view>
+        <view class="caption addr-detail">{{address.province}}{{address.city}}{{address.district}}{{address.detail}}</view>
+      </view>
+      <view class="addr-arrow"></view>
+    </block>
+    <block wx:else>
+      <view class="addr-icon">📍</view>
+      <view class="grow">
+        <view class="addr-name">添加收货地址</view>
+        <view class="caption">还没有地址，点这里添加一个</view>
+      </view>
+      <view class="addr-arrow"></view>
+    </block>
+  </view>
+
+  <view class="addr-list" wx:if="{{addresses.length > 1}}">
+    <view wx:for="{{addresses}}" wx:key="id" class="addr-pick {{address.id === item.id ? 'addr-pick-on' : ''}}" data-i="{{index}}" bindtap="pickAddress">
+      <text class="ellipsis">{{item.name}} · {{item.district}}{{item.detail}}</text>
+    </view>
+  </view>
+
+  <!-- 商品 -->
+  <view class="block card">
+    <view class="eyebrow eyebrow-rule block-head">商品清单</view>
+    <view wx:for="{{items}}" wx:key="id" class="line">
+      <view class="line-art" style="background:{{item.bg}}"><text class="line-emoji">{{item.emoji}}</text></view>
+      <view class="grow">
+        <view class="line-name clamp-2">{{item.name}}</view>
+        <view class="caption">{{item.sub}}</view>
+      </view>
+      <view class="line-right">
+        <text class="mono line-price">{{item.lineText}}</text>
+        <text class="caption">×{{item.qty}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 配送 -->
+  <view class="block card">
+    <view class="eyebrow eyebrow-rule block-head">配送方式</view>
+    <view class="ships">
+      <view class="ship {{delivery === 'standard' ? 'ship-on' : ''}}" data-k="standard" bindtap="onDelivery">
+        <view class="ship-name">标准配送</view>
+        <view class="caption">3-5 天送达 · 满 ¥99 免运费</view>
+      </view>
+      <view class="ship {{delivery === 'express' ? 'ship-on' : ''}}" data-k="express" bindtap="onDelivery">
+        <view class="ship-name">加急配送</view>
+        <view class="caption">1-2 天送达 · 运费 ¥20</view>
+      </view>
+    </view>
+    <input class="input note" value="{{note}}" bindinput="onNote" placeholder="订单备注（选填）" placeholder-class="placeholder" />
+  </view>
+
+  <!-- 金额 -->
+  <view class="block card">
+    <view class="sum-row"><text class="grow caption">商品小计</text><text class="mono">{{subtotalText}}</text></view>
+    <view class="sum-row"><text class="grow caption">运费</text><text class="mono">{{shippingText}}</text></view>
+    <view class="hairline sum-line"></view>
+    <view class="sum-row"><text class="grow">应付</text><text class="mono sum-total">{{totalText}}</text></view>
+  </view>
+
+  <view class="notice caption">当前为作品演示版本，提交后不会真实扣款，也不会真的发货。</view>
+  <view class="bar-hold"></view>
+</view>
+
+<view class="bar">
+  <view class="bar-sum">
+    <text class="caption">应付</text>
+    <text class="mono bar-total">{{totalText}}</text>
+  </view>
+  <view class="btn btn-primary bar-btn {{submitting ? 'busy' : ''}}" bindtap="submit">{{submitting ? '提交中…' : '提交订单'}}</view>
+  <view class="bar-safe"></view>
+</view>

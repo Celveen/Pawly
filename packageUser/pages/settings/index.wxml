@@ -1,0 +1,107 @@
+<pawly-nav title="设置" eyebrow="SETTINGS" />
+
+<view class="st">
+  <!-- 资料 -->
+  <view class="eyebrow eyebrow-rule sec">个人资料</view>
+  <view class="card form">
+    <view class="fld">
+      <view class="caption fld-label">头像表情</view>
+      <view class="ava-preview">{{form.avatarEmoji}}</view>
+      <view class="picks">
+        <view wx:for="{{emojis}}" wx:key="*this" class="pick {{form.avatarEmoji === item ? 'pick-on' : ''}}" data-e="{{item}}" bindtap="onEmoji">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="fld">
+      <view class="caption fld-label">昵称</view>
+      <input class="input" value="{{form.nickname}}" data-k="nickname" bindinput="onField" maxlength="20" placeholder="别人在社区看到的名字" placeholder-class="placeholder" />
+    </view>
+
+    <view class="fld">
+      <view class="caption fld-label">简介</view>
+      <input class="input" value="{{form.bio}}" data-k="bio" bindinput="onField" maxlength="60" placeholder="一句话介绍你和毛孩子" placeholder-class="placeholder" />
+    </view>
+
+    <view class="fld-row">
+      <view class="fld grow">
+        <view class="caption fld-label">性别</view>
+        <picker mode="selector" range="{{genders}}" range-key="name" value="{{genderIndex}}" bindchange="onGender">
+          <view class="input picker">{{genders[genderIndex].name}}</view>
+        </picker>
+      </view>
+      <view class="fld grow">
+        <view class="caption fld-label">生日</view>
+        <picker mode="date" value="{{form.birthday}}" end="{{today}}" bindchange="onBirthday">
+          <view class="input picker">{{form.birthday || '选择日期'}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="fld">
+      <view class="caption fld-label">常居地</view>
+      <input class="input" value="{{form.location}}" data-k="location" bindinput="onField" maxlength="20" placeholder="比如：上海" placeholder-class="placeholder" />
+    </view>
+
+    <view class="btn btn-primary btn-block" bindtap="save">{{saving ? '保存中…' : '保存资料'}}</view>
+  </view>
+
+  <!-- 账号 -->
+  <view class="eyebrow eyebrow-rule sec">账号</view>
+  <view class="card list">
+    <block wx:if="{{me && !me.guest}}">
+      <view class="li">
+        <text class="grow">手机号</text>
+        <text class="caption mono">{{me.phoneMasked || '未绑定'}}</text>
+      </view>
+      <view class="li">
+        <text class="grow">邮箱</text>
+        <text class="caption">{{me.emailMasked || '未绑定'}}</text>
+      </view>
+      <view class="li" bindtap="openPw" hover-class="li-hover">
+        <text class="grow">修改密码</text><view class="li-arrow"></view>
+      </view>
+      <view class="li li-danger" bindtap="logout" hover-class="li-hover">
+        <text class="grow">退出登录</text>
+      </view>
+    </block>
+    <view wx:else class="li" bindtap="goLogin" hover-class="li-hover">
+      <text class="grow">登录 / 注册</text><view class="li-arrow"></view>
+    </view>
+  </view>
+
+  <!-- 通用 -->
+  <view class="eyebrow eyebrow-rule sec">通用</view>
+  <view class="card list">
+    <view class="li" bindtap="clearCache" hover-class="li-hover">
+      <text class="grow">清理本地缓存</text><text class="caption">{{cacheSize}}</text><view class="li-arrow"></view>
+    </view>
+    <view class="li" bindtap="about" hover-class="li-hover">
+      <text class="grow">关于 Pawly</text><view class="li-arrow"></view>
+    </view>
+  </view>
+
+  <view class="caption foot">Pawly 宝狸 · 作品演示版本</view>
+  <view class="safe-hold"></view>
+</view>
+
+<!-- 修改密码 -->
+<view wx:if="{{pwOpen}}" class="mask" bindtap="closePw"></view>
+<view wx:if="{{pwOpen}}" class="sheet" catchtap="stop">
+  <view class="sheet-head">
+    <view class="h-3">修改密码</view>
+    <view class="sheet-close" bindtap="closePw"></view>
+  </view>
+  <view class="fld">
+    <view class="caption fld-label">当前密码</view>
+    <input class="input" password value="{{pw.oldPassword}}" data-k="oldPassword" bindinput="onPw" placeholder="原密码" placeholder-class="placeholder" />
+  </view>
+  <view class="fld">
+    <view class="caption fld-label">新密码</view>
+    <input class="input" password value="{{pw.newPassword}}" data-k="newPassword" bindinput="onPw" placeholder="至少 6 位" placeholder-class="placeholder" />
+  </view>
+  <view class="fld">
+    <view class="caption fld-label">确认新密码</view>
+    <input class="input" password value="{{pw.confirm}}" data-k="confirm" bindinput="onPw" placeholder="再输一次" placeholder-class="placeholder" />
+  </view>
+  <view class="btn btn-primary btn-lg btn-block" bindtap="savePw">确认修改</view>
+</view>

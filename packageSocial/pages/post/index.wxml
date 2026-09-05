@@ -1,0 +1,102 @@
+<pawly-nav title="笔记" eyebrow="COMMUNITY">
+  <view slot="right" wx:if="{{post.mine}}" class="del-btn" bindtap="deletePost">删除</view>
+</pawly-nav>
+
+<view class="ps" wx:if="{{post}}">
+  <!-- 作者 -->
+  <view class="author">
+    <view class="row gap-16 grow" bindtap="goAuthor">
+      <view class="ava">
+        <image wx:if="{{avatar}}" class="ava-img" src="{{avatar}}" mode="aspectFill" />
+        <text wx:else class="ava-emoji">{{post.authorAvatar}}</text>
+      </view>
+      <view class="grow">
+        <view class="author-name ellipsis">{{post.author}}</view>
+        <view class="caption">{{time}}{{post.petName ? ' · 和 ' + post.petName : ''}}</view>
+      </view>
+    </view>
+    <view wx:if="{{!post.mine}}" class="btn btn-line btn-sm" bindtap="toggleFollow">关注</view>
+  </view>
+
+  <!-- 图片 / 封面 -->
+  <block wx:if="{{images.length}}">
+    <swiper class="gallery" indicator-dots="{{images.length > 1}}" indicator-color="rgba(31,42,29,.2)" indicator-active-color="#1F2A1D" circular>
+      <swiper-item wx:for="{{images}}" wx:key="*this">
+        <image class="gallery-img" src="{{item}}" mode="aspectFill" data-i="{{index}}" bindtap="previewImage" />
+      </swiper-item>
+    </swiper>
+  </block>
+  <view wx:else class="cover" style="background:{{post.bg}}">
+    <text class="cover-emoji">{{post.emoji}}</text>
+  </view>
+
+  <!-- 正文 -->
+  <view class="content">
+    <view class="h-2 ps-title">{{post.title}}</view>
+    <view class="ps-text">{{post.content}}</view>
+    <view class="tags" wx:if="{{post.topics.length}}">
+      <text wx:for="{{post.topics}}" wx:key="*this" class="tag">#{{item}}</text>
+    </view>
+    <view class="caption ps-meta">{{post.topic}} · {{time}}</view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <!-- 评论 -->
+  <view class="comments">
+    <view class="eyebrow eyebrow-rule cm-head">共 {{post.commentCount || 0}} 条评论</view>
+    <view wx:if="{{commentsLoading}}" class="caption">加载中…</view>
+    <block wx:elif="{{comments.length}}">
+      <view wx:for="{{comments}}" wx:key="id" class="cm">
+        <view class="cm-ava">
+          <image wx:if="{{item.avatarUrl}}" class="ava-img" src="{{item.avatarUrl}}" mode="aspectFill" />
+          <text wx:else>{{item.authorAvatar}}</text>
+        </view>
+        <view class="grow">
+          <view class="cm-top">
+            <text class="cm-name ellipsis">{{item.author}}</text>
+            <text class="caption">{{item.time}}</text>
+          </view>
+          <view class="cm-text">{{item.content}}</view>
+        </view>
+        <view wx:if="{{item.mine}}" class="cm-del" data-id="{{item.id}}" bindtap="deleteComment">删除</view>
+      </view>
+    </block>
+    <view wx:else class="caption cm-empty">还没有评论，来说第一句</view>
+  </view>
+
+  <view class="bar-hold"></view>
+</view>
+
+<view wx:elif="{{error}}" class="err">
+  <text class="err-emoji">📡</text>
+  <view class="h-3">{{error}}</view>
+  <view class="btn btn-line btn-sm err-btn" bindtap="load">重新加载</view>
+</view>
+
+<!-- 底部操作条 -->
+<view class="bar" wx:if="{{post}}" style="bottom:{{inputBottom}}px">
+  <input
+    class="bar-input"
+    value="{{input}}"
+    bindinput="onInput"
+    bindfocus="onFocus"
+    bindblur="onBlur"
+    bindconfirm="sendComment"
+    confirm-type="send"
+    confirm-hold
+    adjust-position="{{false}}"
+    placeholder="说点什么…"
+    placeholder-class="placeholder"
+  />
+  <view class="act" bindtap="toggleLike">
+    <view class="act-icon icon-heart {{post.likedByMe ? 'on' : ''}}"></view>
+    <text class="act-n">{{post.likeCount}}</text>
+  </view>
+  <view class="act" bindtap="toggleFavorite">
+    <view class="act-icon icon-star {{post.favoritedByMe ? 'on' : ''}}"></view>
+    <text class="act-n">{{post.favoriteCount || 0}}</text>
+  </view>
+  <view class="act act-send {{input ? 'act-send-on' : ''}}" bindtap="sendComment">发送</view>
+  <view class="bar-safe" wx:if="{{!inputBottom}}"></view>
+</view>

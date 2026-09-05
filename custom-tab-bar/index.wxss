@@ -1,0 +1,77 @@
+/* 自定义 tabBar：奶油底 + 发丝线上边框，中间「宝狸」凸起为深林绿圆钮 */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 500;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar-bg {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(247, 242, 229, 0.94);
+  border-top: 1rpx solid rgba(31, 42, 29, 0.09);
+  backdrop-filter: blur(20rpx);
+}
+.tabbar-inner {
+  position: relative; display: flex; align-items: flex-end;
+  height: 108rpx; padding: 0 8rpx;
+}
+
+.tab {
+  position: relative; flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 108rpx; opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+.tab.on { opacity: 1; }
+.tab-hover { opacity: 0.65; }
+
+.tab-icon {
+  width: 44rpx; height: 44rpx;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+}
+.tab-text {
+  margin-top: 4rpx; font-size: 20rpx; color: #1F2A1D; letter-spacing: 0.5rpx;
+}
+.tab.on .tab-text { font-weight: 600; color: #2C563A; }
+.tab-dot {
+  position: absolute; bottom: 6rpx; width: 8rpx; height: 8rpx;
+  border-radius: 999rpx; background: #DE7429;
+}
+.tab-badge {
+  position: absolute; top: 8rpx; left: 50%; margin-left: 8rpx;
+  min-width: 28rpx; height: 28rpx; padding: 0 7rpx; border-radius: 999rpx;
+  background: #DE7429; color: #FFF9F2;
+  font-size: 19rpx; font-weight: 700; line-height: 28rpx; text-align: center;
+}
+
+/* 中间的 AI 入口 */
+.tab-center { opacity: 1; }
+.center-btn {
+  width: 96rpx; height: 96rpx; border-radius: 999rpx;
+  background: #1F2A1D; margin-top: -40rpx;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 14rpx 28rpx -8rpx rgba(31, 42, 29, 0.5);
+  border: 6rpx solid #F7F2E5;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.tab-center:active .center-btn { transform: scale(0.93); }
+.center-on { background: #2C563A; }
+.center-paw {
+  width: 48rpx; height: 48rpx;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='%23F7F2E5'%3E%3Cellipse cx='9' cy='11.5' rx='2.8' ry='3.3'/%3E%3Cellipse cx='16' cy='8.5' rx='2.8' ry='3.3'/%3E%3Cellipse cx='23' cy='11.5' rx='2.8' ry='3.3'/%3E%3Cellipse cx='6' cy='18.5' rx='2.4' ry='2.8'/%3E%3Cellipse cx='26' cy='18.5' rx='2.4' ry='2.8'/%3E%3Cpath d='M9 22c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5c0 2.6-2.4 4.5-7 4.5S9 24.6 9 22Z'/%3E%3C/svg%3E");
+}
+.center-text { margin-top: 2rpx; opacity: 0.45; }
+.on-text { opacity: 1; font-weight: 600; color: #2C563A; }
+
+/* —— 图标 —— */
+.icon-home {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10.6 12 3.4l9 7.2V20a1 1 0 0 1-1 1h-4.6v-6H8.6v6H4a1 1 0 0 1-1-1z'/%3E%3C/svg%3E");
+}
+.icon-shop {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5.4 7.5h13.2l1 12.5a1 1 0 0 1-1 1.1H5.4a1 1 0 0 1-1-1.1z'/%3E%3Cpath d='M8.8 9.6V6.8a3.2 3.2 0 0 1 6.4 0v2.8'/%3E%3C/svg%3E");
+}
+.icon-community {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.5 12.4c0 4-3.8 7.2-8.5 7.2-1 0-2-.15-2.9-.42L4 20.8l1.5-3.6A6.9 6.9 0 0 1 3.5 12.4c0-4 3.8-7.2 8.5-7.2s8.5 3.2 8.5 7.2Z'/%3E%3Ccircle cx='8.6' cy='12.4' r='1'/%3E%3Ccircle cx='12' cy='12.4' r='1'/%3E%3Ccircle cx='15.4' cy='12.4' r='1'/%3E%3C/svg%3E");
+}
+.icon-my {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F2A1D' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8.4' r='3.9'/%3E%3Cpath d='M4.2 20.6c0-3.9 3.5-6.3 7.8-6.3s7.8 2.4 7.8 6.3'/%3E%3C/svg%3E");
+}

@@ -1,0 +1,126 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/shop/index",
+    "pages/ai/index",
+    "pages/community/index",
+    "pages/my/index"
+  ],
+  "subpackages": [
+    {
+      "root": "packageShop",
+      "name": "shop",
+      "pages": [
+        "pages/product/index",
+        "pages/cart/index",
+        "pages/checkout/index",
+        "pages/orders/index"
+      ]
+    },
+    {
+      "root": "packageContent",
+      "name": "content",
+      "pages": [
+        "pages/articles/index",
+        "pages/article/index"
+      ]
+    },
+    {
+      "root": "packageSocial",
+      "name": "social",
+      "pages": [
+        "pages/post/index",
+        "pages/publish/index",
+        "pages/profile/index",
+        "pages/messages/index",
+        "pages/dm/index",
+        "pages/notifications/index"
+      ]
+    },
+    {
+      "root": "packageUser",
+      "name": "user",
+      "pages": [
+        "pages/member/index",
+        "pages/pets/index",
+        "pages/reminders/index",
+        "pages/address/index",
+        "pages/login/index",
+        "pages/settings/index",
+        "pages/search/index"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/home/index": {
+      "network": "all",
+      "packages": [
+        "shop",
+        "content"
+      ]
+    },
+    "pages/community/index": {
+      "network": "all",
+      "packages": [
+        "social"
+      ]
+    },
+    "pages/my/index": {
+      "network": "all",
+      "packages": [
+        "user"
+      ]
+    }
+  },
+  "usingComponents": {
+    "pawly-nav": "/components/pawly-nav/index",
+    "product-card": "/components/product-card/index",
+    "article-card": "/components/article-card/index",
+    "post-card": "/components/post-card/index",
+    "section-head": "/components/section-head/index",
+    "empty-state": "/components/empty-state/index"
+  },
+  "window": {
+    "backgroundTextStyle": "dark",
+    "backgroundColor": "#F7F2E5",
+    "backgroundColorTop": "#F7F2E5",
+    "backgroundColorBottom": "#F7F2E5",
+    "navigationBarBackgroundColor": "#F7F2E5",
+    "navigationBarTitleText": "宝狸 Pawly",
+    "navigationBarTextStyle": "black",
+    "navigationStyle": "custom"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#1F2A1D",
+    "selectedColor": "#2C563A",
+    "backgroundColor": "#F7F2E5",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/shop/index",
+        "text": "商品"
+      },
+      {
+        "pagePath": "pages/ai/index",
+        "text": "宝狸"
+      },
+      {
+        "pagePath": "pages/community/index",
+        "text": "社区"
+      },
+      {
+        "pagePath": "pages/my/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "resolveAlias": {
+    "~/*": "/*"
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

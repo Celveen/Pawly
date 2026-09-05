@@ -1,0 +1,48 @@
+.ar { padding-bottom: 20rpx; }
+.font-btn {
+  padding: 8rpx 20rpx; border-radius: 999rpx; font-size: 24rpx; font-weight: 600;
+  color: rgba(31, 42, 29, 0.66); border: 1rpx solid rgba(31, 42, 29, 0.12);
+}
+.font-btn:active { background: rgba(31, 42, 29, 0.06); }
+
+.hero { position: relative; height: 400rpx; display: flex; align-items: center; justify-content: center; }
+.hero-emoji { font-size: 200rpx; line-height: 1; }
+
+.head { padding: 40rpx 40rpx 32rpx; }
+.title { margin-top: 18rpx; line-height: 1.28; }
+.excerpt { margin-top: 20rpx; font-size: 27rpx; }
+.meta { margin-top: 28rpx; display: flex; align-items: center; gap: 14rpx; }
+.meta-ava { width: 52rpx; height: 52rpx; border-radius: 999rpx; background: #F0E8D3; font-size: 26rpx; line-height: 52rpx; text-align: center; }
+
+.body-wrap { padding: 36rpx 40rpx 0; }
+.para {
+  font-size: 29rpx; line-height: 1.86; color: rgba(31, 42, 29, 0.86);
+  margin-bottom: 34rpx; letter-spacing: 0.2rpx;
+}
+.large .para { font-size: 33rpx; line-height: 1.92; }
+
+.refs { margin: 20rpx 32rpx 0; padding: 32rpx; background: rgba(240, 232, 211, 0.6); border-radius: 32rpx; }
+.refs-head { margin-bottom: 24rpx; }
+.ref { padding: 22rpx 0; border-bottom: 1rpx solid rgba(31, 42, 29, 0.08); }
+.ref:active { opacity: 0.6; }
+.ref:last-of-type { border-bottom: 0; }
+.ref-org { font-size: 25rpx; font-weight: 600; color: #2C563A; }
+.ref-title { margin-top: 8rpx; line-height: 1.55; }
+.ref-copy { margin-top: 10rpx; font-size: 22rpx; color: #DE7429; font-weight: 600; }
+.refs-note { margin-top: 20rpx; line-height: 1.6; font-size: 21rpx; }
+
+.ask {
+  margin: 32rpx 32rpx 0; padding: 28rpx 30rpx; border-radius: 32rpx;
+  background: rgba(110, 152, 120, 0.14); border: 1rpx solid rgba(110, 152, 120, 0.28);
+  display: flex; align-items: center; gap: 18rpx;
+}
+.ask-paw {
+  width: 48rpx; height: 48rpx; flex-shrink: 0;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='%232C563A'%3E%3Ccircle cx='9' cy='11' r='3'/%3E%3Ccircle cx='16' cy='8' r='3'/%3E%3Ccircle cx='23' cy='11' r='3'/%3E%3Ccircle cx='6' cy='18' r='2.4'/%3E%3Cpath d='M9 21c0-3.5 3-6 7-6s7 2.5 7 6c0 2.5-2 4.5-7 4.5S9 23.5 9 21Z'/%3E%3C/svg%3E");
+}
+.ask-title { font-size: 27rpx; font-weight: 600; color: #2C563A; }
+.ask-go { flex-shrink: 0; font-size: 25rpx; font-weight: 600; color: #DE7429; }
+
+.disclaimer { margin: 28rpx 40rpx 0; text-align: center; font-size: 21rpx; line-height: 1.6; }
+.rel-head { margin: 48rpx 32rpx 0; }

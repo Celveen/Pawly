@@ -1,0 +1,22 @@
+<view class="nav-hold" style="height:{{statusBarHeight + navBarHeight}}px"></view>
+<view class="nav {{transparent ? 'nav-clear' : ''}}" style="padding-top:{{statusBarHeight}}px">
+  <view class="nav-bar" style="height:{{navBarHeight}}px;padding-right:{{menuRight + 44}}px">
+    <view wx:if="{{back}}" class="nav-back" bindtap="onBack" hover-class="nav-back-hover">
+      <view class="nav-back-icon"></view>
+    </view>
+    <view class="nav-title-wrap">
+      <block wx:if="{{brand}}">
+        <view class="brand">
+          <view class="brand-paw"></view>
+          <text class="brand-name">Pawly</text>
+          <text class="brand-sub">宝狸</text>
+        </view>
+      </block>
+      <block wx:else>
+        <view wx:if="{{eyebrow}}" class="nav-eyebrow">{{eyebrow}}</view>
+        <view class="nav-title">{{title}}</view>
+      </block>
+    </view>
+    <view class="nav-slot"><slot name="right"></slot></view>
+  </view>
+</view>

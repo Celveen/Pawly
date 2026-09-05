@@ -1,0 +1,11 @@
+.sh { padding: 0 32rpx; }
+.sh-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24rpx; margin-top: 36rpx; }
+.sh-eyebrow { margin-bottom: 16rpx; }
+.sh-dash { opacity: 0.5; }
+.sh-title { color: #1F2A1D; }
+.sh-sub { margin-top: 10rpx; max-width: 460rpx; }
+.sh-action {
+  flex-shrink: 0; font-size: 25rpx; color: rgba(31, 42, 29, 0.66);
+  padding: 10rpx 4rpx; border-radius: 12rpx;
+}
+.sh-action-hover { background: rgba(31, 42, 29, 0.06); }

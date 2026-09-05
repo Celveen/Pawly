@@ -1,0 +1,52 @@
+<pawly-nav title="宠物科普" eyebrow="PAWLY JOURNAL" />
+
+<view class="al">
+  <view class="head">
+    <view class="h-1 head-title">养它，从<text class="soft">了解它</text>开始</view>
+    <view class="body head-sub">和兽医、训犬师、铲屎官一起写的实用指南。没有专业术语，只有「今晚就能用」的小知识。</view>
+    <view class="search">
+      <view class="search-icon"></view>
+      <input class="search-input" value="{{q}}" bindinput="onInput" placeholder="搜索：幼犬、疫苗、训练、剪指甲…" placeholder-class="placeholder" />
+      <view class="search-clear" wx:if="{{q}}" bindtap="onClearQ"></view>
+    </view>
+  </view>
+
+  <scroll-view class="chips" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="chips-inner">
+      <view wx:for="{{cats}}" wx:key="id" class="chip {{cat === item.id ? 'chip-on' : ''}}" data-id="{{item.id}}" bindtap="onCat">{{item.name}}</view>
+    </view>
+  </scroll-view>
+
+  <scroll-view class="chips chips-2" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="chips-inner">
+      <view wx:for="{{pets}}" wx:key="id" class="pet {{pet === item.id ? 'pet-on' : ''}}" data-id="{{item.id}}" bindtap="onPet">
+        <text class="pet-e">{{item.emoji}}</text>{{item.label}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="count caption">共 {{total}} 篇 · 每篇都标注来源</view>
+
+  <block wx:if="{{hero}}">
+    <view class="hero press" bindtap="goHero">
+      <view class="hero-art" style="background:{{hero.bg}}">
+        <text class="hero-emoji">{{hero.emoji}}</text>
+        <view class="tag-pill" wx:if="{{hero.refs.length}}">✓ 循证</view>
+      </view>
+      <view class="hero-body">
+        <view class="eyebrow">最新 · {{hero.read}}</view>
+        <view class="h-2 hero-title clamp-3">{{hero.title}}</view>
+        <view class="body hero-excerpt clamp-3">{{hero.excerpt}}</view>
+        <view class="caption hero-author">{{hero.author}} · {{hero.date}}</view>
+      </view>
+    </view>
+
+    <view class="list">
+      <article-card wx:for="{{list}}" wx:key="id" a="{{item}}" mode="row" bind:open="goArticle" />
+    </view>
+    <view class="more caption" wx:if="{{shown < total}}">上拉加载更多…</view>
+  </block>
+  <empty-state wx:else emoji="📚" title="没有找到相关文章" desc="换个关键词或分类试试" action="重置筛选" bind:action="reset" />
+
+  <view class="safe-hold"></view>
+</view>

@@ -1,0 +1,94 @@
+<pawly-nav title="宝狸助手" eyebrow="AI PET BUTLER" back="{{false}}">
+  <view slot="right" class="ai-clear" bindtap="clearChat">清空</view>
+</pawly-nav>
+
+<view class="ai" style="height:calc(100vh - {{navH}}px)">
+  <scroll-view
+    class="stream"
+    scroll-y
+    scroll-into-view="{{scrollTo}}"
+    scroll-with-animation
+    enhanced
+    show-scrollbar="{{false}}"
+    
+  >
+    <view class="stream-inner">
+      <view class="intro">
+        <view class="intro-paw"></view>
+        <view class="caption intro-text">回答基于站内循证科普与 WSAVA、ESCCAP 等权威兽医指南，需要买东西时才推荐商品</view>
+      </view>
+
+      <block wx:for="{{messages}}" wx:key="id" wx:for-item="m" wx:for-index="mi">
+        <view id="msg-{{m.id || mi}}" class="msg msg-{{m.role}}">
+          <view wx:if="{{m.role === 'assistant'}}" class="msg-ava">🐾</view>
+          <view class="msg-main">
+            <view class="bubble bubble-{{m.role}}">
+              <view wx:if="{{m.pending}}" class="typing">
+                <view class="dot"></view><view class="dot d2"></view><view class="dot d3"></view>
+              </view>
+              <text wx:else class="bubble-text" user-select>{{m.content}}</text>
+            </view>
+
+            <!-- 购物方案 -->
+            <view wx:for="{{m.proposals}}" wx:key="title" wx:for-item="pr" wx:for-index="pi" class="plan">
+              <view class="plan-head">
+                <view class="grow">
+                  <view class="plan-title">{{pr.title}}</view>
+                  <view class="caption plan-reason">{{pr.reason}}</view>
+                </view>
+                <view class="badge plan-badge" wx:if="{{pr.badge}}">{{pr.badge}}</view>
+              </view>
+              <view class="plan-items">
+                <view wx:for="{{pr.items}}" wx:key="id" wx:for-item="it" class="plan-item" data-id="{{it.id}}" bindtap="goProduct">
+                  <view class="plan-art" style="background:{{it.bg}}"><text class="plan-emoji">{{it.emoji}}</text></view>
+                  <view class="grow">
+                    <view class="plan-name clamp-2">{{it.name}}</view>
+                    <view class="caption">{{it.sub}}</view>
+                  </view>
+                  <view class="plan-right">
+                    <text class="mono plan-price">{{it.priceText}}</text>
+                    <view class="plan-add" data-id="{{it.id}}" catchtap="addProduct">＋</view>
+                  </view>
+                </view>
+              </view>
+              <view class="plan-foot">
+                <text class="caption">合计约 <text class="mono plan-total">{{pr.total}}</text></text>
+                <view class="btn btn-primary btn-sm" data-m="{{mi}}" data-p="{{pi}}" catchtap="addAll">全部加入购物车</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <view class="quick" wx:if="{{showQuick}}">
+        <view class="caption quick-label">试着这样问</view>
+        <view class="quick-list">
+          <view wx:for="{{quick}}" wx:key="*this" class="quick-item" data-q="{{item}}" bindtap="onQuick">{{item}}</view>
+        </view>
+      </view>
+
+      <view class="disclaimer caption">AI 回复仅供参考，宠物健康问题请咨询专业兽医</view>
+      <view class="stream-hold"></view>
+    </view>
+  </scroll-view>
+
+  <view class="composer" style="bottom:{{composerBottom}}">
+    <view class="composer-inner">
+      <input
+        class="composer-input"
+        value="{{input}}"
+        bindinput="onInput"
+        bindfocus="onFocus"
+        bindblur="onBlur"
+        bindconfirm="onSend"
+        confirm-type="send"
+        confirm-hold
+        adjust-position="{{false}}"
+        placeholder="问点什么…比如「布偶 8 个月软便怎么办」"
+        placeholder-class="placeholder"
+      />
+      <view class="composer-send {{input ? 'send-on' : ''}} {{sending ? 'send-busy' : ''}}" bindtap="onSend"></view>
+    </view>
+    <view class="composer-safe" wx:if="{{!inputBottom}}"></view>
+  </view>
+</view>

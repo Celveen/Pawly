@@ -1,0 +1,12 @@
+<view class="ac ac-{{mode}} press" bindtap="onOpen">
+  <view class="art-box ac-art" style="background:{{a.bg}}">
+    <text class="art-emoji ac-emoji">{{a.emoji}}</text>
+    <view class="tag-pill" wx:if="{{evidence}}">✓ 循证</view>
+  </view>
+  <view class="ac-body">
+    <view class="eyebrow ac-eyebrow">{{catName}} · {{a.read}}</view>
+    <view class="ac-title clamp-2">{{a.title}}</view>
+    <view class="body ac-excerpt clamp-2">{{a.excerpt}}</view>
+    <view class="caption ac-author ellipsis">{{a.author}} · {{a.date}}</view>
+  </view>
+</view>

@@ -1,0 +1,59 @@
+<pawly-nav title="商品" eyebrow="SHOP ALL" back="{{false}}">
+  <view slot="right" class="cart-entry" bindtap="goCart">
+    <view class="cart-icon"></view>
+    <view class="dot-badge cart-badge" wx:if="{{cartCount > 0}}">{{cartCount > 99 ? '99+' : cartCount}}</view>
+  </view>
+</pawly-nav>
+
+<view class="shop">
+  <!-- 标题与搜索 -->
+  <view class="head">
+    <view class="h-1 head-title">给毛孩子挑点好的<text class="br"></text><text class="soft">每一件都实测把关</text></view>
+    <view class="search">
+      <view class="search-icon"></view>
+      <input class="search-input" value="{{q}}" bindinput="onInput" placeholder="搜索：冻干、猫砂、磨牙棒、主粮…" placeholder-class="placeholder" confirm-type="search" />
+      <view class="search-clear" wx:if="{{q}}" bindtap="onClearQ"></view>
+    </view>
+    <view class="hot">
+      <text class="caption">大家在搜</text>
+      <view wx:for="{{hotWords}}" wx:key="*this" class="hot-word" data-w="{{item}}" bindtap="onHotWord">{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 分类 -->
+  <scroll-view class="chips" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="chips-inner">
+      <view wx:for="{{cats}}" wx:key="id" class="chip {{cat === item.id ? 'chip-on' : ''}}" data-id="{{item.id}}" bindtap="onCat">
+        <text class="chip-icon">{{item.icon}}</text>{{item.name}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 宠物筛选 + 排序 -->
+  <view class="filters">
+    <scroll-view class="pets" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="pets-inner">
+        <view wx:for="{{pets}}" wx:key="id" class="pet {{pet === item.id ? 'pet-on' : ''}}" data-id="{{item.id}}" bindtap="onPet">
+          <text class="pet-e">{{item.emoji}}</text>{{item.label}}
+        </view>
+      </view>
+    </scroll-view>
+    <view class="sort" bindtap="toggleSort">
+      <text>{{sort}}</text>
+      <view class="sort-arrow {{sortOpen ? 'sort-arrow-up' : ''}}"></view>
+    </view>
+  </view>
+
+  <view class="sort-menu" wx:if="{{sortOpen}}">
+    <view wx:for="{{sorts}}" wx:key="*this" class="sort-item {{sort === item ? 'sort-item-on' : ''}}" data-s="{{item}}" bindtap="onSort">{{item}}</view>
+  </view>
+
+  <view class="count caption">共 {{list.length}} 件商品</view>
+
+  <view class="grid-2" wx:if="{{list.length}}">
+    <product-card wx:for="{{list}}" wx:key="id" p="{{item}}" bind:open="goProduct" bind:add="onAdd" />
+  </view>
+  <empty-state wx:else emoji="🔍" title="没有找到符合条件的商品" desc="换个关键词或分类试试" />
+
+  <view class="tabbar-hold"></view>
+</view>

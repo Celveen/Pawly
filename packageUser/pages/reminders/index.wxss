@@ -1,0 +1,24 @@
+.rm { padding: 24rpx 32rpx 0; }
+.tip { display: flex; gap: 18rpx; padding: 26rpx; background: rgba(240, 232, 211, 0.7); border-color: transparent; }
+.tip-e { font-size: 36rpx; }
+.tip-t { font-size: 26rpx; font-weight: 600; margin-bottom: 8rpx; }
+.sec { margin: 40rpx 0 20rpx; }
+.pad { padding: 60rpx 0; text-align: center; }
+
+.item { display: flex; align-items: center; gap: 20rpx; padding: 28rpx 26rpx; margin-bottom: 16rpx; }
+.soon { border-color: rgba(222, 116, 41, 0.32); }
+.over { border-color: rgba(192, 73, 43, 0.4); background: rgba(192, 73, 43, 0.05); }
+.item-done { opacity: 0.55; }
+.item-e { font-size: 40rpx; }
+.item-label { font-size: 27rpx; font-weight: 600; line-height: 1.4; }
+.item-meta { margin-top: 8rpx; }
+.check {
+  width: 56rpx; height: 56rpx; border-radius: 999rpx; flex-shrink: 0;
+  border: 2rpx solid rgba(31, 42, 29, 0.2);
+}
+.check:active { transform: scale(0.9); }
+.check-on {
+  background-color: #4F7A57; border-color: #4F7A57;
+  background-repeat: no-repeat; background-position: center; background-size: 28rpx 28rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5L19 7'/%3E%3C/svg%3E");
+}

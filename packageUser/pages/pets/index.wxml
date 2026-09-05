@@ -1,0 +1,110 @@
+<pawly-nav title="宠物档案" eyebrow="PET PROFILE">
+  <view slot="right" class="add-btn" bindtap="openNew">+ 新建</view>
+</pawly-nav>
+
+<view class="pt">
+  <view class="tip card">
+    <text class="tip-e">💡</text>
+    <view class="grow">
+      <view class="tip-t">档案存的是出生日期，不是年龄</view>
+      <view class="caption">年龄实时算，你不用每年改；宝狸助手回答问题时会自动读取这份档案。</view>
+    </view>
+  </view>
+
+  <block wx:if="{{pets && pets.length}}">
+    <view wx:for="{{pets}}" wx:key="name" class="pet card">
+      <view class="pet-head" data-i="{{index}}" bindtap="openEdit">
+        <view class="pet-ava">{{item.emoji}}</view>
+        <view class="grow">
+          <view class="pet-name">{{item.name}}</view>
+          <view class="caption">{{item.species}}{{item.breed ? ' · ' + item.breed : ''}}{{item.sex ? ' · ' + item.sex : ''}}</view>
+        </view>
+        <view class="pet-del" data-name="{{item.name}}" catchtap="remove"></view>
+      </view>
+      <view class="pet-facts">
+        <view class="fact">
+          <text class="caption">年龄</text>
+          <text class="fact-v">{{item.ageText}}</text>
+        </view>
+        <view class="fact">
+          <text class="caption">生命阶段</text>
+          <text class="fact-v">{{item.lifeStage || '—'}}</text>
+        </view>
+        <view class="fact">
+          <text class="caption">体重</text>
+          <text class="fact-v">{{item.weightKg ? item.weightKg + ' kg' : '—'}}</text>
+        </view>
+      </view>
+      <view class="pet-notes caption" wx:if="{{item.notes}}">{{item.notes}}</view>
+      <view class="pet-stale caption" wx:if="{{item.weightStale}}">体重超过 60 天没更新了，建议称一下</view>
+    </view>
+
+    <view class="btn btn-line btn-block ask" bindtap="askAI">让宝狸结合档案给建议 →</view>
+  </block>
+
+  <view wx:elif="{{pets === null}}" class="caption pad">加载中…</view>
+  <empty-state wx:else emoji="🐾" title="{{error ? '加载失败' : '还没有宠物档案'}}"
+    desc="{{error || '建一份档案，AI 管家的建议会贴合它的品种、年龄和体重'}}"
+    action="新建档案" bind:action="openNew" />
+
+  <view class="safe-hold"></view>
+</view>
+
+<!-- 编辑面板 -->
+<view wx:if="{{editing}}" class="mask" bindtap="close"></view>
+<view wx:if="{{editing}}" class="sheet" catchtap="stop">
+  <view class="sheet-head">
+    <view class="h-3">{{isNew ? '新建宠物档案' : '编辑档案'}}</view>
+    <view class="sheet-close" bindtap="close"></view>
+  </view>
+
+  <scroll-view class="sheet-body" scroll-y>
+    <view class="fld">
+      <view class="caption fld-label">名字</view>
+      <input class="input" value="{{form.name}}" data-k="name" bindinput="onField" maxlength="12" placeholder="比如：糯米" placeholder-class="placeholder" disabled="{{!isNew}}" />
+      <view class="caption fld-hint" wx:if="{{!isNew}}">名字是档案的唯一标识，暂不支持改名</view>
+    </view>
+
+    <view class="fld-row">
+      <view class="fld grow">
+        <view class="caption fld-label">物种</view>
+        <picker mode="selector" range="{{speciesList}}" value="{{form.speciesIndex}}" bindchange="onSpecies">
+          <view class="input picker">{{form.species}}</view>
+        </picker>
+      </view>
+      <view class="fld grow">
+        <view class="caption fld-label">性别</view>
+        <picker mode="selector" range="{{sexes}}" value="{{form.sexIndex}}" bindchange="onSex">
+          <view class="input picker">{{form.sex || '未填'}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="fld">
+      <view class="caption fld-label">品种（选填）</view>
+      <input class="input" value="{{form.breed}}" data-k="breed" bindinput="onField" maxlength="16" placeholder="比如：布偶 / 金毛" placeholder-class="placeholder" />
+    </view>
+
+    <view class="fld-row">
+      <view class="fld grow">
+        <view class="caption fld-label">出生日期</view>
+        <picker mode="date" value="{{form.birthday}}" end="{{today}}" bindchange="onBirthday">
+          <view class="input picker">{{form.birthday || '选择日期'}}</view>
+        </picker>
+      </view>
+      <view class="fld grow">
+        <view class="caption fld-label">体重 kg（选填）</view>
+        <input class="input" type="digit" value="{{form.weightKg}}" data-k="weightKg" bindinput="onField" placeholder="4.5" placeholder-class="placeholder" />
+      </view>
+    </view>
+
+    <view class="fld">
+      <view class="caption fld-label">备注（选填）</view>
+      <textarea class="textarea" value="{{form.notes}}" data-k="notes" bindinput="onField" maxlength="120"
+        placeholder="比如：对鸡肉过敏、怕打雷、绝育时间…" placeholder-class="placeholder" auto-height show-confirm-bar="{{false}}" />
+    </view>
+
+    <view class="btn btn-primary btn-lg btn-block" bindtap="save">保存档案</view>
+    <view class="sheet-hold"></view>
+  </scroll-view>
+</view>

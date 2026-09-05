@@ -1,0 +1,40 @@
+<pawly-nav title="健康提醒" eyebrow="HEALTH" />
+
+<view class="rm">
+  <view class="tip card">
+    <text class="tip-e">🗓️</text>
+    <view class="grow">
+      <view class="tip-t">按档案里的出生日期自动排</view>
+      <view class="caption">疫苗与体检按周年推算，体内驱虫按季度、体外按月。具体针次与用药请遵医嘱。</view>
+    </view>
+  </view>
+
+  <block wx:if="{{list && list.length}}">
+    <view class="eyebrow eyebrow-rule sec" wx:if="{{todo.length}}">待办 {{todo.length}} 项</view>
+    <view wx:for="{{todo}}" wx:key="key" class="item card {{item.overdue ? 'over' : item.soon ? 'soon' : ''}}">
+      <view class="item-e">{{item.emoji}}</view>
+      <view class="grow">
+        <view class="item-label">{{item.label}}</view>
+        <view class="caption item-meta">{{item.petName}} · {{item.dueText}} · {{item.daysText}}</view>
+      </view>
+      <view class="check" data-key="{{item.key}}" bindtap="toggle"></view>
+    </view>
+
+    <view class="eyebrow eyebrow-rule sec" wx:if="{{done.length}}">已完成 {{done.length}} 项</view>
+    <view wx:for="{{done}}" wx:key="key" class="item card item-done">
+      <view class="item-e">{{item.emoji}}</view>
+      <view class="grow">
+        <view class="item-label">{{item.label}}</view>
+        <view class="caption item-meta">{{item.petName}} · {{item.dueText}}</view>
+      </view>
+      <view class="check check-on" data-key="{{item.key}}" bindtap="toggle"></view>
+    </view>
+  </block>
+
+  <view wx:elif="{{list === null}}" class="caption pad">加载中…</view>
+  <empty-state wx:else emoji="💉" title="{{error ? '加载失败' : '还没有可排的提醒'}}"
+    desc="{{error || '先建一份宠物档案，填上出生日期，提醒会自动排好'}}"
+    action="去建档案" bind:action="goPets" />
+
+  <view class="safe-hold"></view>
+</view>

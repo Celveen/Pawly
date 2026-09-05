@@ -1,0 +1,58 @@
+<pawly-nav title="{{catName}}" eyebrow="PAWLY JOURNAL">
+  <view slot="right" class="font-btn" bindtap="toggleFont">{{fontLarge ? 'A−' : 'A+'}}</view>
+</pawly-nav>
+
+<view class="ar" wx:if="{{a}}">
+  <view class="hero" style="background:{{a.bg}}">
+    <text class="hero-emoji">{{a.emoji}}</text>
+    <view class="tag-pill" wx:if="{{a.refs.length}}">✓ 循证</view>
+  </view>
+
+  <view class="head">
+    <view class="eyebrow">{{catName}} · {{a.read}}</view>
+    <view class="h-1 title">{{a.title}}</view>
+    <view class="body excerpt">{{a.excerpt}}</view>
+    <view class="meta">
+      <view class="meta-ava">👤</view>
+      <text class="caption">{{a.author}} · {{a.date}}</text>
+    </view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <view class="body-wrap {{fontLarge ? 'large' : ''}}">
+    <view wx:for="{{a.body}}" wx:key="*this" class="para">{{item}}</view>
+  </view>
+
+  <!-- 来源 -->
+  <view class="refs" wx:if="{{a.refs.length}}">
+    <view class="eyebrow eyebrow-rule refs-head">参考来源</view>
+    <view wx:for="{{a.refs}}" wx:key="url" class="ref" data-url="{{item.url}}" bindtap="copyRef">
+      <view class="ref-org">{{item.org}}</view>
+      <view class="caption ref-title">{{item.title}}</view>
+      <view class="ref-copy">复制链接</view>
+    </view>
+    <view class="caption refs-note">小程序内无法直接跳转外部网页，点一下可复制来源链接，到浏览器里打开。</view>
+  </view>
+
+  <!-- 问宝狸 -->
+  <view class="ask press" bindtap="askAI">
+    <view class="ask-paw"></view>
+    <view class="grow">
+      <view class="ask-title">看完还有疑问？</view>
+      <view class="caption">把你家宝贝的情况告诉宝狸助手，它会结合这些资料给出更具体的建议</view>
+    </view>
+    <view class="ask-go">去问 →</view>
+  </view>
+
+  <view class="disclaimer caption">本文为科普内容，不能替代兽医诊断。宠物出现异常请及时就医。</view>
+
+  <view class="rel-head eyebrow eyebrow-rule">相关阅读</view>
+  <scroll-view class="h-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="h-scroll-inner">
+      <article-card wx:for="{{related}}" wx:key="id" a="{{item}}" mode="wide" bind:open="goArticle" />
+    </view>
+  </scroll-view>
+
+  <view class="safe-hold"></view>
+</view>

@@ -1,0 +1,55 @@
+<pawly-nav title="社区" eyebrow="COMMUNITY" back="{{false}}">
+  <view slot="right" class="nav-actions">
+    <view class="nav-icon icon-search" bindtap="goSearch"></view>
+    <view class="nav-icon icon-mail" bindtap="goMessages">
+      <view class="dot-badge nav-badge" wx:if="{{unread > 0}}">{{unread > 99 ? '99+' : unread}}</view>
+    </view>
+  </view>
+</pawly-nav>
+
+<view class="cm">
+  <view class="intro">
+    <view class="h-2 intro-title">铲屎官的分享角落</view>
+    <view class="caption intro-sub">晒宠、好物安利、养宠求助都可以发，最多 9 张图</view>
+  </view>
+
+  <scroll-view class="chips" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="chips-inner">
+      <view wx:for="{{topics}}" wx:key="id" class="chip {{topic === item.id ? 'chip-on' : ''}}" data-id="{{item.id}}" bindtap="onTopic">
+        <text wx:if="{{item.emoji}}" class="chip-icon">{{item.emoji}}</text>{{item.name}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 加载中骨架 -->
+  <view class="masonry" wx:if="{{posts === null}}">
+    <view class="col">
+      <view class="skel" style="height:400rpx"></view>
+      <view class="skel" style="height:320rpx"></view>
+    </view>
+    <view class="col">
+      <view class="skel" style="height:330rpx"></view>
+      <view class="skel" style="height:420rpx"></view>
+    </view>
+  </view>
+
+  <block wx:elif="{{posts.length}}">
+    <view class="masonry">
+      <view class="col">
+        <post-card wx:for="{{colA}}" wx:key="id" p="{{item}}" bind:open="goPost" bind:like="onLike" bind:author="goAuthor" />
+      </view>
+      <view class="col">
+        <post-card wx:for="{{colB}}" wx:key="id" p="{{item}}" bind:open="goPost" bind:like="onLike" bind:author="goAuthor" />
+      </view>
+    </view>
+  </block>
+
+  <empty-state wx:else emoji="{{error ? '📡' : '🐾'}}" title="{{error ? '加载失败' : '还没有笔记'}}" desc="{{error || '来发第一条，晒晒你家毛孩子'}}" action="{{error ? '重新加载' : '去发帖'}}" bind:action="onEmptyAction" />
+
+  <view class="tabbar-hold"></view>
+</view>
+
+<view class="fab" bindtap="goPublish">
+  <view class="fab-plus"></view>
+  <text class="fab-text">发笔记</text>
+</view>

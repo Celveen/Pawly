@@ -1,0 +1,77 @@
+<pawly-nav title="搜索" eyebrow="SEARCH" />
+
+<view class="sr">
+  <view class="search">
+    <view class="search-icon"></view>
+    <input class="search-input" value="{{q}}" bindinput="onInput" bindconfirm="onConfirm" confirm-type="search" focus placeholder="搜商品、科普、社区笔记" placeholder-class="placeholder" />
+    <view class="search-clear" wx:if="{{q}}" bindtap="clearQ"></view>
+  </view>
+
+  <!-- 未搜索：热门 + 历史 -->
+  <block wx:if="{{!searched}}">
+    <view class="eyebrow eyebrow-rule sec">大家在搜</view>
+    <view class="words">
+      <view wx:for="{{hot}}" wx:key="*this" class="word" data-w="{{item}}" bindtap="onWord">{{item}}</view>
+    </view>
+
+    <block wx:if="{{history.length}}">
+      <view class="sec-row">
+        <view class="eyebrow eyebrow-rule">搜索历史</view>
+        <view class="caption clear" bindtap="clearHistory">清空</view>
+      </view>
+      <view class="words">
+        <view wx:for="{{history}}" wx:key="*this" class="word word-h" data-w="{{item}}" bindtap="onWord">{{item}}</view>
+      </view>
+    </block>
+
+    <view class="ask press" bindtap="askAI">
+      <view class="ask-paw"></view>
+      <view class="grow">
+        <view class="ask-title">找不到想要的？直接问宝狸</view>
+        <view class="caption">用一句话描述你的情况，AI 管家会边解释边帮你挑</view>
+      </view>
+      <view class="ask-go">去问 →</view>
+    </view>
+  </block>
+
+  <!-- 搜索结果 -->
+  <block wx:else>
+    <view class="tabs">
+      <view class="tab {{tab === 'all' ? 'tab-on' : ''}}" data-t="all" bindtap="onTab">全部</view>
+      <view class="tab {{tab === 'product' ? 'tab-on' : ''}}" data-t="product" bindtap="onTab">商品 {{products.length}}</view>
+      <view class="tab {{tab === 'article' ? 'tab-on' : ''}}" data-t="article" bindtap="onTab">科普 {{articles.length}}</view>
+      <view class="tab {{tab === 'post' ? 'tab-on' : ''}}" data-t="post" bindtap="onTab">社区 {{posts.length}}</view>
+    </view>
+
+    <block wx:if="{{(tab === 'all' || tab === 'product') && products.length}}">
+      <view class="eyebrow eyebrow-rule sec">商品</view>
+      <view class="grid-2">
+        <product-card wx:for="{{products}}" wx:key="id" p="{{item}}" bind:open="goProduct" bind:add="onAdd" />
+      </view>
+    </block>
+
+    <block wx:if="{{(tab === 'all' || tab === 'article') && articles.length}}">
+      <view class="eyebrow eyebrow-rule sec">科普</view>
+      <view class="col-list">
+        <article-card wx:for="{{articles}}" wx:key="id" a="{{item}}" mode="row" bind:open="goArticle" />
+      </view>
+    </block>
+
+    <block wx:if="{{tab === 'all' || tab === 'post'}}">
+      <view class="eyebrow eyebrow-rule sec" wx:if="{{posts.length || loadingPosts}}">社区笔记</view>
+      <view wx:if="{{loadingPosts}}" class="caption pad">搜索中…</view>
+      <view wx:for="{{posts}}" wx:key="id" class="post card" data-id="{{item.id}}" bindtap="goPost">
+        <view class="post-art" style="background:{{item.bg}}"><text class="post-emoji">{{item.emoji}}</text></view>
+        <view class="grow">
+          <view class="post-title clamp-2">{{item.title}}</view>
+          <view class="caption post-meta">{{item.author}} · {{item.time}} · {{item.likeCount}} 赞</view>
+        </view>
+      </view>
+    </block>
+
+    <empty-state wx:if="{{!products.length && !articles.length && !posts.length && !loadingPosts}}"
+      emoji="🔍" title="没有找到相关内容" desc="换个说法试试，或者直接问宝狸助手" action="去问宝狸" bind:action="askAI" />
+  </block>
+
+  <view class="safe-hold"></view>
+</view>

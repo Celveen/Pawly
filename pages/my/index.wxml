@@ -1,0 +1,102 @@
+<pawly-nav title="我的" eyebrow="ACCOUNT" back="{{false}}">
+  <view slot="right" class="nav-actions">
+    <view class="nav-icon icon-gear" bindtap="goSettings"></view>
+  </view>
+</pawly-nav>
+
+<view class="my">
+  <!-- 用户卡 -->
+  <view class="user card" bindtap="goProfile" hover-class="user-hover">
+    <view class="user-top">
+      <view class="ava">
+        <image wx:if="{{avatar}}" class="ava-img" src="{{avatar}}" mode="aspectFill" />
+        <text wx:else class="ava-emoji">{{me.avatarEmoji || '🐾'}}</text>
+      </view>
+      <view class="grow">
+        <block wx:if="{{me && !me.guest}}">
+          <view class="user-name ellipsis">{{me.nickname || '宝狸用户'}}</view>
+          <view class="caption user-id" wx:if="{{me.pawlyId}}">宝狸号 {{me.pawlyId}}</view>
+          <view class="caption user-bio clamp-1" wx:if="{{me.bio}}">{{me.bio}}</view>
+        </block>
+        <block wx:else>
+          <view class="user-name">还没登录</view>
+          <view class="caption user-id">登录后同步宠物档案、订单与社区数据</view>
+        </block>
+      </view>
+      <view wx:if="{{me && me.guest}}" class="btn btn-primary btn-sm" catchtap="goLogin">登录</view>
+      <view wx:else class="user-arrow"></view>
+    </view>
+
+    <view class="stats" wx:if="{{profile}}">
+      <view class="stat" data-tab="posts" catchtap="goCollection">
+        <text class="stat-n mono">{{profile.postCount}}</text><text class="caption">笔记</text>
+      </view>
+      <view class="stat" data-tab="following" catchtap="goCollection">
+        <text class="stat-n mono">{{profile.followingCount}}</text><text class="caption">关注</text>
+      </view>
+      <view class="stat" data-tab="followers" catchtap="goCollection">
+        <text class="stat-n mono">{{profile.followerCount}}</text><text class="caption">粉丝</text>
+      </view>
+      <view class="stat" data-tab="liked" catchtap="goCollection">
+        <text class="stat-n mono">{{profile.likeCount}}</text><text class="caption">获赞</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 签到 -->
+  <view class="checkin card">
+    <view class="grow">
+      <view class="checkin-title">每日签到</view>
+      <view class="caption">已连续 {{checkin.streak || 0}} 天 · 当前 {{me.points || 0}} 积分</view>
+    </view>
+    <view class="btn btn-sm {{checkin.done ? 'btn-line' : 'btn-accent'}}" bindtap="doCheckin">
+      {{checkin.done ? '今日已签' : '签到 +5'}}
+    </view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="entries card">
+    <view wx:for="{{entries}}" wx:key="id" class="entry" data-url="{{item.url}}" bindtap="goEntry" hover-class="entry-hover">
+      <text class="entry-icon">{{item.icon}}</text>
+      <text class="entry-name">{{item.name}}</text>
+      <view class="entry-badge" wx:if="{{item.id === 'orders' && orderCount > 0}}">{{orderCount}}</view>
+      <view class="entry-badge" wx:if="{{item.id === 'pets' && petCount > 0}}">{{petCount}}</view>
+      <view class="entry-badge entry-badge-warn" wx:if="{{item.id === 'reminders' && dueCount > 0}}">{{dueCount}}</view>
+    </view>
+  </view>
+
+  <!-- 会员卡 -->
+  <view class="member press" bindtap="goMember">
+    <text class="member-paw">🐾</text>
+    <view class="eyebrow member-eyebrow">Pawly Club</view>
+    <view class="member-title">把日常开销变成会员福利</view>
+    <view class="member-desc">¥29/月 · 全场 9 折 · AI 额度升级 · 年度体检</view>
+    <view class="member-go">了解会员 →</view>
+  </view>
+
+  <!-- 列表 -->
+  <view class="list card">
+    <view class="li" bindtap="goCart" hover-class="li-hover">
+      <text class="li-icon">🛒</text><text class="grow">购物车</text>
+      <text class="caption" wx:if="{{cartCount}}">{{cartCount}} 件</text>
+      <view class="li-arrow"></view>
+    </view>
+    <view class="li" bindtap="goMessages" hover-class="li-hover">
+      <text class="li-icon">✉️</text><text class="grow">私信</text>
+      <view class="dot-badge" wx:if="{{unreadDm > 0}}">{{unreadDm}}</view>
+      <view class="li-arrow"></view>
+    </view>
+    <view class="li" bindtap="goNotifications" hover-class="li-hover">
+      <text class="li-icon">🔔</text><text class="grow">通知</text>
+      <view class="dot-badge" wx:if="{{unreadNotify > 0}}">{{unreadNotify}}</view>
+      <view class="li-arrow"></view>
+    </view>
+    <view class="li" bindtap="goSettings" hover-class="li-hover">
+      <text class="li-icon">⚙️</text><text class="grow">设置</text>
+      <view class="li-arrow"></view>
+    </view>
+  </view>
+
+  <view class="foot caption">Pawly 宝狸 · 当前为作品演示版本，结算为演示流程</view>
+  <view class="tabbar-hold"></view>
+</view>

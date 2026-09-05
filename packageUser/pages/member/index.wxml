@@ -1,0 +1,54 @@
+<pawly-nav title="会员中心" eyebrow="PAWLY CLUB" />
+
+<view class="mb">
+  <!-- 会员卡 -->
+  <view class="hero">
+    <text class="hero-paw">🐾</text>
+    <view class="eyebrow hero-eyebrow">Pawly Club · 会员计划</view>
+    <view class="hero-title">把日常开销<text class="br"></text>变成会员福利</view>
+    <view class="hero-price"><text class="mono hero-num">¥29</text><text class="hero-unit"> / 月</text></view>
+    <view class="hero-desc">全场 9 折 · AI 额度升级 · 生日礼盒 · 每年一次免费宠物体检。日常买粮买罐头省下的钱，往往就够回本。</view>
+    <view class="btn btn-accent btn-lg hero-btn" bindtap="join">立即开通</view>
+  </view>
+
+  <!-- 概览 -->
+  <view class="eyebrow eyebrow-rule sec">我的概览</view>
+  <view class="grid">
+    <view class="tile card press" bindtap="goPets">
+      <text class="tile-n mono">{{petCount}}</text><text class="caption">宠物档案</text>
+    </view>
+    <view class="tile card press" bindtap="goOrders">
+      <text class="tile-n mono">{{orderCount}}</text><text class="caption">历史订单</text>
+    </view>
+    <view class="tile card press" bindtap="goReminders">
+      <text class="tile-n mono {{dueCount ? 'warn' : ''}}">{{dueCount}}</text><text class="caption">待办提醒</text>
+    </view>
+    <view class="tile card">
+      <text class="tile-n mono">{{me.points || 0}}</text><text class="caption">积分 · 连签 {{checkin.streak || 0}} 天</text>
+    </view>
+  </view>
+
+  <!-- 权益 -->
+  <view class="eyebrow eyebrow-rule sec">会员权益</view>
+  <view class="benefits">
+    <view wx:for="{{benefits}}" wx:key="t" class="benefit card">
+      <text class="benefit-e">{{item.e}}</text>
+      <view class="grow">
+        <view class="benefit-t">{{item.t}}</view>
+        <view class="caption benefit-d">{{item.d}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- FAQ -->
+  <view class="eyebrow eyebrow-rule sec">常见问题</view>
+  <view class="faq card">
+    <view wx:for="{{faq}}" wx:key="q" class="faq-item">
+      <view class="faq-q">{{item.q}}</view>
+      <view class="caption faq-a">{{item.a}}</view>
+    </view>
+  </view>
+
+  <view class="notice caption">当前为作品演示版本，会员订阅与支付尚未接入，展示用途。</view>
+  <view class="safe-hold"></view>
+</view>

@@ -1,0 +1,98 @@
+<pawly-nav title="商品详情">
+  <view slot="right" class="cart-entry" bindtap="goCart">
+    <view class="cart-icon"></view>
+    <view class="dot-badge cart-badge" wx:if="{{cartCount > 0}}">{{cartCount > 99 ? '99+' : cartCount}}</view>
+  </view>
+</pawly-nav>
+
+<view class="pd" wx:if="{{p}}">
+  <!-- 主图 -->
+  <view class="hero art-box" style="background: radial-gradient(closest-side at 42% 36%, rgba(255,255,255,.45), transparent), {{p.bg}}">
+    <text class="hero-emoji">{{p.emoji}}</text>
+    <view class="pet-pill">{{petEmoji}} {{petLabel}}</view>
+    <view class="tag-pill" wx:if="{{p.tag}}">{{p.tag}}</view>
+  </view>
+
+  <!-- 标题与价格 -->
+  <view class="main card">
+    <view class="row-between price-row">
+      <view class="row gap-12" style="align-items: baseline">
+        <text class="price mono">{{priceText}}</text>
+        <text class="caption mono was" wx:if="{{wasText}}">{{wasText}}</text>
+      </view>
+      <text class="caption">已售 {{soldText}}</text>
+    </view>
+    <view class="h-2 title">{{p.name}}</view>
+    <view class="caption sub">{{p.sub}}　·　{{catName}}</view>
+    <view class="badges">
+      <view wx:for="{{p.badges}}" wx:key="*this" class="badge">{{item}}</view>
+    </view>
+    <view class="rating">
+      <text class="rating-star">★</text>
+      <text class="rating-n mono">{{p.rating}}</text>
+      <text class="caption">　库存 {{p.stock}} 件</text>
+    </view>
+  </view>
+
+  <!-- 简介 -->
+  <view class="block card">
+    <view class="eyebrow eyebrow-rule block-head">商品简介</view>
+    <view class="body">{{p.desc}}</view>
+  </view>
+
+  <!-- 详情 -->
+  <view class="block card" wx:if="{{p.detail}}">
+    <view class="eyebrow eyebrow-rule block-head">详细介绍</view>
+    <view class="body detail">{{p.detail}}</view>
+  </view>
+
+  <!-- 问宝狸 -->
+  <view class="ask press" bindtap="askAI">
+    <view class="ask-paw"></view>
+    <view class="grow">
+      <view class="ask-title">不确定适不适合你家宝贝？</view>
+      <view class="caption">把它的品种、年龄、体重告诉宝狸助手，它会结合档案帮你判断</view>
+    </view>
+    <view class="ask-go">问一下 →</view>
+  </view>
+
+  <!-- 评价 -->
+  <view class="block card">
+    <view class="eyebrow eyebrow-rule block-head">用户评价</view>
+    <view wx:if="{{reviewsLoading}}" class="caption">加载中…</view>
+    <block wx:elif="{{reviews.length}}">
+      <view wx:for="{{reviews}}" wx:key="id" class="review">
+        <view class="review-head">
+          <text class="review-ava">{{item.avatarEmoji || '👤'}}</text>
+          <text class="review-name grow ellipsis">{{item.user}}</text>
+          <text class="review-stars">{{item.rating}}★</text>
+        </view>
+        <view class="body review-text">{{item.content}}</view>
+        <view class="caption review-time">{{item.time}}</view>
+      </view>
+    </block>
+    <view wx:else class="caption">还没有评价，下单后来说说感受吧</view>
+  </view>
+
+  <!-- 相关推荐 -->
+  <view class="rel-head eyebrow eyebrow-rule">同类好物</view>
+  <scroll-view class="h-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="h-scroll-inner">
+      <product-card wx:for="{{related}}" wx:key="id" p="{{item}}" mode="wide" bind:open="goProduct" bind:add="onAddRelated" />
+    </view>
+  </scroll-view>
+
+  <view class="bar-hold"></view>
+</view>
+
+<!-- 底部操作条 -->
+<view class="bar" wx:if="{{p}}">
+  <view class="stepper">
+    <view class="step" bindtap="minus">−</view>
+    <text class="step-n mono">{{qty}}</text>
+    <view class="step" bindtap="plus">＋</view>
+  </view>
+  <view class="btn btn-line bar-btn" bindtap="addToCart">加入购物车</view>
+  <view class="btn btn-primary bar-btn" bindtap="buyNow">立即购买</view>
+  <view class="bar-safe"></view>
+</view>
