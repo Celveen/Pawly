@@ -1,5 +1,5 @@
 const api = require('../../../api/index');
-const { TOPICS, SUGGESTED_TAGS } = require('../../../data');
+const { TOPICS, SUGGESTED_TAGS } = require('../../../data/index');
 const { pickImages } = require('../../../utils/image');
 const { toast } = require('../../../utils/util');
 

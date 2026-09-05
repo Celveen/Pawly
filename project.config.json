@@ -2,7 +2,14 @@
   "description": "Pawly 宝狸 · AI 养宠助手小程序端。项目配置文件文档：https://developers.weixin.qq.com/miniprogram/dev/devtools/projectconfig.html",
   "packOptions": {
     "ignore": [
-      { "type": "folder", "value": "docs" }
+      {
+        "type": "folder",
+        "value": "docs"
+      },
+      {
+        "type": "folder",
+        "value": "scripts"
+      }
     ],
     "include": []
   },
@@ -46,26 +53,101 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.7.8",
-  "appid": "wx0ee80a2f23dbd157",
+  "appid": "touristappid",
   "projectname": "pawly-miniprogram",
   "condition": {
     "miniprogram": {
       "list": [
-        { "name": "首页", "pathName": "pages/home/index", "query": "", "scene": null },
-        { "name": "商品", "pathName": "pages/shop/index", "query": "", "scene": null },
-        { "name": "宝狸 AI", "pathName": "pages/ai/index", "query": "", "scene": null },
-        { "name": "社区", "pathName": "pages/community/index", "query": "", "scene": null },
-        { "name": "我的", "pathName": "pages/my/index", "query": "", "scene": null },
-        { "name": "商品详情", "pathName": "packageShop/pages/product/index", "query": "id=p1", "scene": null },
-        { "name": "购物车", "pathName": "packageShop/pages/cart/index", "query": "", "scene": null },
-        { "name": "科普列表", "pathName": "packageContent/pages/articles/index", "query": "", "scene": null },
-        { "name": "科普详情", "pathName": "packageContent/pages/article/index", "query": "id=a19", "scene": null },
-        { "name": "笔记详情", "pathName": "packageSocial/pages/post/index", "query": "id=seed-cat-day30", "scene": null },
-        { "name": "发笔记", "pathName": "packageSocial/pages/publish/index", "query": "", "scene": null },
-        { "name": "会员中心", "pathName": "packageUser/pages/member/index", "query": "", "scene": null },
-        { "name": "宠物档案", "pathName": "packageUser/pages/pets/index", "query": "", "scene": null },
-        { "name": "登录", "pathName": "packageUser/pages/login/index", "query": "", "scene": null },
-        { "name": "搜索", "pathName": "packageUser/pages/search/index", "query": "", "scene": null }
+        {
+          "name": "首页",
+          "pathName": "pages/home/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "商品",
+          "pathName": "pages/shop/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "宝狸 AI",
+          "pathName": "pages/ai/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "社区",
+          "pathName": "pages/community/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "我的",
+          "pathName": "pages/my/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "商品详情",
+          "pathName": "packageShop/pages/product/index",
+          "query": "id=p1",
+          "scene": null
+        },
+        {
+          "name": "购物车",
+          "pathName": "packageShop/pages/cart/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "科普列表",
+          "pathName": "packageContent/pages/articles/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "科普详情",
+          "pathName": "packageContent/pages/article/index",
+          "query": "id=a19",
+          "scene": null
+        },
+        {
+          "name": "笔记详情",
+          "pathName": "packageSocial/pages/post/index",
+          "query": "id=seed-cat-day30",
+          "scene": null
+        },
+        {
+          "name": "发笔记",
+          "pathName": "packageSocial/pages/publish/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "会员中心",
+          "pathName": "packageUser/pages/member/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "宠物档案",
+          "pathName": "packageUser/pages/pets/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "登录",
+          "pathName": "packageUser/pages/login/index",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "搜索",
+          "pathName": "packageUser/pages/search/index",
+          "query": "",
+          "scene": null
+        }
       ]
     }
   },

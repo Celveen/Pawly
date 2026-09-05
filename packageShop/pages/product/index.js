@@ -1,4 +1,4 @@
-const { PRODUCTS, productById, CATEGORIES } = require('../../../data');
+const { PRODUCTS, productById, CATEGORIES } = require('../../../data/index');
 const { getPetSpecies } = require('../../../utils/pet-species');
 const { fmt, toast, abbr, timeAgo } = require('../../../utils/util');
 const api = require('../../../api/index');

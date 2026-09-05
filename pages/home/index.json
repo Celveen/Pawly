@@ -1,5 +1,10 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "article-card": "/components/article-card/index",
+    "pawly-nav": "/components/pawly-nav/index",
+    "product-card": "/components/product-card/index",
+    "section-head": "/components/section-head/index"
+  },
   "navigationStyle": "custom",
   "backgroundColor": "#F7F2E5",
   "backgroundTextStyle": "dark",

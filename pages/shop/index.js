@@ -1,4 +1,4 @@
-const { PRODUCTS, CATEGORIES } = require('../../data');
+const { PRODUCTS, CATEGORIES } = require('../../data/index');
 const { PET_FILTERS, matchPet } = require('../../utils/pet-species');
 const { toast, debounce } = require('../../utils/util');
 const syncTab = require('../../utils/tabbar');

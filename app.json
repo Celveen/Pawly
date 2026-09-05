@@ -72,14 +72,7 @@
       ]
     }
   },
-  "usingComponents": {
-    "pawly-nav": "/components/pawly-nav/index",
-    "product-card": "/components/product-card/index",
-    "article-card": "/components/article-card/index",
-    "post-card": "/components/post-card/index",
-    "section-head": "/components/section-head/index",
-    "empty-state": "/components/empty-state/index"
-  },
+  "usingComponents": {},
   "window": {
     "backgroundTextStyle": "dark",
     "backgroundColor": "#F7F2E5",

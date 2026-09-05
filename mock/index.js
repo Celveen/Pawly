@@ -7,7 +7,7 @@
  */
 const config = require('../config');
 const seed = require('./seed');
-const { PRODUCTS } = require('../data');
+const { PRODUCTS } = require('../data/index');
 const { uuid, ymd } = require('../utils/util');
 
 const STORE_KEY = 'pawly_mock_db';

@@ -1,1 +1,9 @@
-{ "usingComponents": {}, "navigationStyle": "custom", "backgroundColor": "#F7F2E5" }
+{
+  "usingComponents": {
+    "empty-state": "/components/empty-state/index",
+    "pawly-nav": "/components/pawly-nav/index",
+    "product-card": "/components/product-card/index"
+  },
+  "navigationStyle": "custom",
+  "backgroundColor": "#F7F2E5"
+}

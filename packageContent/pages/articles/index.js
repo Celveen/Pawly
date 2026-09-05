@@ -1,4 +1,4 @@
-const { ARTICLES, ARTICLE_CATS } = require('../../../data');
+const { ARTICLES, ARTICLE_CATS } = require('../../../data/index');
 const { PET_FILTERS, articleMatchesSpecies } = require('../../../utils/pet-species');
 const { debounce } = require('../../../utils/util');
 

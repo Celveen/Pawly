@@ -1,4 +1,4 @@
-const { ARTICLE_CATS } = require('../../data');
+const { ARTICLE_CATS } = require('../../data/index');
 
 Component({
   properties: {

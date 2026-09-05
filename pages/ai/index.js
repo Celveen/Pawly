@@ -1,7 +1,7 @@
 const api = require('../../api/index');
 const config = require('../../config');
 const { chatStream } = require('../../utils/stream');
-const { PRODUCTS, productById } = require('../../data');
+const { PRODUCTS, productById } = require('../../data/index');
 const { fmt, toast } = require('../../utils/util');
 const syncTab = require('../../utils/tabbar');
 

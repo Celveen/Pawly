@@ -1,1 +1,8 @@
-{ "usingComponents": {}, "navigationStyle": "custom", "backgroundColor": "#F7F2E5", "enablePullDownRefresh": true }
+{
+  "usingComponents": {
+    "pawly-nav": "/components/pawly-nav/index"
+  },
+  "navigationStyle": "custom",
+  "backgroundColor": "#F7F2E5",
+  "enablePullDownRefresh": true
+}

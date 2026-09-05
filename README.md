@@ -44,7 +44,18 @@ docs/                            后端对接改动、上线前要做的事
 ## 快速开始
 
 用微信开发者工具「导入项目」选这个目录即可 —— **不需要 `npm install`，也不需要「构建 npm」**。
+开发者工具本身是独立 App（装在 `/Applications`），不用放进项目目录。
 `config.js` 默认 `useMock: true`，不连后端就能把所有界面点通。
+
+改完代码建议跑一下工程自检：
+
+```bash
+npm run check
+```
+
+它专门查「开发者工具打开才会炸、但 Node 里跑不出来」的那类问题：`require` 用了目录索引
+（小程序不支持、Node 支持）、页面三件套缺失、tabBar / 分包预载引用错、`usingComponents`
+指向不存在的组件、wxml 里用了没声明的组件。
 
 （原模板的 TDesign 组件库已移除：界面全是按 Pawly 视觉手写的，日期/地区用小程序原生 `<picker>`。
 想用回来就 `npm i tdesign-miniprogram@1.11.2` 再「工具 → 构建 npm」。）

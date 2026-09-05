@@ -1,5 +1,5 @@
 const api = require('../../api/index');
-const { TOPICS } = require('../../data');
+const { TOPICS } = require('../../data/index');
 const { toast } = require('../../utils/util');
 const syncTab = require('../../utils/tabbar');
 

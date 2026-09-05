@@ -1,5 +1,5 @@
 const api = require('../../../api/index');
-const { PRODUCTS, ARTICLES } = require('../../../data');
+const { PRODUCTS, ARTICLES } = require('../../../data/index');
 const { debounce, toast, timeAgo } = require('../../../utils/util');
 
 const app = getApp();

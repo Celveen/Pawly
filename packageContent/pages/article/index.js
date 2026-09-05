@@ -1,4 +1,4 @@
-const { ARTICLES, ARTICLE_CATS, articleById } = require('../../../data');
+const { ARTICLES, ARTICLE_CATS, articleById } = require('../../../data/index');
 const { toast } = require('../../../utils/util');
 
 Page({
